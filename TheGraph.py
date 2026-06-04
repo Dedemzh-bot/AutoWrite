@@ -1,9 +1,14 @@
 import logging
+import os
 import sys
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from State import NovelState
-from Nodes import architect_node, writer_node, auditor_node, editor_node, summarizer_node
+from Nodes import (
+    architect_node, writer_node, auditor_node, editor_node, summarizer_node,
+    load_keywords, pick_keywords,
+    SHORT_NOVEL_MAX_WORDS, LONG_NOVEL_DEFAULT_CHAPTERS
+)
 
 logger = logging.getLogger("AutoWrite")
 
@@ -70,25 +75,97 @@ app = workflow.compile(
 # 8. 启动测试执行 (带交互式输入版)
 # ==========================================
 if __name__ == "__main__":
-    print("🚀 小说工业流水线 v3.0 (支持人工干预与存档) 启动...")
+    print("🚀 小说工业流水线 v4.0 (词库 + 篇幅自适应) 启动...\n")
     
+    # ======== 步骤1: 输入灵感 ========
     print("-" * 50)
     my_idea = input("💡 请输入你的小说灵感/点子 (直接回车将使用默认设定)：\n> ")
     if not my_idea.strip():
         my_idea = "一个能在梦里修仙的现代程序员"
+    print()
+    
+    # ======== 步骤2: 词库题材选择 ========
+    keywords = []
+    keyword_db = load_keywords()
+    if keyword_db:
+        print("-" * 50)
+        print("📚 随机附加词库 — 请选择题材类型 (混抽逗号分隔，回车跳过):")
+        cats = list(keyword_db.keys())
+        for i, cat in enumerate(cats):
+            desc = keyword_db[cat].get("description", "")
+            end_char = "\n" if (i + 1) % 4 == 0 else "  "
+            print(f"  [{i + 1}] {cat}({desc})", end=end_char)
+        if len(cats) % 4 != 0:
+            print()
+        
+        choice = input("\n👉 输入编号: ").strip()
+        if choice:
+            selected_cats = []
+            for part in choice.replace("，", ",").split(","):
+                try:
+                    idx = int(part.strip()) - 1
+                    if 0 <= idx < len(cats):
+                        selected_cats.append(cats[idx])
+                except ValueError:
+                    pass
+            
+            if selected_cats:
+                print(f"   已选: {', '.join(selected_cats)}")
+                
+                while True:
+                    keywords = pick_keywords(selected_cats, 2)
+                    if not keywords:
+                        print("   ⚠️ 该分类下无词条，跳过。")
+                        break
+                    print(f"   🎲 命中: [{keywords[0]}] [{keywords[1] if len(keywords) > 1 else '—'}]")
+                    confirm = input("   确认(Y) / 重抽(R) / 跳过(N): ").strip().upper()
+                    if confirm == 'Y':
+                        break
+                    elif confirm == 'N':
+                        keywords = []
+                        break
+                    # R → loop again
+    print()
+    
+    # ======== 步骤3: 篇幅选择 ========
+    scope = "short"
+    max_words = SHORT_NOVEL_MAX_WORDS
+    target_chapters = 0
+    
     print("-" * 50)
+    scope_input = input("📏 篇幅: 短篇-S (默认≤5W字) / 长篇-L (默认50章): ").strip().upper()
+    if scope_input == 'L':
+        scope = "long"
+        ch_input = input(f"   章节数 (默认{LONG_NOVEL_DEFAULT_CHAPTERS}): ").strip()
+        try:
+            target_chapters = int(ch_input) if ch_input else LONG_NOVEL_DEFAULT_CHAPTERS
+        except ValueError:
+            target_chapters = LONG_NOVEL_DEFAULT_CHAPTERS
+        print(f"   ✅ 长篇模式，规划 {target_chapters} 章")
+    else:
+        w_input = input(f"   字数上限 (默认{SHORT_NOVEL_MAX_WORDS}字): ").strip()
+        try:
+            max_words = int(w_input) if w_input else SHORT_NOVEL_MAX_WORDS
+        except ValueError:
+            max_words = SHORT_NOVEL_MAX_WORDS
+        print(f"   ✅ 短篇模式，上限 {max_words} 字")
+    print()
     
     config = {"configurable": {"thread_id": "novel_project_001"}}
     
     initial_state = {
         "user_idea": my_idea,
+        "keywords": keywords,
+        "scope": scope,
+        "max_words": max_words,
+        "target_chapters": target_chapters,
         "current_chapter": 1,
         "iteration_count": 0,
         "editor_iteration_count": 0
     }
     
     try:
-        print("\n--- 第一阶段：呼叫架构师出大纲 ---")
+        print("--- 第一阶段：呼叫架构师出大纲 ---")
         for output in app.stream(initial_state, config=config):
             for node_name, node_state in output.items():
                 print(f"✅ 节点 [{node_name}] 执行完毕！")

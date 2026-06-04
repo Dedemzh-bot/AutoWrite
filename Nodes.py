@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+import random
 import sys
 import time
 from pydantic import BaseModel, Field
@@ -25,6 +27,31 @@ if not os.getenv("OPENAI_API_KEY"):
 
 NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "我的修仙大作.txt")
 AUDIT_SLEEP_SECONDS = int(os.getenv("AUDIT_SLEEP_SECONDS", "15"))
+SHORT_NOVEL_MAX_WORDS = int(os.getenv("SHORT_NOVEL_MAX_WORDS", "50000"))
+LONG_NOVEL_DEFAULT_CHAPTERS = int(os.getenv("LONG_NOVEL_DEFAULT_CHAPTERS", "50"))
+
+# ==========================================
+# 0. 辅助函数：词库操作
+# ==========================================
+def load_keywords() -> dict:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(current_dir, "keywords.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        logger.warning("⚠️ 词库文件不存在或格式错误，跳过随机关键词功能: %s", path)
+        return {}
+
+def pick_keywords(categories: list[str], count: int = 2) -> list[str]:
+    keyword_db = load_keywords()
+    pool = []
+    for cat in categories:
+        if cat in keyword_db and keyword_db[cat].get("keywords"):
+            pool.extend(keyword_db[cat]["keywords"])
+    if not pool:
+        return []
+    return random.sample(pool, min(count, len(pool)))
 
 # ==========================================
 # 0. 辅助函数：读取本地 Prompt 文件 (绝对路径版)
@@ -52,7 +79,8 @@ llm_summarizer = ChatOpenAI(model="deepseek-chat", temperature=0.3)
 # ==========================================
 class ArchitectOutput(BaseModel):
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
-    chapter_outlines: dict[int, str] = Field(description="章节号映射到具体的细纲。需规划前50章，格式如 {1: '第1章剧情', 2: '第2章剧情'}")
+    chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到细纲文本。短篇5-15章，长篇按指定章数。键必须为纯数字如'1', '2'。")
+    estimated_words: int = Field(description="预估总字数，短篇不超过指定上限")
 
 class AuditReport(BaseModel):
     审核状态: str = Field(description="严格输出 '通过' 或 '不通过'。")
@@ -87,12 +115,27 @@ def architect_node(state: NovelState):
     if state.get("world_bible"):
         return {}
 
+    keywords = state.get("keywords", [])
+    keywords_str = "、".join(keywords) if keywords else "无"
+
+    scope = state.get("scope", "short")
+    if scope == "short":
+        max_w = state.get("max_words", SHORT_NOVEL_MAX_WORDS)
+        scope_str = f"短篇，总字数不超过{max_w}字，请自行判断合理章节数（5-15章）"
+    else:
+        chapters = state.get("target_chapters", LONG_NOVEL_DEFAULT_CHAPTERS)
+        scope_str = f"长篇，规划{chapters}章详细细纲"
+
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("architect_system.md")),
         ("user", load_prompt("architect_user.md"))
         ])
     
-    result = _safe_invoke(prompt | llm_architect_structured, {"user_idea": state.get("user_idea")}, "architect")
+    result = _safe_invoke(prompt | llm_architect_structured, {
+        "user_idea": state.get("user_idea"),
+        "keywords": keywords_str,
+        "scope_requirement": scope_str
+    }, "architect")
     if result is None:
         raise RuntimeError("架构师结构化输出失败，无法生成大纲")
 
@@ -109,7 +152,7 @@ def writer_node(state: NovelState):
     summary = state.get("story_summary", "故事刚刚开始。")
     world_bible = state.get("world_bible", "")
     outlines = state.get("chapter_outlines", {})
-    current_outline = outlines.get(chapter_num, "自由发挥。")
+    current_outline = outlines.get(str(chapter_num), "自由发挥。")
     
     audit_report = state.get("audit_report", {})
     editor_report = state.get("editor_report", {})
@@ -150,7 +193,7 @@ def auditor_node(state: NovelState):
     ])
 
     result = _safe_invoke(prompt | llm_auditor_structured, {
-        "outline": state.get("chapter_outlines", {}).get(state.get("current_chapter", 1)), 
+        "outline": state.get("chapter_outlines", {}).get(str(state.get("current_chapter", 1)), ""), 
         "draft": state.get("current_draft")
     }, "auditor")
     

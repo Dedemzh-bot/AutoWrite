@@ -4,7 +4,13 @@ class NovelState(TypedDict):
     # --- 基础输入与设定 ---
     user_idea: str
     world_bible: str          # 架构师生成的设定
-    chapter_outlines: dict    # 各章细纲字典，如 {1: "大纲1", 2: "大纲2"}
+    chapter_outlines: dict    # 各章细纲字典
+    keywords: list[str]       # 随机抽取的创作关键词
+    
+    # --- 篇幅配置 ---
+    scope: str                # "short" 或 "long"
+    max_words: int            # 短篇字数上限
+    target_chapters: int      # 长篇目标章数
     
     # --- 运行进度与暂存 ---
     current_chapter: int

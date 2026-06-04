@@ -41,9 +41,10 @@ class TestPydanticModels(unittest.TestCase):
         from Nodes import ArchitectOutput
         data = ArchitectOutput(
             world_bible="测试世界观，不少于500字的内容填充" * 20,
-            chapter_outlines={1: "第1章剧情", 2: "第2章剧情", 3: "第3章剧情", 4: "第4章剧情", 5: "第5章剧情"}
+            chapter_outlines={"1": "第1章剧情", "2": "第2章剧情", "3": "第3章剧情", "4": "第4章剧情", "5": "第5章剧情"},
+            estimated_words=30000
         )
-        self.assertEqual(data.chapter_outlines[1], "第1章剧情")
+        self.assertEqual(data.chapter_outlines["1"], "第1章剧情")
         self.assertIn("测试世界观", data.world_bible)
 
     def test_audit_report_pass(self):
@@ -81,6 +82,10 @@ class TestNovelState(unittest.TestCase):
             "user_idea": "测试",
             "world_bible": "",
             "chapter_outlines": {},
+            "keywords": [],
+            "scope": "short",
+            "max_words": 50000,
+            "target_chapters": 0,
             "current_chapter": 1,
             "current_draft": "",
             "audit_report": {},
@@ -90,8 +95,8 @@ class TestNovelState(unittest.TestCase):
             "story_summary": "",
         }
         self.assertEqual(state["current_chapter"], 1)
-        self.assertEqual(state["iteration_count"], 0)
-        self.assertEqual(state["editor_iteration_count"], 0)
+        self.assertEqual(state["scope"], "short")
+        self.assertEqual(state["max_words"], 50000)
 
 
 class TestGraphStructure(unittest.TestCase):
