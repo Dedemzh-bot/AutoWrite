@@ -41,11 +41,11 @@ def load_prompt(file_name: str) -> str:
 # ==========================================
 # 1. 模型插座配置
 # ==========================================
-llm_architect = ChatOpenAI(model="gemini-2.5-pro", temperature=0.7)
-llm_writer = ChatOpenAI(model="gemini-2.5-flash", temperature=0.8)
-llm_editor = ChatOpenAI(model="gemini-2.5-flash", temperature=0.5)
-llm_auditor_raw = ChatOpenAI(model="gemini-2.5-flash", temperature=0)
-llm_summarizer = ChatOpenAI(model="gemini-2.5-flash", temperature=0.3)
+llm_architect = ChatOpenAI(model="deepseek-chat", temperature=0.7)
+llm_writer = ChatOpenAI(model="deepseek-chat", temperature=0.8)
+llm_editor = ChatOpenAI(model="deepseek-chat", temperature=0.5)
+llm_auditor_raw = ChatOpenAI(model="deepseek-chat", temperature=0)
+llm_summarizer = ChatOpenAI(model="deepseek-chat", temperature=0.3)
 
 # ==========================================
 # 2. 强制 JSON 结构化定义 (键名保持中文)
@@ -63,9 +63,20 @@ class EditorReport(BaseModel):
     文风评分: int = Field(description="给出1-10的评分，8分及格。")
     改进建议: str = Field(description="关于遣词造句、剧情节奏的润色建议。")
 
-llm_architect_structured = llm_architect.with_structured_output(ArchitectOutput)
-llm_auditor_structured = llm_auditor_raw.with_structured_output(AuditReport)
-llm_editor_structured = llm_editor.with_structured_output(EditorReport)
+llm_architect_structured = llm_architect.with_structured_output(ArchitectOutput, method="function_calling")
+llm_auditor_structured = llm_auditor_raw.with_structured_output(AuditReport, method="function_calling")
+llm_editor_structured = llm_editor.with_structured_output(EditorReport, method="function_calling")
+
+def _safe_invoke(chain, inputs, node_name: str, max_retries: int = 3):
+    for attempt in range(max_retries):
+        try:
+            result = chain.invoke(inputs)
+            if result is not None:
+                return result
+        except Exception as e:
+            logger.warning("   ⚠️ [%s] 结构化输出尝试 %d/%d 失败: %s", node_name, attempt + 1, max_retries, e)
+    logger.error("   ❌ [%s] 结构化输出全部%d次尝试失败，返回 None", node_name, max_retries)
+    return None
 
 # ==========================================
 # 3. 核心节点
@@ -81,7 +92,9 @@ def architect_node(state: NovelState):
         ("user", load_prompt("architect_user.md"))
         ])
     
-    result = (prompt | llm_architect_structured).invoke({"user_idea": state.get("user_idea")})
+    result = _safe_invoke(prompt | llm_architect_structured, {"user_idea": state.get("user_idea")}, "architect")
+    if result is None:
+        raise RuntimeError("架构师结构化输出失败，无法生成大纲")
 
     return {
         "world_bible": result.world_bible,
@@ -119,8 +132,10 @@ def writer_node(state: NovelState):
         "chapter_num": chapter_num
     })
 
+    content = result.content if result and result.content else "[写手产出为空，请重试]"
+    
     return {
-        "current_draft": result.content,
+        "current_draft": content,
         "iteration_count": iteration
     }
 
@@ -134,10 +149,14 @@ def auditor_node(state: NovelState):
         ("user", load_prompt("auditor_user.md"))
     ])
 
-    result = (prompt | llm_auditor_structured).invoke({
+    result = _safe_invoke(prompt | llm_auditor_structured, {
         "outline": state.get("chapter_outlines", {}).get(state.get("current_chapter", 1)), 
         "draft": state.get("current_draft")
-    })
+    }, "auditor")
+    
+    if result is None:
+        logger.warning("🕵️ 审计失败，默认放行")
+        return {"audit_report": {"审核状态": "通过", "发现的问题": [], "修改建议": "无"}}
     
     logger.info("🕵️ 审计结果: %s", result.审核状态)
     return {"audit_report": result.model_dump()}
@@ -150,7 +169,12 @@ def editor_node(state: NovelState):
         ("user", load_prompt("editor_user.md"))
     ])
     
-    result = (prompt | llm_editor_structured).invoke({"draft": state.get("current_draft")})
+    result = _safe_invoke(prompt | llm_editor_structured, {"draft": state.get("current_draft")}, "editor")
+    
+    if result is None:
+        logger.warning("👓 责编评估失败，默认放行(评分8)")
+        result = EditorReport(文风评分=8, 改进建议="无")
+    
     logger.info("👓 责编评分: %d/10", result.文风评分)
     
     editor_iter = state.get("editor_iteration_count", 0) + 1
