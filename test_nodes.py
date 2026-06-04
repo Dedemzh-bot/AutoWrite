@@ -83,9 +83,9 @@ class TestNovelState(unittest.TestCase):
             "world_bible": "",
             "chapter_outlines": {},
             "keywords": [],
-            "scope": "short",
-            "max_words": 50000,
-            "target_chapters": 0,
+            "target_chapters": 12,
+            "words_per_chapter": 2500,
+            "writer_style": "default",
             "current_chapter": 1,
             "current_draft": "",
             "audit_report": {},
@@ -94,9 +94,9 @@ class TestNovelState(unittest.TestCase):
             "editor_iteration_count": 0,
             "story_summary": "",
         }
-        self.assertEqual(state["current_chapter"], 1)
-        self.assertEqual(state["scope"], "short")
-        self.assertEqual(state["max_words"], 50000)
+        self.assertEqual(state["target_chapters"], 12)
+        self.assertEqual(state["words_per_chapter"], 2500)
+        self.assertEqual(state["writer_style"], "default")
 
 
 class TestGraphStructure(unittest.TestCase):

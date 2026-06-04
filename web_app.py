@@ -19,7 +19,7 @@ from State import NovelState
 from Nodes import (
     architect_node, writer_node, auditor_node, editor_node, summarizer_node,
     load_keywords, pick_keywords,
-    SHORT_NOVEL_MAX_WORDS, LONG_NOVEL_DEFAULT_CHAPTERS
+    DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
 )
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
@@ -152,15 +152,22 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       </div>
     </div>
     <div class="section">
-      <label>📏 篇幅</label>
+      <label>📏 篇幅设置</label>
       <div class="scope-row">
-        <select id="scope">
-          <option value="short">短篇 (字数控制)</option>
-          <option value="long">长篇 (章节控制)</option>
-        </select>
-        <input id="scopeVal" type="number" value="5000" min="1000" step="1000">
-        <span style="font-size:11px;color:#8b949e" id="scopeUnit">字</span>
+        章节数 <input id="chapters" type="number" value="12" min="1" max="200" style="width:60px"> 章
+        &nbsp;每章 <input id="wordsPerCh" type="number" value="2500" min="500" max="10000" step="100" style="width:70px"> 字
       </div>
+      <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 30,000 字</div>
+    </div>
+    <div class="section">
+      <label>✍️ 写手风格</label>
+      <select id="writerStyle" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
+        <option value="default">默认</option>
+        <option value="hot_blood">热血爽文</option>
+        <option value="literary">文艺细腻</option>
+        <option value="cold">冷峻纪实</option>
+        <option value="humor">轻松搞笑</option>
+      </select>
     </div>
     <button class="btn btn-primary" id="btnStart" onclick="startPipeline()">▶ 启动流水线</button>
     <div class="approval-bar hidden" id="approvalBar">
@@ -284,22 +291,24 @@ function onCatChange(){
 function startPipeline(){
   let idea=document.getElementById('idea').value.trim();
   if(!idea){log('请输入小说灵感','warn');return}
-  let scope=document.getElementById('scope').value;
-  let val=parseInt(document.getElementById('scopeVal').value)||5000;
+  let targetChapters=parseInt(document.getElementById('chapters').value)||12;
+  let wordsPerChapter=parseInt(document.getElementById('wordsPerCh').value)||2500;
+  let writerStyle=document.getElementById('writerStyle').value||'default';
   document.getElementById('btnStart').disabled=true;
   document.getElementById('approvalBar').classList.add('hidden');
   document.getElementById('progressStatus').textContent='提交中...';
-  // Reset agents
   Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));
   document.getElementById('outputArea').textContent='';
-  sendMsg({action:'start',data:{idea,selected_cats:selectedCats,scope,max_words:scope==='short'?val:0,target_chapters:scope==='long'?val:0}});
+  sendMsg({action:'start',data:{idea,selected_cats:selectedCats,target_chapters:targetChapters,words_per_chapter:wordsPerChapter,writer_style:writerStyle}});
 }
 
-document.getElementById('scope').onchange=function(){
-  let unit=document.getElementById('scopeUnit');
-  let inp=document.getElementById('scopeVal');
-  if(this.value==='short'){unit.textContent='字';inp.value=5000}
-  else{unit.textContent='章';inp.value=50}
+// Live word count estimate
+document.getElementById('chapters').oninput=updateEstimate;
+document.getElementById('wordsPerCh').oninput=updateEstimate;
+function updateEstimate(){
+  let ch=parseInt(document.getElementById('chapters').value)||0;
+  let w=parseInt(document.getElementById('wordsPerCh').value)||0;
+  document.getElementById('estWords').textContent='预估: 约 '+ (ch*w).toLocaleString() +' 字';
 }
 
 function switchTab(tab){
@@ -358,9 +367,9 @@ async def ws_handler(websocket: WebSocket):
         elif action == "start":
             idea = data.get("idea", "")
             cats = data.get("selected_cats", [])
-            scope = data.get("scope", "short")
-            max_words = data.get("max_words", SHORT_NOVEL_MAX_WORDS)
-            target_chapters = data.get("target_chapters", 0)
+            target_chapters = data.get("target_chapters", DEFAULT_CHAPTERS)
+            words_per_chapter = data.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
+            writer_style = data.get("writer_style", "default")
 
             # 抽取关键词
             keywords = []
@@ -393,9 +402,9 @@ async def ws_handler(websocket: WebSocket):
             init_state = {
                 "user_idea": idea,
                 "keywords": keywords,
-                "scope": scope,
-                "max_words": max_words,
                 "target_chapters": target_chapters,
+                "words_per_chapter": words_per_chapter,
+                "writer_style": writer_style,
                 "current_chapter": 1,
                 "iteration_count": 0,
                 "editor_iteration_count": 0,

@@ -7,7 +7,7 @@ from State import NovelState
 from Nodes import (
     architect_node, writer_node, auditor_node, editor_node, summarizer_node,
     load_keywords, pick_keywords,
-    SHORT_NOVEL_MAX_WORDS, LONG_NOVEL_DEFAULT_CHAPTERS
+    DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
 )
 
 logger = logging.getLogger("AutoWrite")
@@ -128,27 +128,29 @@ if __name__ == "__main__":
     print()
     
     # ======== 步骤3: 篇幅选择 ========
-    scope = "short"
-    max_words = SHORT_NOVEL_MAX_WORDS
-    target_chapters = 0
-    
     print("-" * 50)
-    scope_input = input("📏 篇幅: 短篇-S (默认≤5W字) / 长篇-L (默认50章): ").strip().upper()
-    if scope_input == 'L':
-        scope = "long"
-        ch_input = input(f"   章节数 (默认{LONG_NOVEL_DEFAULT_CHAPTERS}): ").strip()
-        try:
-            target_chapters = int(ch_input) if ch_input else LONG_NOVEL_DEFAULT_CHAPTERS
-        except ValueError:
-            target_chapters = LONG_NOVEL_DEFAULT_CHAPTERS
-        print(f"   ✅ 长篇模式，规划 {target_chapters} 章")
-    else:
-        w_input = input(f"   字数上限 (默认{SHORT_NOVEL_MAX_WORDS}字): ").strip()
-        try:
-            max_words = int(w_input) if w_input else SHORT_NOVEL_MAX_WORDS
-        except ValueError:
-            max_words = SHORT_NOVEL_MAX_WORDS
-        print(f"   ✅ 短篇模式，上限 {max_words} 字")
+    ch_input = input(f"📏 章节数 (默认{DEFAULT_CHAPTERS}章): ").strip()
+    try:
+        target_chapters = int(ch_input) if ch_input else DEFAULT_CHAPTERS
+    except ValueError:
+        target_chapters = DEFAULT_CHAPTERS
+    
+    w_input = input(f"   每章字数 (默认{DEFAULT_WORDS_PER_CHAPTER}字): ").strip()
+    try:
+        words_per_chapter = int(w_input) if w_input else DEFAULT_WORDS_PER_CHAPTER
+    except ValueError:
+        words_per_chapter = DEFAULT_WORDS_PER_CHAPTER
+    print(f"   ✅ {target_chapters}章 × {words_per_chapter}字 = 约{target_chapters * words_per_chapter}字")
+    print()
+    
+    # ======== 步骤4: 写手风格 ========
+    print("-" * 50)
+    print("✍️ 写手风格: [1] 默认  [2] 热血爽文  [3] 文艺细腻  [4] 冷峻纪实  [5] 轻松搞笑")
+    style_input = input("   选择风格 (默认1): ").strip()
+    style_map_cli = {"2": "hot_blood", "3": "literary", "4": "cold", "5": "humor"}
+    writer_style = style_map_cli.get(style_input, "default")
+    style_names = {"default": "默认", "hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑"}
+    print(f"   ✅ 写手风格: {style_names[writer_style]}")
     print()
     
     config = {"configurable": {"thread_id": "novel_project_001"}}
@@ -156,9 +158,9 @@ if __name__ == "__main__":
     initial_state = {
         "user_idea": my_idea,
         "keywords": keywords,
-        "scope": scope,
-        "max_words": max_words,
         "target_chapters": target_chapters,
+        "words_per_chapter": words_per_chapter,
+        "writer_style": writer_style,
         "current_chapter": 1,
         "iteration_count": 0,
         "editor_iteration_count": 0

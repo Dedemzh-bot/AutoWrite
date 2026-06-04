@@ -9,4 +9,4 @@
 {outline}
 {feedback}
 
-请开始撰写第 {chapter_num} 章的正文。直接输出正文，不要有任何多余的问候语。
+请开始撰写第 {chapter_num} 章的正文，目标{words_per_chapter}字。直接输出正文，不要有任何多余的问候语。

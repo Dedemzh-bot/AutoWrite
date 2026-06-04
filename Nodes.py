@@ -27,8 +27,8 @@ if not os.getenv("OPENAI_API_KEY"):
 
 NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "我的修仙大作.txt")
 AUDIT_SLEEP_SECONDS = int(os.getenv("AUDIT_SLEEP_SECONDS", "15"))
-SHORT_NOVEL_MAX_WORDS = int(os.getenv("SHORT_NOVEL_MAX_WORDS", "50000"))
-LONG_NOVEL_DEFAULT_CHAPTERS = int(os.getenv("LONG_NOVEL_DEFAULT_CHAPTERS", "50"))
+DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "12"))
+DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "2500"))
 
 # ==========================================
 # 0. 辅助函数：词库操作
@@ -79,8 +79,8 @@ llm_summarizer = ChatOpenAI(model="deepseek-chat", temperature=0.3)
 # ==========================================
 class ArchitectOutput(BaseModel):
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
-    chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到细纲文本。短篇5-15章，长篇按指定章数。键必须为纯数字如'1', '2'。")
-    estimated_words: int = Field(description="预估总字数，短篇不超过指定上限")
+    chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到细纲文本。键必须为纯数字如'1', '2'。")
+    estimated_words: int = Field(description="预估总字数")
 
 class AuditReport(BaseModel):
     审核状态: str = Field(description="严格输出 '通过' 或 '不通过'。")
@@ -118,13 +118,9 @@ def architect_node(state: NovelState):
     keywords = state.get("keywords", [])
     keywords_str = "、".join(keywords) if keywords else "无"
 
-    scope = state.get("scope", "short")
-    if scope == "short":
-        max_w = state.get("max_words", SHORT_NOVEL_MAX_WORDS)
-        scope_str = f"短篇，总字数不超过{max_w}字，请自行判断合理章节数（5-15章）"
-    else:
-        chapters = state.get("target_chapters", LONG_NOVEL_DEFAULT_CHAPTERS)
-        scope_str = f"长篇，规划{chapters}章详细细纲"
+    chapters = state.get("target_chapters", DEFAULT_CHAPTERS)
+    words_per = state.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
+    chapter_req = f"规划{chapters}章详细细纲，每章目标{words_per}字"
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("architect_system.md")),
@@ -134,7 +130,7 @@ def architect_node(state: NovelState):
     result = _safe_invoke(prompt | llm_architect_structured, {
         "user_idea": state.get("user_idea"),
         "keywords": keywords_str,
-        "scope_requirement": scope_str
+        "chapter_requirement": chapter_req
     }, "architect")
     if result is None:
         raise RuntimeError("架构师结构化输出失败，无法生成大纲")
@@ -153,6 +149,16 @@ def writer_node(state: NovelState):
     world_bible = state.get("world_bible", "")
     outlines = state.get("chapter_outlines", {})
     current_outline = outlines.get(str(chapter_num), "自由发挥。")
+    words_per = state.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
+    style = state.get("writer_style", "default")
+    
+    style_map = {
+        "hot_blood": "writer_system_hot_blood.md",
+        "literary": "writer_system_literary.md",
+        "cold": "writer_system_cold.md",
+        "humor": "writer_system_humor.md",
+    }
+    system_file = style_map.get(style, "writer_system.md")
     
     audit_report = state.get("audit_report", {})
     editor_report = state.get("editor_report", {})
@@ -163,7 +169,7 @@ def writer_node(state: NovelState):
         feedback += f"\n\n【责编退稿润色令】：文风不达标(当前评分{editor_report.get('文风评分')}/10)。改进建议：{editor_report.get('改进建议')}"
 
     prompt = ChatPromptTemplate.from_messages([
-        ("system", load_prompt("writer_system.md")),
+        ("system", load_prompt(system_file)),
         ("user", load_prompt("writer_user.md"))
     ])
 
@@ -172,7 +178,8 @@ def writer_node(state: NovelState):
         "summary": summary,
         "outline": current_outline,
         "feedback": feedback,
-        "chapter_num": chapter_num
+        "chapter_num": chapter_num,
+        "words_per_chapter": words_per
     })
 
     content = result.content if result and result.content else "[写手产出为空，请重试]"
