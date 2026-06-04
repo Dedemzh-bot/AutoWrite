@@ -3,3 +3,4 @@ langgraph
 langchain-core
 pydantic
 python-dotenv
+pytest

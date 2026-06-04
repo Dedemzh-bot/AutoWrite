@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 import time
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
@@ -8,22 +10,33 @@ from State import NovelState
 
 load_dotenv()
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    stream=sys.stdout
+)
+logger = logging.getLogger("AutoWrite")
+
+if not os.getenv("OPENAI_API_KEY"):
+    logger.error("❌ 环境变量 OPENAI_API_KEY 未设置！请在 .env 文件中配置你的 API Key。")
+    sys.exit(1)
+
+NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "我的修仙大作.txt")
+AUDIT_SLEEP_SECONDS = int(os.getenv("AUDIT_SLEEP_SECONDS", "15"))
+
 # ==========================================
 # 0. 辅助函数：读取本地 Prompt 文件 (绝对路径版)
 # ==========================================
 def load_prompt(file_name: str) -> str:
-    # 1. 获取当前文件 (Nodes.py) 所在的绝对路径目录
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # 2. 拼接出准确的 prompts 文件夹路径
     path = os.path.join(current_dir, "Role", file_name)
-    
-    # 3. 读取文件
     try:
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        print(f"❌ 严重错误：找不到提示词文件！请检查路径：\n{path}")
+        logger.error("❌ 严重错误：找不到提示词文件！请检查路径：%s", path)
         raise
 # ==========================================
 # 1. 模型插座配置
@@ -59,8 +72,7 @@ llm_editor_structured = llm_editor.with_structured_output(EditorReport)
 # ==========================================
 
 def architect_node(state: NovelState):
-    print("🧠 架构师正在深度推演世界观与大纲...")
-# 只有当世界观为空时才生成
+    logger.info("🧠 架构师正在深度推演世界观与大纲...")
     if state.get("world_bible"):
         return {}
 
@@ -79,7 +91,7 @@ def architect_node(state: NovelState):
 def writer_node(state: NovelState):
     chapter_num = state.get("current_chapter", 1)
     iteration = state.get("iteration_count", 0) + 1
-    print(f"✍️ 写手正在奋笔疾书 第 {chapter_num} 章 (第 {iteration} 稿)...")
+    logger.info("✍️ 写手正在奋笔疾书 第 %d 章 (第 %d 稿)...", chapter_num, iteration)
     
     summary = state.get("story_summary", "故事刚刚开始。")
     world_bible = state.get("world_bible", "")
@@ -113,9 +125,9 @@ def writer_node(state: NovelState):
     }
 
 def auditor_node(state: NovelState):
-    print("⏳ [减速带] 审计员正在喝茶等待 (15秒)...")
-    time.sleep(15)  
-    print("🕵️ 审计员正在进行地毯式排查...")
+    logger.info("⏳ [减速带] 审计员正在喝茶等待 (%d秒)...", AUDIT_SLEEP_SECONDS)
+    time.sleep(AUDIT_SLEEP_SECONDS)  
+    logger.info("🕵️ 审计员正在进行地毯式排查...")
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("auditor_system.md")),
@@ -127,11 +139,11 @@ def auditor_node(state: NovelState):
         "draft": state.get("current_draft")
     })
     
-    print(f"🕵️ 审计结果: {result.审核状态}")
+    logger.info("🕵️ 审计结果: %s", result.审核状态)
     return {"audit_report": result.model_dump()}
 
 def editor_node(state: NovelState):
-    print("👓 责编正在审视文笔与爽点...")
+    logger.info("👓 责编正在审视文笔与爽点...")
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("editor_system.md")),
@@ -139,7 +151,7 @@ def editor_node(state: NovelState):
     ])
     
     result = (prompt | llm_editor_structured).invoke({"draft": state.get("current_draft")})
-    print(f"👓 责编评分: {result.文风评分}/10")
+    logger.info("👓 责编评分: %d/10", result.文风评分)
     
     editor_iter = state.get("editor_iteration_count", 0) + 1
     
@@ -149,17 +161,15 @@ def editor_node(state: NovelState):
     }
 
 def summarizer_node(state: NovelState):
-    print("📝 书记员正在提炼记忆档案...")
+    logger.info("📝 书记员正在提炼记忆档案...")
     
     current_chap_num = state.get("current_chapter", 1)
     latest_chapter = state.get("current_draft", "")
     
-    # 自动保存到本地
-    file_path = "我的修仙大作.txt"
-    with open(file_path, "a", encoding="utf-8") as f:
+    with open(NOVEL_OUTPUT_FILE, "a", encoding="utf-8") as f:
         f.write(f"\n\n{'='*20} 第 {current_chap_num} 章 {'='*20}\n\n")
         f.write(latest_chapter)
-    print(f"💾 第 {current_chap_num} 章已安全入库。")
+    logger.info("💾 第 %d 章已安全入库 → %s", current_chap_num, NOVEL_OUTPUT_FILE)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("summarizer_system.md")),

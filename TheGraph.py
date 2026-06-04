@@ -1,8 +1,11 @@
+import logging
 import sys
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver  # 引入内存存档器
+from langgraph.checkpoint.memory import MemorySaver
 from State import NovelState
 from Nodes import architect_node, writer_node, auditor_node, editor_node, summarizer_node
+
+logger = logging.getLogger("AutoWrite")
 
 # 1. 初始化图
 workflow = StateGraph(NovelState)
@@ -35,7 +38,7 @@ def route_after_editor(state: NovelState):
     outlines = state.get("chapter_outlines", {})
     
     if report.get("文风评分", 0) < 8 and state.get("editor_iteration_count", 0) < 2:
-        print(f"   ⚠️ 责编退稿：文风评分 {report.get('文风评分')}/10 未达标，发回写手润色 (第{state.get('editor_iteration_count', 0)}次)")
+        logger.warning("   ⚠️ 责编退稿：文风评分 %d/10 未达标，发回写手润色 (第%d次)", report.get('文风评分'), state.get('editor_iteration_count', 0))
         return "writer"
     
     if state.get("current_chapter", 1) <= len(outlines):
@@ -113,6 +116,6 @@ if __name__ == "__main__":
         else:
             print("🛑 流程已终止。你可以调整提示词后重新运行。")
     except Exception as e:
-        print(f"\n❌ 流程异常终止：{e}")
-        print("💡 提示：请检查 API Key 是否有效、网络连接是否正常。")
+        logger.error("❌ 流程异常终止：%s", e)
+        logger.info("💡 提示：请检查 API Key 是否有效、网络连接是否正常。")
         sys.exit(1)
