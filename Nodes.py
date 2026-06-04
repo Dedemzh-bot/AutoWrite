@@ -39,7 +39,7 @@ llm_summarizer = ChatOpenAI(model="gemini-2.5-flash", temperature=0.3)
 # ==========================================
 class ArchitectOutput(BaseModel):
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
-    chapter_outlines: dict[int, str] = Field(description="章节号映射到具体的细纲。需规划前5章，格式如 {1: '第1章剧情', 2: '第2章剧情'}")
+    chapter_outlines: dict[int, str] = Field(description="章节号映射到具体的细纲。需规划前50章，格式如 {1: '第1章剧情', 2: '第2章剧情'}")
 
 class AuditReport(BaseModel):
     审核状态: str = Field(description="严格输出 '通过' 或 '不通过'。")
