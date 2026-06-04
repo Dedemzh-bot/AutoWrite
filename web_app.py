@@ -693,5 +693,8 @@ async def _run_pipeline(websocket, send, state, config):
 # ═══════════════════════════════════════════════════
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 AutoWrite Web 服务启动: http://127.0.0.1:8080")
+    import webbrowser
+    url = "http://127.0.0.1:8080"
+    webbrowser.open(url)
+    print(f"🚀 AutoWrite Web 服务启动: {url}")
     uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
