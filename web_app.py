@@ -9,6 +9,8 @@ import threading
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -63,9 +65,34 @@ workflow.add_conditional_edges("editor", route_after_editor, {
 workflow.add_edge("summarizer", "writer")
 
 memory = MemorySaver()
-graph_app = workflow.compile(checkpointer=memory)  # 无 interrupt_after，Web 层自行分段
+graph_app = workflow.compile(checkpointer=memory)
+
+# ── 灵感精炼 LLM ──
+llm_refine = ChatOpenAI(model="deepseek-chat", temperature=0.5)
+
+REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子精炼为完整的故事设定。
+
+你的工作方式是：
+1. 先看作者的点子，找出最需要明确的关键信息（主角身份、核心冲突、世界观基调、金手指类型）
+2. 一次只问一个问题，问题要具体，引导作者给出有用信息
+3. 累计问 2 轮后，输出精炼后的完整设定
+
+输出格式：
+- 如果是提问，直接输出问题，不要前缀标记
+- 如果是精炼结果，输出格式为 "【精炼设定】\n<完整的300字设定描述>"
+- 精炼设定必须整合所有已获取的信息，用一段通顺的文字呈现"""
 
 app = FastAPI(title="AutoWrite Web")
+
+def _call_refine(history: list[dict]) -> str:
+    messages = [("system", REFINE_SYSTEM)]
+    for h in history:
+        role = "user" if h["role"] == "user" else "assistant"
+        messages.append((role, h["content"]))
+    prompt = ChatPromptTemplate.from_messages(messages)
+    result = (prompt | llm_refine).invoke({})
+    return result.content.strip() if result and result.content else ""
+
 
 # ═══════════════════════════════════════════════════
 #  HTML 前端 (嵌入式单页)
@@ -140,6 +167,26 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     <div class="section">
       <label>📝 小说灵感</label>
       <textarea id="idea" placeholder="输入你的创意点子..."></textarea>
+      <div class="btn-bar" style="margin-top:4px">
+        <button class="btn" style="flex:1;padding:6px;font-size:12px;background:#1f6feb;color:#fff" onclick="startRefine()">🔍 AI 精炼灵感</button>
+        <button class="btn" style="flex:1;padding:6px;font-size:12px;background:#30363d;color:#c9d1d9" onclick="skipRefine()">跳过</button>
+      </div>
+    </div>
+    <div class="section hidden" id="refineSection">
+      <label>💬 灵感精炼</label>
+      <div id="refineChat" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px;max-height:200px;overflow-y:auto;font-size:12px;margin-bottom:6px"></div>
+      <div style="display:flex;gap:6px">
+        <textarea id="refineAnswer" placeholder="输入你的回答..." style="flex:1;height:48px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px;border-radius:4px;font-size:12px;resize:none"></textarea>
+        <button class="btn btn-primary" style="width:50px;padding:6px;font-size:12px" onclick="sendRefineAnswer()">发送</button>
+      </div>
+    </div>
+    <div class="section hidden" id="refineResultSection">
+      <label>✨ 精炼后的设定</label>
+      <div id="refineResult" style="background:#0d1117;border:1px solid #3fb950;border-radius:6px;padding:8px;font-size:12px;line-height:1.6;color:#c9d1d9;max-height:150px;overflow-y:auto"></div>
+      <div class="btn-bar" style="margin-top:4px">
+        <button class="btn btn-primary" onclick="confirmRefine()">✅ 使用此设定</button>
+        <button class="btn" style="background:#30363d;color:#c9d1d9" onclick="editRefineResult()">✏️ 手动修改</button>
+      </div>
     </div>
     <div class="section" id="kwSection">
       <label>📚 随机词库 (可选多选)</label>
@@ -217,6 +264,22 @@ function handleMsg(msg){
         `<label class="cat-item"><input type="checkbox" value="${k}" onchange="onCatChange()">${k}<span style="color:#8b949e;font-size:10px">${v}</span></label>`
       ).join('');
       break;
+    case 'refine_question':
+      document.getElementById('refineChat').innerHTML+=`<div style="color:#d29922;margin:4px 0">🤖 AI: ${msg.question}</div>`;
+      document.getElementById('refineChat').scrollTop=document.getElementById('refineChat').scrollHeight;
+      break;
+    case 'refine_done':
+      document.getElementById('refineChat').innerHTML+=`<div style="color:#3fb950;margin:4px 0">✨ 精炼完成</div>`;
+      document.getElementById('refineChat').scrollTop=document.getElementById('refineChat').scrollHeight;
+      refinedIdea=msg.refined;
+      document.getElementById('refineResult').textContent=msg.refined;
+      document.getElementById('refineResultSection').classList.remove('hidden');
+      document.getElementById('refineAnswer').disabled=true;
+      document.querySelector('#refineSection .btn-primary').disabled=true;
+      break;
+    case 'refine_skip':
+      skipRefine();
+      break;
     case 'keywords':
       document.getElementById('kwResult').textContent='🎲 命中: ['+msg.data.join('] [')+']';
       document.getElementById('kwResult').classList.remove('hidden');
@@ -288,6 +351,60 @@ function onCatChange(){
   selectedCats=[...document.querySelectorAll('#catGrid input:checked')].map(c=>c.value);
 }
 
+let refineActive=false,refinedIdea='';
+
+function startRefine(){
+  let idea=document.getElementById('idea').value.trim();
+  if(!idea){log('请先输入灵感','warn');return}
+  refineActive=true;refinedIdea='';
+  document.getElementById('refineSection').classList.remove('hidden');
+  document.getElementById('refineResultSection').classList.add('hidden');
+  document.getElementById('refineChat').innerHTML='<div style="color:#8b949e">⏳ AI 正在分析你的点子...</div>';
+  document.getElementById('refineAnswer').value='';
+  document.getElementById('btnStart').disabled=true;
+  document.getElementById('idea').disabled=true;
+  log('🔍 启动灵感精炼...','info');
+  sendMsg({action:'refine_start',data:{idea}});
+}
+
+function skipRefine(){
+  refineActive=false;refinedIdea='';
+  document.getElementById('refineSection').classList.add('hidden');
+  document.getElementById('refineResultSection').classList.add('hidden');
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('idea').disabled=false;
+}
+
+function sendRefineAnswer(){
+  let ans=document.getElementById('refineAnswer').value.trim();
+  if(!ans)return;
+  let chat=document.getElementById('refineChat');
+  chat.innerHTML+=`<div style="color:#58a6ff;margin:4px 0">👤 ${ans}</div>`;
+  document.getElementById('refineAnswer').value='';
+  chat.scrollTop=chat.scrollHeight;
+  sendMsg({action:'refine_answer',data:ans});
+}
+
+function confirmRefine(){
+  document.getElementById('idea').value=refinedIdea;
+  document.getElementById('idea').disabled=false;
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('refineSection').classList.add('hidden');
+  document.getElementById('refineResultSection').classList.add('hidden');
+  refineActive=false;
+  log('✅ 已采用精炼设定','success');
+}
+
+function editRefineResult(){
+  document.getElementById('idea').value=refinedIdea;
+  document.getElementById('idea').disabled=false;
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('refineSection').classList.add('hidden');
+  document.getElementById('refineResultSection').classList.add('hidden');
+  refineActive=false;
+  log('✏️ 精炼设定已放入编辑框，可手动修改','info');
+}
+
 function startPipeline(){
   let idea=document.getElementById('idea').value.trim();
   if(!idea){log('请输入小说灵感','warn');return}
@@ -357,7 +474,82 @@ async def ws_handler(websocket: WebSocket):
         action = raw.get("action", "")
         data = raw.get("data", {})
 
-        # ── 获取词库分类 ──
+        if action == "get_categories":
+            db = load_keywords()
+            cats = {k: v.get("description", "") for k, v in db.items()}
+            await send({"type": "categories", "data": cats})
+
+        # ── 灵感精炼：开始 ──
+        elif action == "refine_start":
+            idea = data.get("idea", "")
+            if not idea:
+                await send({"type": "error", "message": "请先输入灵感"})
+                continue
+            # 用临时对话历史（累积上下文）
+            refine_history = []
+            refine_history.append({"role": "user", "content": f"我的小说灵感是：【{idea}】。请帮我精炼。"})
+            # 第一轮提问
+            try:
+                resp = await asyncio.get_event_loop().run_in_executor(None, _call_refine, refine_history)
+            except Exception as e:
+                await send({"type": "error", "message": f"精炼LLM调用失败: {e}"})
+                continue
+
+            if resp.startswith("【精炼设定】"):
+                # 直接出结果了
+                await send({"type": "refine_done", "refined": resp.replace("【精炼设定】\n", "").strip()})
+            else:
+                refine_history.append({"role": "assistant", "content": resp})
+                await send({"type": "refine_question", "question": resp, "round": 1})
+
+                # 等待用户回答
+                while True:
+                    try:
+                        ans = await websocket.receive_json()
+                    except WebSocketDisconnect:
+                        return
+                    if ans.get("action") == "refine_answer":
+                        answer = ans.get("data", "")
+                        refine_history.append({"role": "user", "content": answer})
+                        # 让LLM继续
+                        try:
+                            resp2 = await asyncio.get_event_loop().run_in_executor(None, _call_refine, refine_history)
+                        except Exception as e:
+                            await send({"type": "error", "message": f"精炼LLM调用失败: {e}"})
+                            break
+                        if resp2.startswith("【精炼设定】"):
+                            await send({"type": "refine_done", "refined": resp2.replace("【精炼设定】\n", "").strip()})
+                            break
+                        else:
+                            refine_history.append({"role": "assistant", "content": resp2})
+                            await send({"type": "refine_question", "question": resp2, "round": 2})
+                            # 第二轮回答后直接给精炼结果
+                            try:
+                                ans2 = await websocket.receive_json()
+                            except WebSocketDisconnect:
+                                return
+                            if ans2.get("action") == "refine_answer":
+                                refine_history.append({"role": "user", "content": ans2.get("data", "")})
+                            refine_history.append({"role": "user", "content": "请根据以上对话输出精炼设定。"})
+                            try:
+                                resp3 = await asyncio.get_event_loop().run_in_executor(None, _call_refine, refine_history)
+                            except Exception as e:
+                                await send({"type": "error", "message": f"精炼LLM调用失败: {e}"})
+                                break
+                            if resp3.startswith("【精炼设定】"):
+                                resp3 = resp3.replace("【精炼设定】\n", "").strip()
+                            await send({"type": "refine_done", "refined": resp3})
+                            break
+                    elif ans.get("action") == "refine_skip":
+                        await send({"type": "refine_skip"})
+                        break
+                    else:
+                        break
+
+        # ── 灵感精炼：确认使用精炼结果 ──
+        elif action == "refine_confirm":
+            # 前端会重新发 start 包含精炼后的 idea
+            pass
         if action == "get_categories":
             db = load_keywords()
             cats = {k: v.get("description", "") for k, v in db.items()}
