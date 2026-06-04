@@ -92,6 +92,7 @@ class TestNovelState(unittest.TestCase):
             "editor_report": {},
             "iteration_count": 0,
             "editor_iteration_count": 0,
+            "saved_chapter": 0,
             "story_summary": "",
         }
         self.assertEqual(state["target_chapters"], 12)

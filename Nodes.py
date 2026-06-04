@@ -3,7 +3,6 @@ import logging
 import os
 import random
 import sys
-import time
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -26,7 +25,6 @@ if not os.getenv("OPENAI_API_KEY"):
     sys.exit(1)
 
 NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "我的修仙大作.txt")
-AUDIT_SLEEP_SECONDS = int(os.getenv("AUDIT_SLEEP_SECONDS", "15"))
 DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "12"))
 DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "2500"))
 
@@ -190,8 +188,6 @@ def writer_node(state: NovelState):
     }
 
 def auditor_node(state: NovelState):
-    logger.info("⏳ [减速带] 审计员正在喝茶等待 (%d秒)...", AUDIT_SLEEP_SECONDS)
-    time.sleep(AUDIT_SLEEP_SECONDS)  
     logger.info("🕵️ 审计员正在进行地毯式排查...")
     
     prompt = ChatPromptTemplate.from_messages([
@@ -259,5 +255,6 @@ def summarizer_node(state: NovelState):
         "story_summary": result.content,
         "current_chapter": current_chap_num + 1,
         "iteration_count": 0,
-        "editor_iteration_count": 0
+        "editor_iteration_count": 0,
+        "saved_chapter": current_chap_num
     }

@@ -228,8 +228,10 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <div class="tab active" onclick="switchTab('outline')">📋 大纲</div>
       <div class="tab" onclick="switchTab('novel')">📖 正文</div>
     </div>
-    <div id="content"><pre id="outputArea">等待启动...</pre></div>
-    <div id="log-panel" style="display:none"><div id="logArea"></div></div>
+    <div id="content">
+      <pre id="outlineArea" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.7;color:#c9d1d9">等待启动...</pre>
+      <pre id="novelArea" class="hidden" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.7;color:#c9d1d9"></pre>
+    </div>
     <div id="log-panel"><div id="logArea"></div></div>
   </div>
 </div>
@@ -297,9 +299,10 @@ function handleMsg(msg){
     case 'architect_result':
       setAgentState('architect','done');
       log('✅ 架构师完成大纲','success');
-      document.getElementById('outputArea').textContent=msg.data.world_bible+'\n\n---\n\n'+JSON.stringify(msg.data.chapter_outlines,null,2);
+      document.getElementById('outlineArea').textContent=msg.data.world_bible+'\n\n======== 章节细纲 ========\n\n'+JSON.stringify(msg.data.chapter_outlines,null,2);
       document.getElementById('approvalBar').classList.remove('hidden');
       document.getElementById('progressStatus').textContent='⏸️ 请审批大纲';
+      document.getElementById('novelArea').textContent='';
       break;
     case 'node_start':
       log(`${['🧠','✍️','🕵️','👓','📝'][['architect','writer','auditor','editor','summarizer'].indexOf(msg.node)]||'▶'} ${agentNames[msg.node]||msg.node} 工作中...`,'info');
@@ -321,15 +324,17 @@ function handleMsg(msg){
       }
       break;
     case 'chapter_saved':
-      let chap=document.getElementById('novelContent');
-      if(!chap){document.getElementById('outputArea').textContent='';chap=document.getElementById('outputArea')}
-      chap.textContent+='\n\n'+msg.data;
-      chap.scrollTop=chap.scrollHeight;
+      let na=document.getElementById('novelArea');
+      na.textContent+=msg.data+'\n\n';
+      na.scrollTop=na.scrollHeight;
       break;
     case 'pipeline_done':
-      log('🎉 流水线完成！','success');
+      log('🎉 流水线完成！全部章节已产出','success');
       document.getElementById('progressStatus').textContent='✅ 全部完成';
       document.getElementById('btnStart').disabled=false;
+      break;
+    case 'log':
+      log(msg.message,msg.cls||'info');
       break;
     case 'error':
       log('❌ '+msg.message,'error');
@@ -415,7 +420,6 @@ function startPipeline(){
   document.getElementById('approvalBar').classList.add('hidden');
   document.getElementById('progressStatus').textContent='提交中...';
   Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));
-  document.getElementById('outputArea').textContent='';
   sendMsg({action:'start',data:{idea,selected_cats:selectedCats,target_chapters:targetChapters,words_per_chapter:wordsPerChapter,writer_style:writerStyle}});
 }
 
@@ -431,6 +435,8 @@ function updateEstimate(){
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   event.target.classList.add('active');
+  document.getElementById('outlineArea').classList.toggle('hidden',tab!=='outline');
+  document.getElementById('novelArea').classList.toggle('hidden',tab!=='novel');
 }
 
 // Reset all agent dots
@@ -659,9 +665,10 @@ async def _run_pipeline(websocket, send, state, config):
                     q.put({"type": "node_done", "node": node_name, "data": node_data,
                            "message": f"✍️ 写手产出 第{node_data.get('current_chapter','?')}章 第{node_data.get('iteration_count','?')}稿" if node_name=="writer" else ""})
                     if node_name == "summarizer":
-                        chap_num = node_data.get("current_chapter", "?")
+                        chap_num = node_data.get("saved_chapter", node_data.get("current_chapter", "?"))
                         draft = node_data.get("current_draft", "")
                         q.put({"type": "chapter_saved", "data": f"══════════ 第{chap_num}章 ══════════\n{draft}"})
+            q.put({"type": "log", "message": "🎉 全部章节写作完成！", "cls": "success"})
             q.put({"type": "done"})
         except Exception as e:
             q.put({"type": "error", "message": str(e)})
@@ -678,6 +685,8 @@ async def _run_pipeline(websocket, send, state, config):
             elif msg["type"] == "error":
                 await send({"type": "error", "message": msg["message"]})
                 break
+            elif msg["type"] == "log":
+                await send({"type": "log", "message": msg.get("message", ""), "cls": msg.get("cls", "info")})
             else:
                 await send(msg)
         except queue.Empty:
