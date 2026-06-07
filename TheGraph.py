@@ -5,7 +5,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from State import NovelState
 from Nodes import (
-    architect_node, writer_node, auditor_node, editor_node, summarizer_node,
+    architect_node, writer_node, reviewer_node, summarizer_node,
     load_keywords, pick_keywords,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
 )
@@ -15,11 +15,10 @@ logger = logging.getLogger("AutoWrite")
 # 1. 初始化图
 workflow = StateGraph(NovelState)
 
-# 2. 添加所有节点
+# 2. 添加节点 (审查合并为一个并行节点)
 workflow.add_node("architect", architect_node)
 workflow.add_node("writer", writer_node)
-workflow.add_node("auditor", auditor_node)
-workflow.add_node("editor", editor_node)
+workflow.add_node("reviewer", reviewer_node)
 workflow.add_node("summarizer", summarizer_node)
 
 # 3. 设置入口点
@@ -27,45 +26,41 @@ workflow.set_entry_point("architect")
 
 # 4. 固定连接
 workflow.add_edge("architect", "writer")
-workflow.add_edge("writer", "auditor")
+workflow.add_edge("writer", "reviewer")
 
-# 5. 核心路由一：审计完了去哪？
-def route_after_audit(state: NovelState):
-    report = state.get("audit_report", {})
-    if report.get("审核状态") == "不通过" and state.get("iteration_count", 0) < 3:
-        return "writer"
-    return "editor"
-workflow.add_conditional_edges("auditor", route_after_audit, {"writer": "writer", "editor": "editor"})
-
-# 6. 核心路由二：责编完了去哪？
-def route_after_editor(state: NovelState):
-    report = state.get("editor_report", {})
+# 5. 统一路由：审查完去哪？
+def route_after_review(state: NovelState):
+    audit = state.get("audit_report", {})
+    editor = state.get("editor_report", {})
     outlines = state.get("chapter_outlines", {})
     
-    if report.get("文风评分", 0) < 8 and state.get("editor_iteration_count", 0) < 2:
-        logger.warning("   ⚠️ 责编退稿：文风评分 %d/10 未达标，发回写手润色 (第%d次)", report.get('文风评分'), state.get('editor_iteration_count', 0))
+    need_retry = (
+        audit.get("审核状态") == "不通过" or
+        editor.get("文风评分", 10) < 8
+    )
+    if need_retry and state.get("iteration_count", 1) <= 2:
+        logger.warning("   ⚠️ 审稿退稿 审计:%s 评分:%d/10 → 发回写手重写",
+                      audit.get("审核状态"), editor.get("文风评分", 0))
         return "writer"
     
     if state.get("current_chapter", 1) <= len(outlines):
         return "summarizer"
     return END
 
-workflow.add_conditional_edges("editor", route_after_editor, {
+workflow.add_conditional_edges("reviewer", route_after_review, {
     "writer": "writer",
     "summarizer": "summarizer",
     END: END
 })
 
-# 7. 闭环路线
+# 6. 闭环路线
 workflow.add_edge("summarizer", "writer")
 
 # ==========================================
-# 【核心升级】：挂载存档器与设置断点
+# 挂载存档器与设置断点
 # ==========================================
-# 初始化一个内存存档器（真实项目中可换成 SQLite 或 Postgres 数据库存档）
 memory = MemorySaver()
 
-# 编译图时，把 memory 挂上去，并告诉程序：在 architect（架构师）干完活后，立刻暂停！
 app = workflow.compile(
     checkpointer=memory,
     interrupt_after=["architect"] 
@@ -162,8 +157,7 @@ if __name__ == "__main__":
         "words_per_chapter": words_per_chapter,
         "writer_style": writer_style,
         "current_chapter": 1,
-        "iteration_count": 0,
-        "editor_iteration_count": 0
+        "iteration_count": 0
     }
     
     try:
@@ -187,9 +181,10 @@ if __name__ == "__main__":
                 for node_name, node_state in output.items():
                     if node_name == "writer":
                         print(f"✍️ 写手产出 第 {node_state.get('current_chapter')} 章 (第 {node_state.get('iteration_count')} 稿)...")
-                    elif node_name == "auditor":
-                        report = node_state.get('audit_report', {})
-                        print(f"   -> 审计状态: {report.get('审核状态')}")
+                    elif node_name == "reviewer":
+                        audit = node_state.get('audit_report', {})
+                        editor = node_state.get('editor_report', {})
+                        print(f"   -> 审稿 审计:{audit.get('审核状态')} 评分:{editor.get('文风评分')}/10")
                     elif node_name == "summarizer":
                         print(f"   -> 🗂️ 记忆已更新，准备进入下一章。")
         else:

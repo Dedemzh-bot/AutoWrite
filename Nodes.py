@@ -4,6 +4,7 @@ import logging
 import os
 import random
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -143,7 +144,7 @@ llm_architect_structured = llm_architect.with_structured_output(ArchitectOutput,
 llm_auditor_structured = llm_auditor_raw.with_structured_output(AuditReport, method="function_calling")
 llm_editor_structured = llm_editor.with_structured_output(EditorReport, method="function_calling")
 
-def _safe_invoke(chain, inputs, node_name: str, max_retries: int = 3):
+def _safe_invoke(chain, inputs, node_name: str, max_retries: int = 2):
     for attempt in range(max_retries):
         try:
             result = chain.invoke(inputs)
@@ -291,12 +292,44 @@ def editor_node(state: NovelState):
     
     logger.info("👓 责编评分: %d/10", result.文风评分)
     
-    editor_iter = state.get("editor_iteration_count", 0) + 1
-    
     return {
         "editor_report": result.model_dump(),
-        "editor_iteration_count": editor_iter
     }
+
+def _auditor_internal(state: NovelState) -> dict:
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", load_prompt("auditor_system.md")),
+        ("user", load_prompt("auditor_user.md"))
+    ])
+    result = _safe_invoke(prompt | llm_auditor_structured, {
+        "outline": state.get("chapter_outlines", {}).get(str(state.get("current_chapter", 1)), ""),
+        "draft": state.get("current_draft")
+    }, "auditor")
+    if result is None:
+        return {"audit_report": {"审核状态": "通过", "发现的问题": [], "修改建议": "无"}}
+    return {"audit_report": result.model_dump()}
+
+def _editor_internal(state: NovelState) -> dict:
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", load_prompt("editor_system.md")),
+        ("user", load_prompt("editor_user.md"))
+    ])
+    result = _safe_invoke(prompt | llm_editor_structured, {"draft": state.get("current_draft")}, "editor")
+    if result is None:
+        return {"editor_report": EditorReport(文风评分=8, 改进建议="无").model_dump()}
+    return {"editor_report": result.model_dump()}
+
+def reviewer_node(state: NovelState):
+    logger.info("🔍 审稿员正在进行逻辑+文风并行双检...")
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fut_audit = pool.submit(_auditor_internal, state)
+        fut_editor = pool.submit(_editor_internal, state)
+        audit_result = fut_audit.result()
+        editor_result = fut_editor.result()
+    audit_report = audit_result.get("audit_report", {})
+    editor_report = editor_result.get("editor_report", {})
+    logger.info("🔍 审计: %s | 文风评分: %d/10", audit_report.get("审核状态"), editor_report.get("文风评分", 0))
+    return {**audit_result, **editor_result}
 
 def summarizer_node(state: NovelState):
     logger.info("📝 书记员正在提炼记忆档案...")
@@ -325,6 +358,5 @@ def summarizer_node(state: NovelState):
         "current_chapter": current_chap_num + 1,
         "current_draft": latest_chapter,
         "iteration_count": 0,
-        "editor_iteration_count": 0,
         "saved_chapter": current_chap_num
     }

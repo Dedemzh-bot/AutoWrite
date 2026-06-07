@@ -21,8 +21,7 @@ class NovelState(TypedDict):
     editor_report: dict
     
     # --- 统计与存储 ---
-    iteration_count: int
-    editor_iteration_count: int
+    iteration_count: int      # 审查打回计数器，最多2次
     saved_chapter: int        # 刚刚保存的章节号
     novel_title: str          # 小说标题
     outline_file: str         # 洗文来源大纲文件名

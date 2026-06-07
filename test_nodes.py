@@ -93,7 +93,6 @@ class TestNovelState(unittest.TestCase):
             "audit_report": {},
             "editor_report": {},
             "iteration_count": 0,
-            "editor_iteration_count": 0,
             "saved_chapter": 0,
             "novel_title": "测试",
             "story_summary": "",
@@ -112,7 +111,7 @@ class TestGraphStructure(unittest.TestCase):
 
     def test_all_nodes_exist(self):
         nodes = list(self.workflow.nodes.keys())
-        expected = {"architect", "writer", "auditor", "editor", "summarizer"}
+        expected = {"architect", "writer", "reviewer", "summarizer"}
         self.assertEqual(set(nodes), expected)
 
     def test_entry_point(self):
@@ -128,12 +127,12 @@ class TestGraphStructure(unittest.TestCase):
         self.assertTrue(callable(writer_node))
 
     def test_auditor_node_exists(self):
-        from Nodes import auditor_node
-        self.assertTrue(callable(auditor_node))
+        from Nodes import reviewer_node
+        self.assertTrue(callable(reviewer_node))
 
     def test_editor_node_exists(self):
-        from Nodes import editor_node
-        self.assertTrue(callable(editor_node))
+        from Nodes import reviewer_node
+        self.assertTrue(callable(reviewer_node))
 
     def test_summarizer_node_exists(self):
         from Nodes import summarizer_node

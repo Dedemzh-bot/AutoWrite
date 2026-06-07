@@ -19,7 +19,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from State import NovelState
 from Nodes import (
-    architect_node, writer_node, auditor_node, editor_node, summarizer_node,
+    architect_node, writer_node, reviewer_node, summarizer_node,
     load_keywords, pick_keywords,
     list_outline_files, load_outline_json, generate_wash_title,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
@@ -32,35 +32,29 @@ logger = logging.getLogger("AutoWrite")
 workflow = StateGraph(NovelState)
 workflow.add_node("architect", architect_node)
 workflow.add_node("writer", writer_node)
-workflow.add_node("auditor", auditor_node)
-workflow.add_node("editor", editor_node)
+workflow.add_node("reviewer", reviewer_node)
 workflow.add_node("summarizer", summarizer_node)
 workflow.set_entry_point("architect")
 workflow.add_edge("architect", "writer")
-workflow.add_edge("writer", "auditor")
+workflow.add_edge("writer", "reviewer")
 
 
-def route_after_audit(state: NovelState):
-    report = state.get("audit_report", {})
-    if report.get("审核状态") == "不通过" and state.get("iteration_count", 0) < 3:
-        return "writer"
-    return "editor"
-
-
-workflow.add_conditional_edges("auditor", route_after_audit, {"writer": "writer", "editor": "editor"})
-
-
-def route_after_editor(state: NovelState):
-    report = state.get("editor_report", {})
+def route_after_review(state: NovelState):
+    audit = state.get("audit_report", {})
+    editor = state.get("editor_report", {})
     outlines = state.get("chapter_outlines", {})
-    if report.get("文风评分", 0) < 8 and state.get("editor_iteration_count", 0) < 2:
+    need_retry = (
+        audit.get("审核状态") == "不通过" or
+        editor.get("文风评分", 10) < 8
+    )
+    if need_retry and state.get("iteration_count", 1) <= 2:
         return "writer"
     if state.get("current_chapter", 1) <= len(outlines):
         return "summarizer"
     return END
 
 
-workflow.add_conditional_edges("editor", route_after_editor, {
+workflow.add_conditional_edges("reviewer", route_after_review, {
     "writer": "writer", "summarizer": "summarizer", END: END
 })
 workflow.add_edge("summarizer", "writer")
@@ -172,8 +166,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     <div class="agent-bar" id="agentStatus">
       <span class="agent-dot" id="dot-architect"></span>架构师
       <span class="agent-dot" id="dot-writer"></span>写手
-      <span class="agent-dot" id="dot-auditor"></span>审计
-      <span class="agent-dot" id="dot-editor"></span>责编
+      <span class="agent-dot" id="dot-reviewer"></span>审稿
       <span class="agent-dot" id="dot-summarizer"></span>书记
     </div>
     <div id="createPanel">
@@ -279,8 +272,8 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 
 <script>
 let ws=null,token=0,selectedCats=[];
-const agentMap={architect:'dot-architect',writer:'dot-writer',auditor:'dot-auditor',editor:'dot-editor',summarizer:'dot-summarizer'};
-const agentNames={architect:'架构师',writer:'写手',auditor:'审计员',editor:'责编',summarizer:'书记员'};
+const agentMap={architect:'dot-architect',writer:'dot-writer',reviewer:'dot-reviewer',summarizer:'dot-summarizer'};
+const agentNames={architect:'架构师',writer:'写手',reviewer:'审稿员',summarizer:'书记员'};
 
 function log(msg,cls='info'){
   let d=document.getElementById('logArea');
@@ -400,12 +393,14 @@ function handleMsg(msg){
         log('💾 '+msg.message,'success');
       }else if(msg.node==='writer'){
         log(msg.message,'info');
-      }else if(msg.node==='auditor'&&msg.data){
-        let r=msg.data.audit_report||{};
-        log(`  审计: ${r['审核状态']}${r['审核状态']==='不通过'?' (发现'+((r['发现的问题']||[]).length)+'个问题)':''}`,r['审核状态']==='不通过'?'warn':'success');
-      }else if(msg.node==='editor'&&msg.data){
-        let r=msg.data.editor_report||{};
-        log(`  责编评分: ${r['文风评分']}/10`,r['文风评分']>=8?'success':'warn');
+      }
+      break;
+    case 'node_done_review':
+      setAgentState('reviewer','done');
+      if(msg.data){
+        let a=msg.data.audit_report||{};
+        let e=msg.data.editor_report||{};
+        log(`  审稿: 审计${a['审核状态']}${a['审核状态']==='不通过'?' ('+((a['发现的问题']||[]).length)+'个问题)':''} | 评分${e['文风评分']}/10`,(a['审核状态']==='通过'&&e['文风评分']>=8)?'success':'warn');
       }
       break;
     case 'chapter_saved':
@@ -738,7 +733,6 @@ async def ws_handler(websocket: WebSocket):
                 "writer_style": writer_style,
                 "current_chapter": 1,
                 "iteration_count": 0,
-                "editor_iteration_count": 0,
             }
             await send({"type": "architect_start"})
             try:
@@ -830,7 +824,6 @@ async def ws_handler(websocket: WebSocket):
                 "writer_style": writer_style,
                 "current_chapter": 1,
                 "iteration_count": 0,
-                "editor_iteration_count": 0,
             }
             await send({"type": "log", "message": f"📝 洗文启动: 《{new_title}》 | {chapters}章 × {words_per_chapter}字 | {writer_style}", "cls": "info"})
             state = init_state
@@ -862,8 +855,11 @@ async def _run_pipeline(websocket, send, state, config):
                     else:
                         ch = state.get("current_chapter", "?")
 
-                    q.put({"type": "node_done", "node": node_name, "data": node_data,
-                           "message": f"✍️ 写手产出 第{ch}章 第{node_data.get('iteration_count','?')}稿" if node_name=="writer" else ""})
+                    if node_name == "reviewer":
+                        q.put({"type": "node_done_review", "node": "reviewer", "data": node_data})
+                    else:
+                        q.put({"type": "node_done", "node": node_name, "data": node_data,
+                               "message": f"✍️ 写手产出 第{ch}章 第{node_data.get('iteration_count','?')}稿" if node_name=="writer" else ""})
                     if node_name == "summarizer":
                         chap_num = node_data.get("saved_chapter", node_data.get("current_chapter", "?"))
                         draft = node_data.get("current_draft", "")
