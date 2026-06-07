@@ -40,10 +40,12 @@ class TestPydanticModels(unittest.TestCase):
     def test_architect_output_valid(self):
         from Nodes import ArchitectOutput
         data = ArchitectOutput(
+            novel_title="绝世剑神",
             world_bible="测试世界观，不少于500字的内容填充" * 20,
             chapter_outlines={"1": "第1章剧情", "2": "第2章剧情", "3": "第3章剧情", "4": "第4章剧情", "5": "第5章剧情"},
             estimated_words=30000
         )
+        self.assertEqual(data.novel_title, "绝世剑神")
         self.assertEqual(data.chapter_outlines["1"], "第1章剧情")
         self.assertIn("测试世界观", data.world_bible)
 
@@ -93,6 +95,7 @@ class TestNovelState(unittest.TestCase):
             "iteration_count": 0,
             "editor_iteration_count": 0,
             "saved_chapter": 0,
+            "novel_title": "测试",
             "story_summary": "",
         }
         self.assertEqual(state["target_chapters"], 12)

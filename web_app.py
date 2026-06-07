@@ -310,8 +310,10 @@ function handleMsg(msg){
       break;
     case 'architect_result':
       setAgentState('architect','done');
-      log('✅ 架构师完成大纲','success');
-      let outlineText=msg.data.world_bible+'\n\n======== 章节细纲 ========\n\n';
+      log(`✅ 架构师完成大纲 — 《${msg.data.novel_title||'未命名'}》`,'success');
+      let outlineText='';
+      if(msg.data.novel_title) outlineText+=`《${msg.data.novel_title}》\n\n`;
+      outlineText+=msg.data.world_bible+'\n\n======== 章节细纲 ========\n\n';
       for(let[k,v]of Object.entries(msg.data.chapter_outlines||{})){
         outlineText+='第'+k+'章: '+v.replace(/\\n/g,'\n')+'\n\n';
       }
@@ -638,6 +640,7 @@ async def ws_handler(websocket: WebSocket):
 
             init_state.update(arch_result)
             await send({"type": "architect_result", "data": {
+                "novel_title": init_state.get("novel_title", ""),
                 "world_bible": init_state.get("world_bible", ""),
                 "chapter_outlines": init_state.get("chapter_outlines", {})
             }})

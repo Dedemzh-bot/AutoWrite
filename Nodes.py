@@ -24,7 +24,11 @@ if not os.getenv("OPENAI_API_KEY"):
     logger.error("❌ 环境变量 OPENAI_API_KEY 未设置！请在 .env 文件中配置你的 API Key。")
     sys.exit(1)
 
-NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "小说输出.txt")
+def _build_output_path(title: str) -> str:
+    safe = "".join(c for c in title if c not in r'\/:*?"<>|')
+    safe = safe.strip() or "小说输出"
+    os.makedirs("Novel", exist_ok=True)
+    return os.path.join("Novel", f"{safe}.txt")
 DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "12"))
 DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "2500"))
 
@@ -76,6 +80,7 @@ llm_summarizer = ChatOpenAI(model="deepseek-chat", temperature=0.3)
 # 2. 强制 JSON 结构化定义 (键名保持中文)
 # ==========================================
 class ArchitectOutput(BaseModel):
+    novel_title: str = Field(description="小说的书名，8-20字，简洁有力有网感")
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
     chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到细纲文本。键必须为纯数字如'1', '2'。")
     estimated_words: int = Field(description="预估总字数")
@@ -134,6 +139,7 @@ def architect_node(state: NovelState):
         raise RuntimeError("架构师结构化输出失败，无法生成大纲")
 
     return {
+        "novel_title": result.novel_title,
         "world_bible": result.world_bible,
         "chapter_outlines": result.chapter_outlines,
         "current_chapter": 1
@@ -235,11 +241,12 @@ def summarizer_node(state: NovelState):
     
     current_chap_num = state.get("current_chapter", 1)
     latest_chapter = state.get("current_draft", "")
+    file_path = _build_output_path(state.get("novel_title", "小说输出"))
     
-    with open(NOVEL_OUTPUT_FILE, "a", encoding="utf-8") as f:
+    with open(file_path, "a", encoding="utf-8") as f:
         f.write(f"\n\n{'='*20} 第 {current_chap_num} 章 {'='*20}\n\n")
         f.write(latest_chapter)
-    logger.info("💾 第 %d 章已安全入库 → %s", current_chap_num, NOVEL_OUTPUT_FILE)
+    logger.info("💾 第 %d 章已安全入库 → %s", current_chap_num, file_path)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("summarizer_system.md")),
