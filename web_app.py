@@ -241,7 +241,11 @@ let ws=null,token=0,selectedCats=[];
 const agentMap={architect:'dot-architect',writer:'dot-writer',auditor:'dot-auditor',editor:'dot-editor',summarizer:'dot-summarizer'};
 const agentNames={architect:'架构师',writer:'写手',auditor:'审计员',editor:'责编',summarizer:'书记员'};
 
-function log(msg,cls='info'){let d=document.getElementById('logArea');d.innerHTML+=`<div class="log-item ${cls}">${msg}</div>`;d.scrollTop=d.scrollHeight}
+function log(msg,cls='info'){
+  let d=document.getElementById('logArea');
+  d.innerHTML+=`<div class="log-item ${cls}">${msg}</div>`;
+  d.scrollTop=d.scrollHeight;
+}
 
 function connect(){
   let proto=location.protocol==='https:'?'wss':'ws';
@@ -253,7 +257,15 @@ function connect(){
 }
 
 function sendMsg(obj){if(ws&&ws.readyState===1)ws.send(JSON.stringify(obj))}
-function sendCmd(action,data){sendMsg({action,data,token})}
+function sendCmd(action,data){
+  sendMsg({action,data,token});
+  if(action==='approval' && data){
+    document.getElementById('approvalBar').classList.add('hidden');
+    document.getElementById('progressStatus').textContent='▶ 写作流水线启动中...';
+    document.querySelectorAll('#approvalBar .btn').forEach(b=>b.disabled=true);
+    log('▶ 大纲已批准，写作流水线启动...','success');
+  }
+}
 
 function loadCategories(){
   sendMsg({action:'get_categories'});
@@ -299,7 +311,11 @@ function handleMsg(msg){
     case 'architect_result':
       setAgentState('architect','done');
       log('✅ 架构师完成大纲','success');
-      document.getElementById('outlineArea').textContent=msg.data.world_bible+'\n\n======== 章节细纲 ========\n\n'+JSON.stringify(msg.data.chapter_outlines,null,2);
+      let outlineText=msg.data.world_bible+'\n\n======== 章节细纲 ========\n\n';
+      for(let[k,v]of Object.entries(msg.data.chapter_outlines||{})){
+        outlineText+='第'+k+'章: '+v.replace(/\\n/g,'\n')+'\n\n';
+      }
+      document.getElementById('outlineArea').textContent=outlineText;
       document.getElementById('approvalBar').classList.remove('hidden');
       document.getElementById('progressStatus').textContent='⏸️ 请审批大纲';
       document.getElementById('novelArea').textContent='';
@@ -662,12 +678,20 @@ async def _run_pipeline(websocket, send, state, config):
                 for node_name, node_data in output.items():
                     if node_name == "__interrupt__":
                         continue
+                    # 追踪当前章节号
+                    if node_name == "writer":
+                        ch = node_data.get("current_chapter") or state.get("current_chapter", "?")
+                    elif node_name == "summarizer":
+                        ch = node_data.get("saved_chapter", node_data.get("current_chapter", "?"))
+                    else:
+                        ch = state.get("current_chapter", "?")
+
                     q.put({"type": "node_done", "node": node_name, "data": node_data,
-                           "message": f"✍️ 写手产出 第{node_data.get('current_chapter','?')}章 第{node_data.get('iteration_count','?')}稿" if node_name=="writer" else ""})
+                           "message": f"✍️ 写手产出 第{ch}章 第{node_data.get('iteration_count','?')}稿" if node_name=="writer" else ""})
                     if node_name == "summarizer":
                         chap_num = node_data.get("saved_chapter", node_data.get("current_chapter", "?"))
                         draft = node_data.get("current_draft", "")
-                        q.put({"type": "chapter_saved", "data": f"══════════ 第{chap_num}章 ══════════\n{draft}"})
+                        q.put({"type": "chapter_saved", "data": f"══════════ 第{chap_num}章 ══════════\n\n{draft}"})
             q.put({"type": "log", "message": "🎉 全部章节写作完成！", "cls": "success"})
             q.put({"type": "done"})
         except Exception as e:

@@ -24,7 +24,7 @@ if not os.getenv("OPENAI_API_KEY"):
     logger.error("❌ 环境变量 OPENAI_API_KEY 未设置！请在 .env 文件中配置你的 API Key。")
     sys.exit(1)
 
-NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "我的修仙大作.txt")
+NOVEL_OUTPUT_FILE = os.getenv("NOVEL_OUTPUT_FILE", "小说输出.txt")
 DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "12"))
 DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "2500"))
 
@@ -254,6 +254,7 @@ def summarizer_node(state: NovelState):
     return {
         "story_summary": result.content,
         "current_chapter": current_chap_num + 1,
+        "current_draft": latest_chapter,
         "iteration_count": 0,
         "editor_iteration_count": 0,
         "saved_chapter": current_chap_num
