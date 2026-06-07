@@ -25,5 +25,7 @@ class NovelState(TypedDict):
     editor_iteration_count: int
     saved_chapter: int        # 刚刚保存的章节号
     novel_title: str          # 小说标题
+    outline_file: str         # 洗文来源大纲文件名
+    wash_original_title: str  # 洗文原始标题
 
     story_summary: str

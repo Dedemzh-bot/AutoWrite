@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -29,6 +30,50 @@ def _build_output_path(title: str) -> str:
     safe = safe.strip() or "小说输出"
     os.makedirs("Novel", exist_ok=True)
     return os.path.join("Novel", f"{safe}.txt")
+
+def list_outline_files() -> list[dict]:
+    files = []
+    os.makedirs("Outline", exist_ok=True)
+    for name in sorted(os.listdir("Outline"), reverse=True):
+        if name.endswith(".json"):
+            try:
+                with open(os.path.join("Outline", name), "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                files.append({
+                    "file": name,
+                    "title": data.get("title", name),
+                    "chapters": len(data.get("chapter_outlines", {})),
+                    "created_at": data.get("created_at", "")
+                })
+            except Exception:
+                pass
+    return files
+
+def load_outline_json(file_name: str) -> dict:
+    path = os.path.join("Outline", file_name)
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+WASH_TITLE_SYSTEM = """你是一位资深编辑，为洗文（同人大纲二次创作）生成新书名。
+规则：
+1. 新书名必须与原标题明显不同，不能只差一两个字
+2. 新书名需体现选定的写手风格
+3. 字数8-20字，简洁有力有网感
+4. 直接输出新书名，不要任何前缀后缀"""
+
+def generate_wash_title(original_title: str, style: str) -> str:
+    style_names = {"hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "default": "默认风格"}
+    style_cn = style_names.get(style, "默认风格")
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", WASH_TITLE_SYSTEM),
+        ("user", f"原书名《{original_title}》，写手风格【{style_cn}】。请生成洗文新书名。")
+    ])
+    result = (prompt | llm_architect).invoke({})
+    title = result.content.strip() if result and result.content else f"{original_title}·重制版"
+    for ch in r'\/:*?"<>|':
+        title = title.replace(ch, "")
+    return title.strip() or f"{original_title}·重制版"
+
 DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "12"))
 DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "2500"))
 
@@ -137,6 +182,23 @@ def architect_node(state: NovelState):
     }, "architect")
     if result is None:
         raise RuntimeError("架构师结构化输出失败，无法生成大纲")
+
+    # 保存大纲 JSON 到 Outline/ 目录
+    try:
+        os.makedirs("Outline", exist_ok=True)
+        safe_title = "".join(c for c in result.novel_title if c not in r'\/:*?"<>|')
+        save_path = os.path.join("Outline", f"{safe_title}.json")
+        with open(save_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "title": result.novel_title,
+                "world_bible": result.world_bible,
+                "chapter_outlines": result.chapter_outlines,
+                "estimated_words": result.estimated_words,
+                "created_at": datetime.datetime.now().isoformat()
+            }, f, ensure_ascii=False, indent=2)
+        logger.info("📁 大纲已保存 → %s", save_path)
+    except Exception as e:
+        logger.warning("⚠️ 大纲保存失败: %s", e)
 
     return {
         "novel_title": result.novel_title,

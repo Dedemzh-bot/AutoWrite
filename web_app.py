@@ -21,6 +21,7 @@ from State import NovelState
 from Nodes import (
     architect_node, writer_node, auditor_node, editor_node, summarizer_node,
     load_keywords, pick_keywords,
+    list_outline_files, load_outline_json, generate_wash_title,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
 )
 
@@ -148,6 +149,13 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 .approval-bar{display:flex;gap:8px;margin:8px 0}
 .approval-bar .btn{flex:1;padding:8px;font-size:13px}
 .hidden{display:none!important}
+.mode-tab{flex:1;text-align:center;padding:8px;font-size:13px;cursor:pointer;border-bottom:2px solid #30363d;color:#8b949e;transition:all .15s}
+.mode-tab.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.outline-item{padding:8px 10px;border-bottom:1px solid #161b22;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center}
+.outline-item:hover{background:#1a2332}
+.outline-item.active{background:#1a2332;border-left:3px solid #58a6ff}
+.outline-item .otitle{color:#c9d1d9;font-weight:600}
+.outline-item .ometa{color:#8b949e;font-size:10px}
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:#0d1117}
 ::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
@@ -156,6 +164,10 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 <body>
 <div id="app">
   <div id="panel">
+    <div id="modeBar" style="display:flex;margin-bottom:12px">
+      <div class="mode-tab active" onclick="switchMode('create')">🎨 创作</div>
+      <div class="mode-tab" onclick="switchMode('wash')">🔄 洗文</div>
+    </div>
     <h1>🚀 AutoWrite 小说流水线</h1>
     <div class="agent-bar" id="agentStatus">
       <span class="agent-dot" id="dot-architect"></span>架构师
@@ -164,6 +176,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <span class="agent-dot" id="dot-editor"></span>责编
       <span class="agent-dot" id="dot-summarizer"></span>书记
     </div>
+    <div id="createPanel">
     <div class="section">
       <label>📝 小说灵感</label>
       <textarea id="idea" placeholder="输入你的创意点子..."></textarea>
@@ -222,7 +235,35 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <button class="btn btn-danger" onclick="sendCmd('approval',false)">❌ 拒绝，重新设定</button>
     </div>
     <p id="progressStatus" style="font-size:11px;color:#8b949e;margin-top:8px"></p>
+  </div><!-- /createPanel -->
+  <div id="washPanel" class="hidden">
+    <div class="section">
+      <label>✍️ 写手风格</label>
+      <select id="washWriterStyle" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
+        <option value="default">默认</option>
+        <option value="hot_blood">热血爽文</option>
+        <option value="literary">文艺细腻</option>
+        <option value="cold">冷峻纪实</option>
+        <option value="humor">轻松搞笑</option>
+      </select>
+    </div>
+    <div class="section">
+      <label>📏 篇幅 (0=保持原大纲)</label>
+      <div class="scope-row">
+        章节数 <input id="washChapters" type="number" value="0" min="0" max="200" style="width:60px"> 章
+        &nbsp;每章 <input id="washWords" type="number" value="2500" min="500" max="10000" step="100" style="width:70px"> 字
+      </div>
+    </div>
+    <div class="section">
+      <label>📚 大纲列表</label>
+      <div id="outlineList" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;max-height:240px;overflow-y:auto;font-size:12px">
+        <div style="color:#8b949e;padding:12px;text-align:center">点击"洗文"标签后自动加载...</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btnWashStart" disabled onclick="startWash()">▶ 确认创作</button>
+    <p id="washStatus" style="font-size:11px;color:#8b949e;margin-top:4px"></p>
   </div>
+  </div><!-- /panel -->
   <div id="right">
     <div id="tabs">
       <div class="tab active" onclick="switchTab('outline')">📋 大纲</div>
@@ -293,6 +334,32 @@ function handleMsg(msg){
       break;
     case 'refine_skip':
       skipRefine();
+      break;
+    case 'outline_list':
+      let listHtml='';
+      if(!msg.data||!msg.data.length){
+        listHtml='<div style="color:#8b949e;padding:12px;text-align:center">暂无可洗文大纲<br><span style="font-size:10px">请先在"创作"模式生成大纲</span></div>';
+      }else{
+        for(let o of msg.data){
+          listHtml+=`<div class="outline-item" data-file="${o.file}" onclick="selectOutline('${o.file}')">
+            <span class="otitle">${o.title}</span>
+            <span class="ometa">${o.chapters}章 · ${(o.created_at||'').slice(0,10)}</span>
+          </div>`;
+        }
+      }
+      document.getElementById('outlineList').innerHTML=listHtml;
+      break;
+    case 'outline_content':
+      selectedOutlineData=msg.data;
+      let ocText=`《${msg.data.title||'未命名'}》\n\n${msg.data.world_bible||''}\n\n======== 章节细纲 ========\n\n`;
+      for(let[k,v]of Object.entries(msg.data.chapter_outlines||{})){
+        ocText+='第'+k+'章: '+v.replace(/\\n/g,'\n')+'\n\n';
+      }
+      document.getElementById('outlineArea').textContent=ocText;
+      document.getElementById('washChapters').value=msg.data.chapter_outlines?Object.keys(msg.data.chapter_outlines).length:0;
+      break;
+    case 'rewash_title':
+      document.getElementById('washStatus').textContent='✨ 新书名: 《'+msg.title+'》';
       break;
     case 'keywords':
       document.getElementById('kwResult').textContent='🎲 命中: ['+msg.data.join('] [')+']';
@@ -455,6 +522,54 @@ function switchTab(tab){
   event.target.classList.add('active');
   document.getElementById('outlineArea').classList.toggle('hidden',tab!=='outline');
   document.getElementById('novelArea').classList.toggle('hidden',tab!=='novel');
+}
+
+// --- 洗文模式 ---
+let currentMode='create',selectedOutlineFile='',selectedOutlineData=null;
+
+function switchMode(mode){
+  currentMode=mode;
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.textContent.includes(mode==='create'?'创作':'洗文')));
+  document.getElementById('createPanel').classList.toggle('hidden',mode!=='create');
+  document.getElementById('washPanel').classList.toggle('hidden',mode!=='wash');
+  document.getElementById('approvalBar').classList.add('hidden');
+  if(mode==='wash'){
+    document.getElementById('btnWashStart').disabled=true;
+    selectedOutlineFile='';selectedOutlineData=null;
+    loadOutlines();
+  }else{
+    document.getElementById('btnStart').disabled=false;
+  }
+}
+
+function loadOutlines(){
+  document.getElementById('outlineList').innerHTML='<div style="color:#8b949e;padding:12px;text-align:center">加载中...</div>';
+  sendMsg({action:'list_outlines'});
+}
+
+function selectOutline(file){
+  selectedOutlineFile=file;
+  document.querySelectorAll('#outlineList .outline-item').forEach(i=>i.classList.remove('active'));
+  let items=document.querySelectorAll('#outlineList .outline-item');
+  for(let el of items){if(el.dataset.file===file){el.classList.add('active');break}}
+  document.getElementById('btnWashStart').disabled=false;
+  sendMsg({action:'load_outline',data:{file}});
+}
+
+function startWash(){
+  if(!selectedOutlineFile||!selectedOutlineData)return;
+  let ch=parseInt(document.getElementById('washChapters').value)||0;
+  let w=parseInt(document.getElementById('washWords').value)||2500;
+  let style=document.getElementById('washWriterStyle').value||'default';
+  document.getElementById('btnWashStart').disabled=true;
+  document.getElementById('washStatus').textContent='生成新书名...';
+  Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));
+  document.getElementById('novelArea').textContent='';
+  document.getElementById('approvalBar').classList.add('hidden');
+  sendMsg({action:'start_rewash',data:{
+    file:selectedOutlineFile,writer_style:style,
+    target_chapters:ch,words_per_chapter:w
+  }});
 }
 
 // Reset all agent dots
@@ -660,6 +775,64 @@ async def ws_handler(websocket: WebSocket):
                 continue
 
             # ── 第二阶段: 运行完整流水线 ──
+            state = init_state
+            await _run_pipeline(websocket, send, state, config)
+
+        # ── 洗文：列出大纲 ──
+        elif action == "list_outlines":
+            files = list_outline_files()
+            await send({"type": "outline_list", "data": files})
+
+        # ── 洗文：加载大纲内容 ──
+        elif action == "load_outline":
+            try:
+                content = load_outline_json(data.get("file", ""))
+                await send({"type": "outline_content", "data": content})
+            except Exception as e:
+                await send({"type": "error", "message": f"加载大纲失败: {e}"})
+
+        # ── 洗文：启动洗文流水线 ──
+        elif action == "start_rewash":
+            file_name = data.get("file", "")
+            writer_style = data.get("writer_style", "default")
+            target_chapters = data.get("target_chapters", 0)
+            words_per_chapter = data.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
+
+            try:
+                outline = load_outline_json(file_name)
+            except Exception as e:
+                await send({"type": "error", "message": f"加载大纲失败: {e}"})
+                continue
+
+            original_title = outline.get("title", "未命名")
+
+            # 生成洗文新书名
+            await send({"type": "log", "message": f"🤖 为《{original_title}》生成洗文新书名...", "cls": "info"})
+            try:
+                new_title = await asyncio.get_event_loop().run_in_executor(
+                    None, generate_wash_title, original_title, writer_style
+                )
+            except Exception as e:
+                new_title = f"{original_title}·重制版"
+            await send({"type": "rewash_title", "title": new_title})
+
+            chapters = target_chapters if target_chapters > 0 else len(outline.get("chapter_outlines", {}))
+            init_state = {
+                "user_idea": f"洗文:《{original_title}》→《{new_title}》",
+                "novel_title": new_title,
+                "wash_original_title": original_title,
+                "outline_file": file_name,
+                "world_bible": outline.get("world_bible", ""),
+                "chapter_outlines": outline.get("chapter_outlines", {}),
+                "keywords": [],
+                "target_chapters": chapters,
+                "words_per_chapter": words_per_chapter,
+                "writer_style": writer_style,
+                "current_chapter": 1,
+                "iteration_count": 0,
+                "editor_iteration_count": 0,
+            }
+            await send({"type": "log", "message": f"📝 洗文启动: 《{new_title}》 | {chapters}章 × {words_per_chapter}字 | {writer_style}", "cls": "info"})
             state = init_state
             await _run_pipeline(websocket, send, state, config)
 
