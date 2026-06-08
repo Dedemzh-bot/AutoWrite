@@ -63,7 +63,7 @@ memory = MemorySaver()
 graph_app = workflow.compile(checkpointer=memory)
 
 # ── 灵感精炼 LLM ──
-llm_refine = ChatOpenAI(model="deepseek-chat", temperature=0.5)
+llm_refine = ChatOpenAI(model="deepseek-v4-flash", temperature=0.5)
 
 REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子精炼为完整的故事设定。
 
@@ -220,6 +220,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <option value="literary">文艺细腻</option>
         <option value="cold">冷峻纪实</option>
         <option value="humor">轻松搞笑</option>
+        <option value="18xx">18XX</option>
       </select>
     </div>
     <button class="btn btn-primary" id="btnStart" onclick="startPipeline()">▶ 启动流水线</button>
@@ -238,6 +239,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <option value="literary">文艺细腻</option>
         <option value="cold">冷峻纪实</option>
         <option value="humor">轻松搞笑</option>
+        <option value="18xx">18XX</option>
       </select>
     </div>
     <div class="section">

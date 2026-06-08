@@ -63,7 +63,7 @@ WASH_TITLE_SYSTEM = """你是一位资深编辑，为洗文（同人大纲二次
 4. 直接输出新书名，不要任何前缀后缀"""
 
 def generate_wash_title(original_title: str, style: str) -> str:
-    style_names = {"hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "default": "默认风格"}
+    style_names = {"hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "18xx": "18XX", "default": "默认风格"}
     style_cn = style_names.get(style, "默认风格")
     prompt = ChatPromptTemplate.from_messages([
         ("system", WASH_TITLE_SYSTEM),
@@ -116,11 +116,11 @@ def load_prompt(file_name: str) -> str:
 # ==========================================
 # 1. 模型插座配置
 # ==========================================
-llm_architect = ChatOpenAI(model="deepseek-chat", temperature=0.7)
-llm_writer = ChatOpenAI(model="deepseek-chat", temperature=0.8)
-llm_editor = ChatOpenAI(model="deepseek-chat", temperature=0.5)
-llm_auditor_raw = ChatOpenAI(model="deepseek-chat", temperature=0)
-llm_summarizer = ChatOpenAI(model="deepseek-chat", temperature=0.3)
+llm_architect = ChatOpenAI(model="deepseek-v4-flash", temperature=0.7)
+llm_writer = ChatOpenAI(model="deepseek-v4-flash", temperature=0.8)
+llm_editor = ChatOpenAI(model="deepseek-v4-flash", temperature=0.5)
+llm_auditor_raw = ChatOpenAI(model="deepseek-v4-flash", temperature=0)
+llm_summarizer = ChatOpenAI(model="deepseek-v4-flash", temperature=0.3)
 
 # ==========================================
 # 2. 强制 JSON 结构化定义 (键名保持中文)
@@ -224,6 +224,7 @@ def writer_node(state: NovelState):
         "literary": "writer_system_literary.md",
         "cold": "writer_system_cold.md",
         "humor": "writer_system_humor.md",
+        "18xx": "writer_system_18xx.md",
     }
     system_file = style_map.get(style, "writer_system.md")
     

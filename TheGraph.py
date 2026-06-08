@@ -144,7 +144,7 @@ if __name__ == "__main__":
     style_input = input("   选择风格 (默认1): ").strip()
     style_map_cli = {"2": "hot_blood", "3": "literary", "4": "cold", "5": "humor"}
     writer_style = style_map_cli.get(style_input, "default")
-    style_names = {"default": "默认", "hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑"}
+    style_names = {"default": "默认", "hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "18xx": "18XX"}
     print(f"   ✅ 写手风格: {style_names[writer_style]}")
     print()
     
