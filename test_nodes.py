@@ -445,22 +445,27 @@ class TestFemaleAngstAwakeningPattern(unittest.TestCase):
         self.assertIn("不复合", build_pattern_plan(no_reunion, 10, 1500)["10"]["required_event"])
         self.assertIn("不可逆的代价", build_pattern_plan(costly, 10, 1500)["10"]["required_event"])
 
-    def test_deterministic_outline_validation_rejects_missing_mandatory_beats(self):
+    def test_lexical_outline_checks_warn_without_rejecting_structured_plan(self):
         from Nodes import (
+            attach_pattern_plan_to_outlines,
             build_pattern_plan,
             roll_pattern_manifest,
-            strong_pattern_outline_content_issues,
+            strong_pattern_outline_content_warnings,
+            strong_pattern_validation_issues,
         )
 
         manifest = roll_pattern_manifest("female_angst_awakening", seed=9)
         plan = build_pattern_plan(manifest, 5, 1500)
         outlines = {str(index): "普通剧情推进。" * 80 for index in range(1, 6)}
-        issues = strong_pattern_outline_content_issues(manifest, plan, outlines, 5)
+        warnings = strong_pattern_outline_content_warnings(manifest, plan, outlines, 5)
+        attached = attach_pattern_plan_to_outlines(outlines, plan)
+        blocking_issues = strong_pattern_validation_issues(manifest, plan, attached, 5)
 
-        self.assertTrue(any("前300字" in issue for issue in issues))
-        self.assertTrue(any("心死" in issue for issue in issues))
-        self.assertTrue(any("默认结局" in issue for issue in issues))
-        self.assertTrue(any("虐点模块" in issue for issue in issues))
+        self.assertTrue(any("前300字" in warning for warning in warnings))
+        self.assertTrue(any("心死" in warning for warning in warnings))
+        self.assertTrue(any("默认结局" in warning for warning in warnings))
+        self.assertTrue(any("虐点模块" in warning for warning in warnings))
+        self.assertEqual(blocking_issues, [])
 
     def test_rewash_can_replace_old_attached_pattern_tasks(self):
         from Nodes import (

@@ -629,10 +629,10 @@ def strong_pattern_validation_issues(
     return issues
 
 
-def strong_pattern_outline_content_issues(
+def strong_pattern_outline_content_warnings(
     manifest: dict, pattern_plan: dict, outlines: dict, target_chapters: int
 ) -> list[str]:
-    """Check that model-produced outlines contain the mandatory strong-pattern beats."""
+    """Best-effort lexical diagnostics; never use these warnings to reject an outline."""
     chapters = max(1, int(target_chapters))
     outlines = {str(key): str(value) for key, value in (outlines or {}).items()}
     issues = []
@@ -686,6 +686,10 @@ def strong_pattern_outline_content_issues(
         if name and name not in all_outlines:
             issues.append(f"细纲未安排已确认虐点模块：{name}")
     return issues
+
+
+# Backward-compatible alias for callers that used the original helper name.
+strong_pattern_outline_content_issues = strong_pattern_outline_content_warnings
 
 def pick_keywords(categories: list[str], count: int = 2) -> list[str]:
     keyword_db = load_keywords()
@@ -858,9 +862,8 @@ def architect_node(state: NovelState):
             f"{json.dumps(pattern_plan, ensure_ascii=False)}\n"
             "每章细纲必须严格服从对应章节任务，尤其不得提前让男主得知真相，"
             "不得让后期女主重新反复解释或无代价回头。"
-            "细纲必须显式写出对应虐点模块名与关键阶段词：第1章写明“前300字”，"
-            "卡点章写明“最严重伤害”和“反转”，结局章写明女主“独立”"
-            "以及确认的离开或复合方向，供确定性验收。"
+            "请在细纲中清楚描述开篇伤害、最重伤害与反转、女主觉醒过程、"
+            "确认的结局方向和已选虐点如何建立前因与后果；允许使用符合剧情的自然措辞。"
         )
     chapter_req = (
         f"规划严格且仅有{chapters}章的详细细纲，每章正文目标{words_per}字。"
@@ -880,6 +883,7 @@ def architect_node(state: NovelState):
     architect_chain = prompt | llm_architect_structured
     result = None
     outline_issues = []
+    outline_warnings = []
     active_chapter_req = chapter_req
     for outline_attempt in range(APP_INVOKE_ATTEMPTS):
         result = invoke_with_retry(architect_chain, {
@@ -890,10 +894,8 @@ def architect_node(state: NovelState):
         chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
         outline_issues = outline_validation_issues(chapter_outlines, chapters)
         if strong_pattern:
-            outline_issues.extend(
-                strong_pattern_outline_content_issues(
-                    manifest, pattern_plan, chapter_outlines, chapters
-                )
+            outline_warnings = strong_pattern_outline_content_warnings(
+                manifest, pattern_plan, chapter_outlines, chapters
             )
             chapter_outlines = attach_pattern_plan_to_outlines(chapter_outlines, pattern_plan)
             outline_issues.extend(
@@ -902,6 +904,11 @@ def architect_node(state: NovelState):
                 )
             )
         if not outline_issues:
+            if outline_warnings:
+                logger.warning(
+                    "   ⚠️ 强套路细纲存在措辞层面的提醒，但结构化任务已补齐，不阻断生成: %s",
+                    "；".join(outline_warnings[:5]),
+                )
             break
         logger.warning(
             "   ⚠️ 架构师大纲验收未通过 (%d/%d): %s",
