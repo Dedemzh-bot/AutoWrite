@@ -23,6 +23,10 @@ def parse_args():
     parser.add_argument("--chapters", type=int, default=10)
     parser.add_argument("--words", type=int, default=1500)
     parser.add_argument("--style", default="default")
+    parser.add_argument("--pattern", default="none")
+    parser.add_argument("--custom-pattern", default="")
+    parser.add_argument("--pattern-seed", type=int)
+    parser.add_argument("--ending", choices=["no_reunion", "costly_reunion"], default="no_reunion")
     return parser.parse_args()
 
 
@@ -42,6 +46,7 @@ def build_timed_graph(timings: list[dict], run_info: dict):
                 result = func(state)
                 if name == "architect":
                     run_info["novel_title"] = result.get("novel_title", "")
+                    run_info["pattern_plan"] = result.get("pattern_plan", {})
                     outlines = result.get("chapter_outlines", {})
                     run_info["outline_chapters"] = len(outlines)
                     run_info["outline_inspection"] = {
@@ -64,7 +69,11 @@ def build_timed_graph(timings: list[dict], run_info: dict):
                     )
                 if name == "reviewer":
                     record["audit_status"] = result.get("audit_report", {}).get("审核状态")
+                    record["audit_warnings"] = result.get("audit_report", {}).get("警告", [])
+                    record["pattern_status"] = result.get("audit_report", {}).get("套路执行状态")
+                    record["pattern_issues"] = result.get("audit_report", {}).get("套路问题", [])
                     record["style_score"] = result.get("editor_report", {}).get("文风评分")
+                    record["ai_trace_issues"] = result.get("editor_report", {}).get("AI痕迹问题", [])
                 return result
             except Exception as exc:
                 record["error"] = f"{type(exc).__name__}: {exc}"
@@ -197,15 +206,46 @@ def summarize_timings(timings: list[dict]) -> dict:
     }
 
 
+def summarize_review_quality(timings: list[dict]) -> dict:
+    reviews = [item for item in timings if item["node"] == "reviewer"]
+    first_reviews = [item for item in reviews if item.get("attempt") == 1]
+    final_by_chapter = {}
+    for item in reviews:
+        final_by_chapter[item.get("chapter")] = item
+    return {
+        "reviews": len(reviews),
+        "first_draft_reviews": len(first_reviews),
+        "first_draft_passes": sum(item.get("audit_status") == "通过" for item in first_reviews),
+        "final_chapter_passes": sum(
+            item.get("audit_status") == "通过" for item in final_by_chapter.values()
+        ),
+        "logic_warnings": sum(len(item.get("audit_warnings", [])) for item in reviews),
+        "pattern_failures": sum(item.get("pattern_status") == "不通过" for item in reviews),
+        "pattern_issues": sum(len(item.get("pattern_issues", [])) for item in reviews),
+        "ai_trace_issues": sum(len(item.get("ai_trace_issues", [])) for item in reviews),
+    }
+
+
 def main():
     args = parse_args()
     timings = []
+    pattern_manifest = (
+        Nodes.roll_pattern_manifest(args.pattern, seed=args.pattern_seed, ending=args.ending)
+        if Nodes.is_strong_pattern(args.pattern)
+        else {}
+    )
+    if Nodes.is_strong_pattern(args.pattern):
+        compatible_styles = Nodes.compatible_styles_for_pattern(args.pattern)
+        if args.style not in compatible_styles:
+            raise SystemExit(f"强套路不兼容写手风格 {args.style}；可用风格：{compatible_styles}")
     run_info = {
         "run_id": f"e2e-{uuid.uuid4().hex[:8]}",
         "idea": IDEA,
         "requested_chapters": args.chapters,
         "max_chars_per_chapter": args.words,
         "writer_style": args.style,
+        "story_pattern": args.pattern,
+        "pattern_manifest": pattern_manifest,
         "started_at": datetime.now().isoformat(timespec="seconds"),
     }
     graph = build_timed_graph(timings, run_info)
@@ -215,6 +255,11 @@ def main():
         "target_chapters": args.chapters,
         "words_per_chapter": args.words,
         "writer_style": args.style,
+        "story_pattern": args.pattern,
+        "custom_pattern": args.custom_pattern,
+        "pattern_manifest": pattern_manifest,
+        "pattern_plan": {},
+        "continuity_state": "",
         "current_chapter": 1,
         "iteration_count": 0,
     }
@@ -232,6 +277,7 @@ def main():
     run_info["total_seconds"] = total_seconds
     run_info["error"] = error
     run_info["timing_summary"] = summarize_timings(timings)
+    run_info["review_quality"] = summarize_review_quality(timings)
     run_info["node_calls"] = timings
     run_info["execution_issues"] = []
     unexpected_calls = [

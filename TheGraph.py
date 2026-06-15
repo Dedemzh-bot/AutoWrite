@@ -6,9 +6,11 @@ from langgraph.checkpoint.memory import MemorySaver
 from State import NovelState
 from Nodes import (
     architect_node, writer_node, reviewer_node, summarizer_node,
-    load_keywords, pick_keywords,
+    load_keywords, pick_keywords, load_story_patterns,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, should_retry_short_draft,
+    is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
+    format_pattern_manifest,
 )
 
 logger = logging.getLogger("AutoWrite")
@@ -167,6 +169,40 @@ if __name__ == "__main__":
     style_names = {"default": "默认", "hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "18xx": "18XX"}
     print(f"   ✅ 写手风格: {style_names[writer_style]}")
     print()
+
+    # ======== 步骤5: 创作套路 ========
+    patterns = load_story_patterns()
+    pattern_keys = [key for key in patterns if key != "custom"]
+    print("-" * 50)
+    print("🎭 创作套路: " + "  ".join(
+        f"[{index + 1}] {patterns[key].get('name', key)}"
+        for index, key in enumerate(pattern_keys)
+    ))
+    pattern_input = input("   选择套路 (默认1=无套路，输入C自定义): ").strip()
+    custom_pattern = ""
+    if pattern_input.upper() == "C":
+        story_pattern = "custom"
+        custom_pattern = input("   自定义套路要求: ").strip()
+    else:
+        try:
+            story_pattern = pattern_keys[int(pattern_input) - 1] if pattern_input else "none"
+        except (ValueError, IndexError):
+            story_pattern = "none"
+    print(f"   ✅ 创作套路: {patterns.get(story_pattern, patterns['none']).get('name', '无套路')}")
+    pattern_manifest = {}
+    pattern_plan = {}
+    if is_strong_pattern(story_pattern):
+        keywords = []
+        compatible_styles = compatible_styles_for_pattern(story_pattern)
+        if writer_style not in compatible_styles:
+            writer_style = "default"
+            print("   ⚠️ 当前风格与强套路冲突，已切换为默认风格")
+        ending_choice = input("   结局方向: [1] 不复合(默认)  [2] 高代价后由女主决定: ").strip()
+        ending = "costly_reunion" if ending_choice == "2" else "no_reunion"
+        pattern_manifest = roll_pattern_manifest(story_pattern, ending=ending)
+        print("   🎲 已生成强套路契约：")
+        print(format_pattern_manifest(pattern_manifest))
+    print()
     
     config = {"configurable": {"thread_id": "novel_project_001"}}
     
@@ -176,6 +212,11 @@ if __name__ == "__main__":
         "target_chapters": target_chapters,
         "words_per_chapter": words_per_chapter,
         "writer_style": writer_style,
+        "story_pattern": story_pattern,
+        "custom_pattern": custom_pattern,
+        "pattern_manifest": pattern_manifest,
+        "pattern_plan": pattern_plan,
+        "continuity_state": "",
         "current_chapter": 1,
         "iteration_count": 0
     }
@@ -204,7 +245,11 @@ if __name__ == "__main__":
                     elif node_name == "reviewer":
                         audit = node_state.get('audit_report', {})
                         editor = node_state.get('editor_report', {})
-                        print(f"   -> 审稿 审计:{audit.get('审核状态')} 评分:{editor.get('文风评分')}/10")
+                        print(
+                            f"   -> 审稿 逻辑:{'不通过' if audit.get('发现的问题') else '通过'} "
+                            f"套路:{audit.get('套路执行状态', '通过')} "
+                            f"评分:{editor.get('文风评分')}/10"
+                        )
                     elif node_name == "summarizer":
                         print(f"   -> 🗂️ 记忆已更新，准备进入下一章。")
         else:

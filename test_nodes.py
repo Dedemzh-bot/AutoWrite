@@ -88,6 +88,11 @@ class TestNovelState(unittest.TestCase):
             "target_chapters": 12,
             "words_per_chapter": 2500,
             "writer_style": "default",
+            "story_pattern": "none",
+            "custom_pattern": "",
+            "pattern_manifest": {},
+            "pattern_plan": {},
+            "continuity_state": "",
             "current_chapter": 1,
             "current_draft": "",
             "audit_report": {},
@@ -100,6 +105,7 @@ class TestNovelState(unittest.TestCase):
         self.assertEqual(state["target_chapters"], 12)
         self.assertEqual(state["words_per_chapter"], 2500)
         self.assertEqual(state["writer_style"], "default")
+        self.assertEqual(state["story_pattern"], "none")
 
 
 class TestChapterOutputFormat(unittest.TestCase):
@@ -209,6 +215,287 @@ class TestModelRetry(unittest.TestCase):
         with patch("Nodes.time.sleep"):
             with self.assertRaisesRegex(RuntimeError, "已自动重试3次"):
                 invoke_with_retry(chain, {}, "写手", max_attempts=3)
+
+    def test_template_key_error_is_not_retried(self):
+        from Nodes import invoke_with_retry
+
+        chain = MagicMock()
+        chain.invoke.side_effect = KeyError("未转义变量")
+
+        with self.assertRaisesRegex(RuntimeError, "提示词模板变量缺失"):
+            invoke_with_retry(chain, {}, "写手", max_attempts=3)
+
+        self.assertEqual(chain.invoke.call_count, 1)
+
+
+class TestStoryPatternsAndReviewPolicy(unittest.TestCase):
+    def test_custom_pattern_is_added_to_each_stage(self):
+        from Nodes import resolve_story_pattern
+
+        pattern = resolve_story_pattern({
+            "story_pattern": "custom",
+            "custom_pattern": "每三章揭示一次假规则",
+        })
+
+        self.assertIn("每三章揭示一次假规则", pattern["architect"])
+        self.assertIn("每三章揭示一次假规则", pattern["writer"])
+        self.assertIn("每三章揭示一次假规则", pattern["auditor"])
+
+    def test_unknown_pattern_falls_back_to_none(self):
+        from Nodes import resolve_story_pattern
+
+        pattern = resolve_story_pattern({"story_pattern": "missing"})
+
+        self.assertEqual(pattern["key"], "none")
+        self.assertEqual(pattern["name"], "无套路")
+
+    def test_soft_warnings_do_not_trigger_audit_failure(self):
+        from Nodes import normalize_audit_report
+
+        report = normalize_audit_report({
+            "审核状态": "不通过",
+            "发现的问题": [],
+            "警告": ["铺垫略少"],
+            "修改建议": "补一处线索",
+        })
+
+        self.assertEqual(report["审核状态"], "通过")
+        self.assertEqual(report["警告"], ["铺垫略少"])
+
+    def test_hard_issues_always_trigger_audit_failure(self):
+        from Nodes import normalize_audit_report
+
+        report = normalize_audit_report({
+            "审核状态": "通过",
+            "发现的问题": ["已死亡角色重新出现"],
+            "警告": [],
+            "修改建议": "修正角色状态",
+        })
+
+        self.assertEqual(report["审核状态"], "不通过")
+
+    def test_blank_hard_issue_does_not_trigger_failure(self):
+        from Nodes import normalize_audit_report
+
+        report = normalize_audit_report({
+            "审核状态": "不通过",
+            "发现的问题": [""],
+            "警告": [],
+            "修改建议": "无",
+        })
+
+        self.assertEqual(report["审核状态"], "通过")
+
+    def test_pattern_issue_triggers_failure_but_soft_warning_does_not(self):
+        from Nodes import normalize_audit_report
+
+        failed = normalize_audit_report({
+            "审核状态": "通过",
+            "发现的问题": [],
+            "警告": [],
+            "套路执行状态": "通过",
+            "套路问题": ["本章未完成女主心死转折"],
+            "修改建议": "补足转折",
+        })
+        warned = normalize_audit_report({
+            "审核状态": "不通过",
+            "发现的问题": [],
+            "警告": ["情绪浓度略弱"],
+            "套路执行状态": "不通过",
+            "套路问题": [],
+            "修改建议": "增强对比",
+        })
+
+        self.assertEqual(failed["审核状态"], "不通过")
+        self.assertEqual(failed["套路执行状态"], "不通过")
+        self.assertEqual(warned["审核状态"], "通过")
+        self.assertEqual(warned["套路执行状态"], "通过")
+
+    def test_low_style_score_requires_specific_ai_trace_issue(self):
+        from Nodes import normalize_editor_report
+
+        no_evidence = normalize_editor_report({
+            "文风评分": 4,
+            "AI痕迹问题": [],
+            "改进建议": "无",
+        })
+        with_evidence = normalize_editor_report({
+            "文风评分": 4,
+            "AI痕迹问题": ["连续三段使用同一句式"],
+            "改进建议": "调整句式",
+        })
+
+        self.assertEqual(no_evidence["文风评分"], 7)
+        self.assertEqual(with_evidence["文风评分"], 4)
+
+    def test_auditor_receives_continuity_and_next_outline(self):
+        from Nodes import _audit_inputs
+
+        inputs = _audit_inputs({
+            "current_chapter": 1,
+            "world_bible": "规则不可违背",
+            "continuity_state": "主角在车站",
+            "chapter_outlines": {"1": "进入车站", "2": "离开车站"},
+            "current_draft": "正文",
+            "story_pattern": "rule_horror",
+        })
+
+        self.assertEqual(inputs["continuity_state"], "主角在车站")
+        self.assertEqual(inputs["next_outline"], "离开车站")
+        self.assertIn("规则", inputs["pattern_auditor"])
+
+    def test_shared_writer_rules_exist(self):
+        from Nodes import load_prompt
+
+        rules = load_prompt("writer_common_rules.md")
+
+        self.assertIn("句式去模板化", rules)
+        self.assertIn("连续性优先", rules)
+
+    def test_writer_system_prompts_have_no_unescaped_template_variables(self):
+        import string
+        from Nodes import load_prompt
+
+        for file_name in [
+            "writer_common_rules.md",
+            "writer_system.md",
+            "writer_system_hot_blood.md",
+            "writer_system_literary.md",
+            "writer_system_cold.md",
+            "writer_system_humor.md",
+            "writer_system_18xx.md",
+        ]:
+            variables = [
+                field_name
+                for _, field_name, _, _ in string.Formatter().parse(load_prompt(file_name))
+                if field_name
+            ]
+            self.assertEqual(variables, [], file_name)
+
+    def test_pattern_issues_are_preserved_as_final_chapter_warnings(self):
+        from Nodes import chapter_quality_warnings
+
+        warnings = chapter_quality_warnings({
+            "current_chapter": 2,
+            "current_draft": "第2章 测试\n\n" + "正文" * 50,
+            "words_per_chapter": 100,
+            "audit_report": {
+                "审核状态": "不通过",
+                "发现的问题": [],
+                "警告": [],
+                "套路问题": ["未完成最重伤害"],
+            },
+            "editor_report": {"文风评分": 7},
+        })
+
+        self.assertTrue(any("套路任务仍未完成" in warning for warning in warnings))
+
+
+class TestFemaleAngstAwakeningPattern(unittest.TestCase):
+    def test_strong_pattern_has_expected_style_constraints_and_rules(self):
+        from Nodes import compatible_styles_for_pattern, is_strong_pattern, resolve_story_pattern
+
+        self.assertTrue(is_strong_pattern("female_angst_awakening"))
+        self.assertEqual(
+            compatible_styles_for_pattern("female_angst_awakening"),
+            ["default", "literary", "cold"],
+        )
+        pattern = resolve_story_pattern({"story_pattern": "female_angst_awakening"})
+        self.assertIn("强制写作技巧", pattern["writer"])
+        self.assertIn("套路审核规则", pattern["auditor"])
+
+    def test_manifest_is_reproducible_and_limits_reproductive_harm(self):
+        from Nodes import roll_pattern_manifest, validate_pattern_manifest
+
+        first = roll_pattern_manifest("female_angst_awakening", seed=20260616)
+        second = roll_pattern_manifest("female_angst_awakening", seed=20260616)
+
+        self.assertEqual(first, second)
+        self.assertGreaterEqual(len(first["conflicts"]), 2)
+        self.assertLessEqual(len(first["conflicts"]), 3)
+        self.assertLessEqual(
+            sum(item["category"] == "reproductive" for item in first["conflicts"]),
+            1,
+        )
+        self.assertEqual(validate_pattern_manifest(first), [])
+
+    def test_paywall_target_uses_total_word_ratio_for_different_lengths(self):
+        from Nodes import build_pattern_plan, roll_pattern_manifest
+
+        manifest = roll_pattern_manifest("female_angst_awakening", seed=7)
+        for chapters, words in [(5, 1500), (10, 1500), (20, 3000)]:
+            plan = build_pattern_plan(manifest, chapters, words)
+            paywalls = [task for task in plan.values() if task["is_paywall_turn"]]
+            self.assertEqual(len(paywalls), 1)
+            self.assertTrue(all(task["conflict_stage"] for task in plan.values()))
+            ratio = paywalls[0]["paywall_target_word"] / (chapters * words)
+            self.assertGreaterEqual(ratio, 0.45)
+            self.assertLessEqual(ratio, 0.50)
+
+    def test_plan_respects_selected_ending(self):
+        from Nodes import build_pattern_plan, roll_pattern_manifest
+
+        no_reunion = roll_pattern_manifest(
+            "female_angst_awakening", seed=1, ending="no_reunion"
+        )
+        costly = roll_pattern_manifest(
+            "female_angst_awakening", seed=1, ending="costly_reunion"
+        )
+
+        self.assertIn("不复合", build_pattern_plan(no_reunion, 10, 1500)["10"]["required_event"])
+        self.assertIn("不可逆的代价", build_pattern_plan(costly, 10, 1500)["10"]["required_event"])
+
+    def test_deterministic_outline_validation_rejects_missing_mandatory_beats(self):
+        from Nodes import (
+            build_pattern_plan,
+            roll_pattern_manifest,
+            strong_pattern_outline_content_issues,
+        )
+
+        manifest = roll_pattern_manifest("female_angst_awakening", seed=9)
+        plan = build_pattern_plan(manifest, 5, 1500)
+        outlines = {str(index): "普通剧情推进。" * 80 for index in range(1, 6)}
+        issues = strong_pattern_outline_content_issues(manifest, plan, outlines, 5)
+
+        self.assertTrue(any("前300字" in issue for issue in issues))
+        self.assertTrue(any("心死" in issue for issue in issues))
+        self.assertTrue(any("默认结局" in issue for issue in issues))
+        self.assertTrue(any("虐点模块" in issue for issue in issues))
+
+    def test_rewash_can_replace_old_attached_pattern_tasks(self):
+        from Nodes import (
+            attach_pattern_plan_to_outlines,
+            build_pattern_plan,
+            roll_pattern_manifest,
+            strip_pattern_plan_from_outlines,
+        )
+
+        raw = {"1": "原始细纲内容"}
+        manifest = roll_pattern_manifest("female_angst_awakening", seed=3)
+        attached = attach_pattern_plan_to_outlines(raw, build_pattern_plan(manifest, 1, 1500))
+
+        self.assertEqual(strip_pattern_plan_from_outlines(attached), raw)
+
+
+class TestWebDefaults(unittest.TestCase):
+    def test_default_estimate_is_fifteen_thousand(self):
+        from web_app import HTML_PAGE
+
+        self.assertIn('id="estWords">预估: 约 15,000 字', HTML_PAGE)
+        self.assertIn("updateEstimate();", HTML_PAGE)
+
+    def test_web_has_pattern_controls(self):
+        from web_app import HTML_PAGE
+
+        self.assertIn('id="storyPattern"', HTML_PAGE)
+        self.assertIn('id="washStoryPattern"', HTML_PAGE)
+        self.assertIn('value="rule_horror"', HTML_PAGE)
+        self.assertIn("get_patterns", HTML_PAGE)
+        self.assertIn("female_angst_awakening", HTML_PAGE)
+        self.assertIn("roll_pattern_manifest", HTML_PAGE)
+        self.assertIn('id="patternEnding"', HTML_PAGE)
+        self.assertIn('id="washPatternEnding"', HTML_PAGE)
+        self.assertIn("请先确认女频虐恋觉醒套路契约", HTML_PAGE)
 
 
 class TestWebPortSelection(unittest.TestCase):
@@ -369,6 +656,31 @@ class TestSummarizerBehavior(unittest.TestCase):
             self.assertTrue(
                 any("摘要更新失败" in warning for warning in result["chapter_warnings"])
             )
+
+    def test_summary_updates_structured_continuity_state(self):
+        from Nodes import summarizer_node
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = os.path.join(temp_dir, "novel.txt")
+            state = {
+                "current_chapter": 1,
+                "current_draft": "第1章 开端\n\n主角进入车站。",
+                "novel_title": "测试",
+                "chapter_outlines": {"1": "开端", "2": "后续"},
+                "story_summary": "旧摘要",
+                "continuity_state": "旧连续性",
+                "words_per_chapter": 10,
+                "audit_report": {"审核状态": "通过", "警告": []},
+                "editor_report": {"文风评分": 7},
+            }
+            model_result = MagicMock(content="时间线：午夜\n角色位置：主角在车站")
+            with patch("Nodes._build_output_path", return_value=output_path):
+                with patch("Nodes.invoke_with_retry", return_value=model_result) as invoke:
+                    result = summarizer_node(state)
+
+            self.assertEqual(result["continuity_state"], model_result.content)
+            self.assertEqual(result["story_summary"], model_result.content)
+            self.assertEqual(invoke.call_args.args[1]["old_summary"], "旧连续性")
 
 
 if __name__ == "__main__":

@@ -11,6 +11,10 @@ class NovelState(TypedDict):
     target_chapters: int      # 目标章节数
     words_per_chapter: int    # 每章目标字数
     writer_style: str         # 写手风格标识
+    story_pattern: str        # 创作套路标识
+    custom_pattern: str       # 用户自定义套路要求
+    pattern_manifest: dict    # 本次确认的人物、背景、虐点与结局契约
+    pattern_plan: dict        # 按章节映射的套路节拍任务
     
     # --- 运行进度与暂存 ---
     current_chapter: int
@@ -30,3 +34,4 @@ class NovelState(TypedDict):
     wash_original_title: str  # 洗文原始标题
 
     story_summary: str
+    continuity_state: str     # 结构化连续性档案
