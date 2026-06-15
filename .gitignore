@@ -5,3 +5,4 @@ __pycache__/
 小说输出.txt
 Novel/*.txt
 Outline/*.json
+TestResults/

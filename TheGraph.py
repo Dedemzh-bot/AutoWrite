@@ -7,7 +7,8 @@ from State import NovelState
 from Nodes import (
     architect_node, writer_node, reviewer_node, summarizer_node,
     load_keywords, pick_keywords,
-    DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
+    DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
+    MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, should_retry_short_draft,
 )
 
 logger = logging.getLogger("AutoWrite")
@@ -26,7 +27,17 @@ workflow.set_entry_point("architect")
 
 # 4. 固定连接
 workflow.add_edge("architect", "writer")
-workflow.add_edge("writer", "reviewer")
+
+def route_after_writer(state: NovelState):
+    if should_retry_short_draft(state):
+        logger.warning("   ⚠️ 正文低于最低字数 → 发回写手补写后再审核")
+        return "writer"
+    return "reviewer"
+
+workflow.add_conditional_edges("writer", route_after_writer, {
+    "writer": "writer",
+    "reviewer": "reviewer",
+})
 
 # 5. 统一路由：审查完去哪？
 def route_after_review(state: NovelState):
@@ -36,9 +47,9 @@ def route_after_review(state: NovelState):
     
     need_retry = (
         audit.get("审核状态") == "不通过" or
-        editor.get("文风评分", 10) < 8
+        editor.get("文风评分", 10) < STYLE_PASS_SCORE
     )
-    if need_retry and state.get("iteration_count", 1) <= 2:
+    if need_retry and state.get("iteration_count", 1) < MAX_REVIEW_ATTEMPTS:
         logger.warning("   ⚠️ 审稿退稿 审计:%s 评分:%d/10 → 发回写手重写",
                       audit.get("审核状态"), editor.get("文风评分", 0))
         return "writer"
@@ -50,11 +61,20 @@ def route_after_review(state: NovelState):
 workflow.add_conditional_edges("reviewer", route_after_review, {
     "writer": "writer",
     "summarizer": "summarizer",
-    END: END
+    END: END,
 })
 
-# 6. 闭环路线
-workflow.add_edge("summarizer", "writer")
+# 6. 摘要保存后，仅在仍有下一章时继续写作
+def route_after_summary(state: NovelState):
+    outlines = state.get("chapter_outlines", {})
+    if state.get("current_chapter", 1) <= len(outlines):
+        return "writer"
+    return END
+
+workflow.add_conditional_edges("summarizer", route_after_summary, {
+    "writer": "writer",
+    END: END
+})
 
 # ==========================================
 # 挂载存档器与设置断点

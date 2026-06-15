@@ -3,8 +3,14 @@ import json
 import logging
 import os
 import queue
+import socket
 import sys
 import threading
+import time
+import uuid
+import urllib.request
+from collections import defaultdict
+from datetime import datetime
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -22,11 +28,38 @@ from Nodes import (
     architect_node, writer_node, reviewer_node, summarizer_node,
     load_keywords, pick_keywords,
     list_outline_files, load_outline_json, generate_wash_title,
-    DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
+    DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
+    MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, normalize_chapter_outlines,
+    MODEL_MAX_RETRIES, MODEL_TIMEOUT_SECONDS, invoke_with_retry,
+    outline_validation_issues, should_retry_short_draft,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger("AutoWrite")
+
+
+class RetryCounterHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self._count = 0
+        self._lock = threading.Lock()
+
+    def emit(self, record):
+        if "Retrying request" in record.getMessage():
+            with self._lock:
+                self._count += 1
+
+    def reset(self):
+        with self._lock:
+            self._count = 0
+
+    def value(self):
+        with self._lock:
+            return self._count
+
+
+retry_counter = RetryCounterHandler()
+logging.getLogger().addHandler(retry_counter)
 
 # ── 构建图（不去除 interrupt，Web 层手动控制暂停） ──
 workflow = StateGraph(NovelState)
@@ -36,7 +69,15 @@ workflow.add_node("reviewer", reviewer_node)
 workflow.add_node("summarizer", summarizer_node)
 workflow.set_entry_point("architect")
 workflow.add_edge("architect", "writer")
-workflow.add_edge("writer", "reviewer")
+
+
+def route_after_writer(state: NovelState):
+    return "writer" if should_retry_short_draft(state) else "reviewer"
+
+
+workflow.add_conditional_edges("writer", route_after_writer, {
+    "writer": "writer", "reviewer": "reviewer"
+})
 
 
 def route_after_review(state: NovelState):
@@ -45,9 +86,9 @@ def route_after_review(state: NovelState):
     outlines = state.get("chapter_outlines", {})
     need_retry = (
         audit.get("审核状态") == "不通过" or
-        editor.get("文风评分", 10) < 8
+        editor.get("文风评分", 10) < STYLE_PASS_SCORE
     )
-    if need_retry and state.get("iteration_count", 1) <= 2:
+    if need_retry and state.get("iteration_count", 1) < MAX_REVIEW_ATTEMPTS:
         return "writer"
     if state.get("current_chapter", 1) <= len(outlines):
         return "summarizer"
@@ -57,13 +98,29 @@ def route_after_review(state: NovelState):
 workflow.add_conditional_edges("reviewer", route_after_review, {
     "writer": "writer", "summarizer": "summarizer", END: END
 })
-workflow.add_edge("summarizer", "writer")
+
+
+def route_after_summary(state: NovelState):
+    outlines = state.get("chapter_outlines", {})
+    if state.get("current_chapter", 1) <= len(outlines):
+        return "writer"
+    return END
+
+
+workflow.add_conditional_edges("summarizer", route_after_summary, {
+    "writer": "writer", END: END
+})
 
 memory = MemorySaver()
 graph_app = workflow.compile(checkpointer=memory)
 
 # ── 灵感精炼 LLM ──
-llm_refine = ChatOpenAI(model="deepseek-v4-flash", temperature=0.5)
+llm_refine = ChatOpenAI(
+    model="deepseek-v4-flash",
+    temperature=0.5,
+    timeout=MODEL_TIMEOUT_SECONDS,
+    max_retries=MODEL_MAX_RETRIES,
+)
 
 REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子精炼为完整的故事设定。
 
@@ -78,6 +135,8 @@ REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子�
 - 精炼设定必须整合所有已获取的信息，用一段通顺的文字呈现"""
 
 app = FastAPI(title="AutoWrite Web")
+pipeline_lock = threading.Lock()
+generation_active = threading.Event()
 
 def _call_refine(history: list[dict]) -> str:
     messages = [("system", REFINE_SYSTEM)]
@@ -85,7 +144,7 @@ def _call_refine(history: list[dict]) -> str:
         role = "user" if h["role"] == "user" else "assistant"
         messages.append((role, h["content"]))
     prompt = ChatPromptTemplate.from_messages(messages)
-    result = (prompt | llm_refine).invoke({})
+    result = invoke_with_retry(prompt | llm_refine, {}, "灵感精炼")
     return result.content.strip() if result and result.content else ""
 
 
@@ -207,8 +266,8 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     <div class="section">
       <label>📏 篇幅设置</label>
       <div class="scope-row">
-        章节数 <input id="chapters" type="number" value="12" min="1" max="200" style="width:60px"> 章
-        &nbsp;每章 <input id="wordsPerCh" type="number" value="2500" min="500" max="10000" step="100" style="width:70px"> 字
+        章节数 <input id="chapters" type="number" value="10" min="1" max="200" style="width:60px"> 章
+        &nbsp;每章 <input id="wordsPerCh" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
       </div>
       <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 30,000 字</div>
     </div>
@@ -246,7 +305,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <label>📏 篇幅 (0=保持原大纲)</label>
       <div class="scope-row">
         章节数 <input id="washChapters" type="number" value="0" min="0" max="200" style="width:60px"> 章
-        &nbsp;每章 <input id="washWords" type="number" value="2500" min="500" max="10000" step="100" style="width:70px"> 字
+        &nbsp;每章 <input id="washWords" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
       </div>
     </div>
     <div class="section">
@@ -402,7 +461,7 @@ function handleMsg(msg){
       if(msg.data){
         let a=msg.data.audit_report||{};
         let e=msg.data.editor_report||{};
-        log(`  审稿: 审计${a['审核状态']}${a['审核状态']==='不通过'?' ('+((a['发现的问题']||[]).length)+'个问题)':''} | 评分${e['文风评分']}/10`,(a['审核状态']==='通过'&&e['文风评分']>=8)?'success':'warn');
+        log(`  审稿: 审计${a['审核状态']}${a['审核状态']==='不通过'?' ('+((a['发现的问题']||[]).length)+'个问题)':''} | 评分${e['文风评分']}/10`,(a['审核状态']==='通过'&&e['文风评分']>=7)?'success':'warn');
       }
       break;
     case 'chapter_saved':
@@ -414,6 +473,13 @@ function handleMsg(msg){
       log('🎉 流水线完成！全部章节已产出','success');
       document.getElementById('progressStatus').textContent='✅ 全部完成';
       document.getElementById('btnStart').disabled=false;
+      break;
+    case 'timing_report':
+      let t=msg.data||{};
+      log(`⏱️ 总耗时 ${(t.wall_seconds||0).toFixed(1)}秒，模型流水线 ${(t.pipeline_seconds||0).toFixed(1)}秒，审批等待 ${(t.approval_wait_seconds||0).toFixed(1)}秒，API重试 ${t.api_retry_count||0}次`,'success');
+      for(let [name,item] of Object.entries(t.nodes||{})){
+        log(`  ${agentNames[name]||name}: ${item.calls}次 / ${item.total_seconds.toFixed(1)}秒 / 平均${item.average_seconds.toFixed(1)}秒`,'info');
+      }
       break;
     case 'log':
       log(msg.message,msg.cls||'info');
@@ -495,8 +561,8 @@ function editRefineResult(){
 function startPipeline(){
   let idea=document.getElementById('idea').value.trim();
   if(!idea){log('请输入小说灵感','warn');return}
-  let targetChapters=parseInt(document.getElementById('chapters').value)||12;
-  let wordsPerChapter=parseInt(document.getElementById('wordsPerCh').value)||2500;
+  let targetChapters=parseInt(document.getElementById('chapters').value)||10;
+  let wordsPerChapter=parseInt(document.getElementById('wordsPerCh').value)||1500;
   let writerStyle=document.getElementById('writerStyle').value||'default';
   document.getElementById('btnStart').disabled=true;
   document.getElementById('approvalBar').classList.add('hidden');
@@ -556,7 +622,7 @@ function selectOutline(file){
 function startWash(){
   if(!selectedOutlineFile||!selectedOutlineData)return;
   let ch=parseInt(document.getElementById('washChapters').value)||0;
-  let w=parseInt(document.getElementById('washWords').value)||2500;
+  let w=parseInt(document.getElementById('washWords').value)||1500;
   let style=document.getElementById('washWriterStyle').value||'default';
   document.getElementById('btnWashStart').disabled=true;
   document.getElementById('washStatus').textContent='生成新书名...';
@@ -693,6 +759,17 @@ async def ws_handler(websocket: WebSocket):
 
         # ── 启动流水线 ──
         elif action == "start":
+            if generation_active.is_set():
+                await send({"type": "error", "message": "已有小说生成任务正在运行，请等待其完成"})
+                continue
+            generation_active.set()
+            retry_counter.reset()
+            run_metrics = {
+                "run_id": f"web-{uuid.uuid4().hex[:8]}",
+                "started_at": datetime.now().isoformat(timespec="seconds"),
+                "wall_started": time.perf_counter(),
+                "pre_pipeline": {},
+            }
             idea = data.get("idea", "")
             cats = data.get("selected_cats", [])
             target_chapters = data.get("target_chapters", DEFAULT_CHAPTERS)
@@ -737,16 +814,22 @@ async def ws_handler(websocket: WebSocket):
                 "iteration_count": 0,
             }
             await send({"type": "architect_start"})
+            architect_started = time.perf_counter()
             try:
                 arch_result = await asyncio.get_event_loop().run_in_executor(
                     None, architect_node, init_state
                 )
             except Exception as e:
                 await send({"type": "error", "message": str(e)})
+                generation_active.clear()
                 continue
+            run_metrics["pre_pipeline"]["architect_seconds"] = round(
+                time.perf_counter() - architect_started, 3
+            )
 
             if arch_result is None:
                 await send({"type": "error", "message": "架构师输出为空"})
+                generation_active.clear()
                 continue
 
             init_state.update(arch_result)
@@ -758,21 +841,27 @@ async def ws_handler(websocket: WebSocket):
 
             # ── 等待用户审批大纲 ──
             approved = False
+            approval_started = time.perf_counter()
             while True:
                 try:
                     resp = await websocket.receive_json()
                 except WebSocketDisconnect:
+                    generation_active.clear()
                     return
                 if resp.get("action") == "approval":
                     approved = resp.get("data", False)
                     break
+            run_metrics["pre_pipeline"]["approval_wait_seconds"] = round(
+                time.perf_counter() - approval_started, 3
+            )
             if not approved:
                 await send({"type": "error", "message": "用户拒绝大纲"})
+                generation_active.clear()
                 continue
 
             # ── 第二阶段: 运行完整流水线 ──
             state = init_state
-            await _run_pipeline(websocket, send, state, config)
+            await _run_pipeline(websocket, send, state, config, run_metrics)
 
         # ── 洗文：列出大纲 ──
         elif action == "list_outlines":
@@ -789,6 +878,17 @@ async def ws_handler(websocket: WebSocket):
 
         # ── 洗文：启动洗文流水线 ──
         elif action == "start_rewash":
+            if generation_active.is_set():
+                await send({"type": "error", "message": "已有小说生成任务正在运行，请等待其完成"})
+                continue
+            generation_active.set()
+            retry_counter.reset()
+            run_metrics = {
+                "run_id": f"web-{uuid.uuid4().hex[:8]}",
+                "started_at": datetime.now().isoformat(timespec="seconds"),
+                "wall_started": time.perf_counter(),
+                "pre_pipeline": {},
+            }
             file_name = data.get("file", "")
             writer_style = data.get("writer_style", "default")
             target_chapters = data.get("target_chapters", 0)
@@ -798,28 +898,50 @@ async def ws_handler(websocket: WebSocket):
                 outline = load_outline_json(file_name)
             except Exception as e:
                 await send({"type": "error", "message": f"加载大纲失败: {e}"})
+                generation_active.clear()
+                continue
+
+            chapters = target_chapters if target_chapters > 0 else len(outline.get("chapter_outlines", {}))
+            outline_issues = outline_validation_issues(
+                outline.get("chapter_outlines", {}), chapters
+            )
+            if outline_issues:
+                await send({
+                    "type": "error",
+                    "message": (
+                        "所选大纲不符合写作要求："
+                        f"{'；'.join(outline_issues[:5])}。"
+                        "每章细纲至少需要200字，请重新生成合格大纲后再启动写作。"
+                    ),
+                })
+                generation_active.clear()
                 continue
 
             original_title = outline.get("title", "未命名")
 
             # 生成洗文新书名
             await send({"type": "log", "message": f"🤖 为《{original_title}》生成洗文新书名...", "cls": "info"})
+            title_started = time.perf_counter()
             try:
                 new_title = await asyncio.get_event_loop().run_in_executor(
                     None, generate_wash_title, original_title, writer_style
                 )
             except Exception as e:
                 new_title = f"{original_title}·重制版"
+            run_metrics["pre_pipeline"]["title_generation_seconds"] = round(
+                time.perf_counter() - title_started, 3
+            )
             await send({"type": "rewash_title", "title": new_title})
 
-            chapters = target_chapters if target_chapters > 0 else len(outline.get("chapter_outlines", {}))
             init_state = {
                 "user_idea": f"洗文:《{original_title}》→《{new_title}》",
                 "novel_title": new_title,
                 "wash_original_title": original_title,
                 "outline_file": file_name,
                 "world_bible": outline.get("world_bible", ""),
-                "chapter_outlines": outline.get("chapter_outlines", {}),
+                "chapter_outlines": normalize_chapter_outlines(
+                    outline.get("chapter_outlines", {}), chapters
+                ),
                 "keywords": [],
                 "target_chapters": chapters,
                 "words_per_chapter": words_per_chapter,
@@ -829,7 +951,7 @@ async def ws_handler(websocket: WebSocket):
             }
             await send({"type": "log", "message": f"📝 洗文启动: 《{new_title}》 | {chapters}章 × {words_per_chapter}字 | {writer_style}", "cls": "info"})
             state = init_state
-            await _run_pipeline(websocket, send, state, config)
+            await _run_pipeline(websocket, send, state, config, run_metrics)
 
         # ── 关键词决策 (在 start 流程中通过 receive_json 内循环处理) ──
         elif action == "keywords_decision":
@@ -839,23 +961,64 @@ async def ws_handler(websocket: WebSocket):
             pass  # handled in the inner loop above
 
 
-async def _run_pipeline(websocket, send, state, config):
+def _summarize_web_timings(node_timings: list[dict]) -> dict:
+    grouped = defaultdict(list)
+    for timing in node_timings:
+        grouped[timing["node"]].append(timing["duration_seconds"])
+    return {
+        node: {
+            "calls": len(values),
+            "total_seconds": round(sum(values), 3),
+            "average_seconds": round(sum(values) / len(values), 3),
+        }
+        for node, values in grouped.items()
+    }
+
+
+async def _run_pipeline(websocket, send, state, config, run_metrics=None):
     """ 在独立线程中运行 LangGraph pipeline，通过队列同步到 WebSocket """
+    if not pipeline_lock.acquire(blocking=False):
+        await send({"type": "error", "message": "已有小说生成任务正在运行，请等待其完成"})
+        return
+
+    run_metrics = run_metrics or {
+        "run_id": f"web-{uuid.uuid4().hex[:8]}",
+        "started_at": datetime.now().isoformat(timespec="seconds"),
+        "wall_started": time.perf_counter(),
+        "pre_pipeline": {},
+    }
     q: queue.Queue = queue.Queue()
 
     def runner():
+        node_timings = []
+        pipeline_started = time.perf_counter()
+        previous_completed = pipeline_started
+        current_chapter = state.get("current_chapter", 1)
+        last_writer_attempt = 0
+        error_message = None
         try:
             for output in graph_app.stream(state, config=config):
                 for node_name, node_data in output.items():
                     if node_name == "__interrupt__":
                         continue
+                    completed = time.perf_counter()
+                    duration = round(completed - previous_completed, 3)
+                    previous_completed = completed
+
                     # 追踪当前章节号
                     if node_name == "writer":
-                        ch = node_data.get("current_chapter") or state.get("current_chapter", "?")
+                        ch = current_chapter
+                        last_writer_attempt = node_data.get("iteration_count", last_writer_attempt)
                     elif node_name == "summarizer":
                         ch = node_data.get("saved_chapter", node_data.get("current_chapter", "?"))
                     else:
-                        ch = state.get("current_chapter", "?")
+                        ch = current_chapter
+                    node_timings.append({
+                        "node": node_name,
+                        "chapter": ch,
+                        "attempt": last_writer_attempt,
+                        "duration_seconds": duration,
+                    })
 
                     if node_name == "reviewer":
                         q.put({"type": "node_done_review", "node": "reviewer", "data": node_data})
@@ -865,11 +1028,55 @@ async def _run_pipeline(websocket, send, state, config):
                     if node_name == "summarizer":
                         chap_num = node_data.get("saved_chapter", node_data.get("current_chapter", "?"))
                         draft = node_data.get("current_draft", "")
-                        q.put({"type": "chapter_saved", "data": f"══════════ 第{chap_num}章 ══════════\n\n{draft}"})
-            q.put({"type": "log", "message": "🎉 全部章节写作完成！", "cls": "success"})
-            q.put({"type": "done"})
+                        current_chapter = chap_num + 1
+                        q.put({"type": "chapter_saved", "data": draft})
+                        for warning in node_data.get("chapter_warnings", []):
+                            q.put({"type": "log", "message": f"⚠️ {warning}", "cls": "warn"})
+                        if node_data.get("summary_skipped"):
+                            q.put({"type": "log", "message": "⏭️ 最后一章已保存，已跳过剧情摘要", "cls": "info"})
         except Exception as e:
-            q.put({"type": "error", "message": str(e)})
+            error_message = str(e)
+        finally:
+            pipeline_finished = time.perf_counter()
+            pre_pipeline = run_metrics.get("pre_pipeline", {})
+            nodes = _summarize_web_timings(node_timings)
+            if "architect_seconds" in pre_pipeline:
+                architect_seconds = pre_pipeline["architect_seconds"]
+                nodes["architect"] = {
+                    "calls": 1,
+                    "total_seconds": architect_seconds,
+                    "average_seconds": architect_seconds,
+                }
+            report = {
+                "run_id": run_metrics["run_id"],
+                "started_at": run_metrics["started_at"],
+                "finished_at": datetime.now().isoformat(timespec="seconds"),
+                "wall_seconds": round(pipeline_finished - run_metrics["wall_started"], 3),
+                "pipeline_seconds": round(pipeline_finished - pipeline_started, 3),
+                "approval_wait_seconds": pre_pipeline.get("approval_wait_seconds", 0),
+                "api_retry_count": retry_counter.value(),
+                "pre_pipeline": pre_pipeline,
+                "nodes": nodes,
+                "node_calls": node_timings,
+                "error": error_message,
+            }
+            try:
+                os.makedirs("TestResults", exist_ok=True)
+                report_path = os.path.join("TestResults", f"{run_metrics['run_id']}.json")
+                with open(report_path, "w", encoding="utf-8") as file:
+                    json.dump(report, file, ensure_ascii=False, indent=2)
+                report["report_path"] = report_path
+            except Exception as report_error:
+                logger.warning("⚠️ 网页计时报告保存失败: %s", report_error)
+
+            q.put({"type": "timing_report", "data": report})
+            if error_message:
+                q.put({"type": "error", "message": error_message})
+            else:
+                q.put({"type": "log", "message": "🎉 全部章节写作完成！", "cls": "success"})
+                q.put({"type": "done"})
+            pipeline_lock.release()
+            generation_active.clear()
 
     thread = threading.Thread(target=runner, daemon=True)
     thread.start()
@@ -898,10 +1105,54 @@ async def _run_pipeline(websocket, send, state, config):
 
 
 # ═══════════════════════════════════════════════════
+def _port_is_available(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        try:
+            sock.bind(("0.0.0.0", port))
+            return True
+        except OSError:
+            return False
+
+
+def _is_existing_autowrite(port: int) -> bool:
+    if _port_is_available(port):
+        return False
+    try:
+        direct_opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with direct_opener.open(f"http://127.0.0.1:{port}/", timeout=1) as response:
+            content = response.read(4096).decode("utf-8", errors="ignore")
+        return "AutoWrite" in content
+    except Exception:
+        return False
+
+
+def choose_web_port(preferred_port: int, max_attempts: int = 20) -> tuple[int, bool]:
+    """Return (port, already_running) without terminating another process."""
+    if _is_existing_autowrite(preferred_port):
+        return preferred_port, True
+    for port in range(preferred_port, preferred_port + max_attempts):
+        if _port_is_available(port):
+            return port, False
+    raise RuntimeError(
+        f"端口 {preferred_port}-{preferred_port + max_attempts - 1} 均被占用，"
+        "请关闭占用程序或设置 WEB_PORT。"
+    )
+
+
+# ═══════════════════════════════════════════════════
 if __name__ == "__main__":
     import uvicorn
     import webbrowser
-    url = "http://127.0.0.1:8080"
-    webbrowser.open(url)
+
+    preferred_port = int(os.getenv("WEB_PORT", "8080"))
+    port, already_running = choose_web_port(preferred_port)
+    url = f"http://127.0.0.1:{port}"
+    if already_running:
+        print(f"ℹ️ AutoWrite Web 已在运行，直接打开: {url}")
+        webbrowser.open(url)
+        raise SystemExit(0)
+    if port != preferred_port:
+        print(f"⚠️ 端口 {preferred_port} 已被其他程序占用，自动改用端口 {port}")
     print(f"🚀 AutoWrite Web 服务启动: {url}")
-    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
+    threading.Timer(0.8, webbrowser.open, args=(url,)).start()
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
