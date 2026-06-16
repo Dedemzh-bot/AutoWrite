@@ -28,9 +28,15 @@ if not os.getenv("OPENAI_API_KEY"):
     logger.error("❌ 环境变量 OPENAI_API_KEY 未设置！请在 .env 文件中配置你的 API Key。")
     sys.exit(1)
 
-def _build_output_path(title: str) -> str:
-    safe = "".join(c for c in title if c not in r'\/:*?"<>|')
-    safe = safe.strip() or "小说输出"
+def _safe_file_stem(text: str, fallback: str) -> str:
+    safe = "".join(c for c in str(text or "") if c not in r'\/:*?"<>|')
+    return safe.strip() or fallback
+
+
+def _build_output_path(title: str, run_id: str = "") -> str:
+    safe = _safe_file_stem(title, "小说输出")
+    if run_id:
+        safe = f"{safe}_{_safe_file_stem(run_id, 'run')}"
     os.makedirs("Novel", exist_ok=True)
     return os.path.join("Novel", f"{safe}.txt")
 
@@ -430,6 +436,26 @@ def filter_material_categories_for_pattern(pattern_key: str, categories: list[st
     ]
 
 
+def _manifest_labels(pattern: dict) -> dict:
+    labels = dict(pattern.get("manifest_labels", {}))
+    return {
+        "protagonist": labels.get("protagonist", "女主"),
+        "counterpart": labels.get("counterpart", "男主"),
+        "foil": labels.get("foil", "女配"),
+        "conflict": labels.get("conflict", "虐点"),
+        "ending": labels.get("ending", "结局"),
+    }
+
+
+def _choice_from_pool(pattern: dict, rng: random.Random, key: str, legacy_key: str, fallback: str) -> str:
+    pool = pattern.get(key) or pattern.get(legacy_key) or [fallback]
+    return rng.choice(pool)
+
+
+def _pattern_from_manifest(manifest: dict) -> dict:
+    return load_story_patterns().get((manifest or {}).get("pattern_key", ""), {})
+
+
 def roll_pattern_manifest(
     pattern_key: str,
     seed: int | None = None,
@@ -445,20 +471,30 @@ def roll_pattern_manifest(
     reproductive = [item for item in modules if item.get("category") == "reproductive"]
     regular = [item for item in modules if item.get("category") != "reproductive"]
     count = rng.choice([2, 3])
-    selected = rng.sample(regular, min(count, len(regular)))
+    selected_pool = regular if regular else modules
+    selected = rng.sample(selected_pool, min(count, len(selected_pool)))
     if reproductive and count >= 3 and rng.random() < 0.55:
         selected[-1] = rng.choice(reproductive)
     rng.shuffle(selected)
 
     endings = pattern.get("ending_options", {})
     if ending not in endings:
-        ending = "no_reunion"
+        ending = next(iter(endings), "default")
+    labels = _manifest_labels(pattern)
+    protagonist = _choice_from_pool(pattern, rng, "protagonist_pool", "heroine_pool", "被强套路推到选择边界的主角")
+    counterpart = _choice_from_pool(pattern, rng, "counterpart_pool", "hero_pool", "制造核心压力的关键关系方")
+    foil = _choice_from_pool(pattern, rng, "foil_pool", "rival_pool", "推动误判和冲突升级的对照人物")
     return {
         "pattern_key": pattern_key,
+        "pattern_name": pattern.get("name", pattern_key),
         "seed": seed,
-        "heroine": rng.choice(pattern.get("heroine_pool", ["善良隐忍、最终觉醒的女主"])),
-        "hero": rng.choice(pattern.get("hero_pool", ["偏信女配、后期追悔的男主"])),
-        "rival": rng.choice(pattern.get("rival_pool", ["擅长示弱的女配"])),
+        "labels": labels,
+        "protagonist": protagonist,
+        "counterpart": counterpart,
+        "foil": foil,
+        "heroine": protagonist,
+        "hero": counterpart,
+        "rival": foil,
         "background": rng.choice(pattern.get("background_pool", ["都市情感"])),
         "conflicts": selected,
         "ending": ending,
@@ -472,22 +508,34 @@ def validate_pattern_manifest(manifest: dict) -> list[str]:
     if not manifest:
         return ["缺少强套路契约"]
     issues = []
+    pattern_key = manifest.get("pattern_key")
+    pattern = load_story_patterns().get(pattern_key, {})
+    labels = _manifest_labels(pattern)
+    conflict_label = labels["conflict"]
     conflicts = manifest.get("conflicts", [])
-    if manifest.get("pattern_key") != STRONG_PATTERN_KEY:
+    if not pattern.get("strong"):
         issues.append("套路契约标识不匹配")
     if not isinstance(conflicts, list):
-        return issues + ["虐点模块必须为列表"]
+        return issues + [f"{conflict_label}模块必须为列表"]
     if not 2 <= len(conflicts) <= 3:
-        issues.append("虐点模块必须为2至3个")
+        issues.append(f"{conflict_label}模块必须为2至3个")
     conflict_ids = [
         item.get("id")
         for item in conflicts
         if isinstance(item, dict) and item.get("id")
     ]
     if len(conflict_ids) != len(conflicts):
-        issues.append("每个虐点模块必须包含有效标识")
+        issues.append(f"每个{conflict_label}模块必须包含有效标识")
     elif len(set(conflict_ids)) != len(conflict_ids):
-        issues.append("虐点模块不能重复")
+        issues.append(f"{conflict_label}模块不能重复")
+    valid_ids = {
+        item.get("id")
+        for item in pattern.get("conflict_modules", [])
+        if isinstance(item, dict) and item.get("id")
+    }
+    unknown_ids = [item for item in conflict_ids if valid_ids and item not in valid_ids]
+    if unknown_ids:
+        issues.append(f"{conflict_label}模块不属于当前套路：{', '.join(unknown_ids)}")
     reproductive_count = sum(
         item.get("category") == "reproductive"
         for item in conflicts
@@ -495,114 +543,200 @@ def validate_pattern_manifest(manifest: dict) -> list[str]:
     )
     if reproductive_count > 1:
         issues.append("生育伤害模块最多只能选择一个")
-    for field in ("heroine", "hero", "rival", "background", "ending", "seed"):
+    for field, legacy in (
+        ("protagonist", "heroine"),
+        ("counterpart", "hero"),
+        ("foil", "rival"),
+    ):
+        if manifest.get(field) in (None, "") and manifest.get(legacy) in (None, ""):
+            issues.append(f"套路契约缺少字段：{field}")
+    for field in ("background", "ending", "seed"):
         if manifest.get(field) in (None, ""):
             issues.append(f"套路契约缺少字段：{field}")
     try:
         int(manifest.get("seed"))
     except (TypeError, ValueError):
         issues.append("套路随机种子必须为整数")
-    if manifest.get("ending") not in {"no_reunion", "costly_reunion"}:
-        issues.append("结局方向必须为不复合或高代价复合")
+    ending_options = pattern.get("ending_options", {})
+    if ending_options and manifest.get("ending") not in ending_options:
+        issues.append(f"结局方向必须为：{', '.join(ending_options)}")
     return issues
 
 
 def build_pattern_plan(manifest: dict, chapters: int, words_per_chapter: int) -> dict[str, dict]:
     chapters = max(1, int(chapters))
     words_per_chapter = max(1, int(words_per_chapter))
+    pattern = _pattern_from_manifest(manifest)
+    labels = dict(manifest.get("labels") or _manifest_labels(pattern))
+    profile = pattern.get("plan_profile", {})
     conflicts = manifest.get("conflicts", [])
     total_words = chapters * words_per_chapter
     paywall_target_word = max(1, int(total_words * 0.475))
     paywall_chapter = min(chapters, (paywall_target_word - 1) // words_per_chapter + 1)
+    beat_map = {
+        item.get("id"): item.get("requirement", "")
+        for item in pattern.get("beats", [])
+        if isinstance(item, dict)
+    }
+
+    def beat(name: str, default: str) -> str:
+        return beat_map.get(name) or profile.get(f"{name}_event") or default
+
+    ending_events = profile.get("ending_events", {})
+    ending_descriptions = pattern.get("ending_options", {})
+    is_female_angst = manifest.get("pattern_key") == STRONG_PATTERN_KEY
     plan = {}
 
     for chapter in range(1, chapters + 1):
         midpoint = (chapter - 0.5) / chapters
         if chapters == 1:
-            phase = "开篇钩子、最重伤害反转与独立结局"
-            heroine_state = "从受伤隐忍走向心死与独立清醒"
-            hero_state = "偏信造成伤害后才察觉真相，并承担无法抹平的代价"
-            required_event = (
-                "前300字内爆发核心伤害；随后完成最严重伤害与反转，"
-                "最终兑现女主独立和确认的结局方向"
+            phase = profile.get("one_chapter_phase", "开篇钩子、核心反转与结局兑现")
+            protagonist_state = profile.get(
+                "one_chapter_protagonist",
+                "从核心压力中完成关键认知变化，并做出最终选择",
             )
-        elif chapter == 1 and chapter == paywall_chapter:
-            phase = "开篇爆钩子与最重伤害反转卡点"
-            heroine_state = "受伤隐忍后迅速心死，停止期待"
-            hero_state = "偏信造成严重伤害后，第一次察觉事情不对"
-            required_event = (
-                "前300字内爆发核心伤害，并在本章完成全书最严重伤害与反转，"
-                "让男主第一次动摇"
+            counterpart_state = profile.get(
+                "one_chapter_counterpart",
+                "制造压力的一方暴露真实代价或被迫承担后果",
             )
-        elif chapter == 1:
-            phase = "开篇爆钩子"
-            heroine_state = "受伤、隐忍，但开始察觉关系失衡"
-            hero_state = "偏信女配，尚未意识到自己在伤害女主"
-            required_event = "前300字内让女主遭受伤害、羞辱或被抛弃，立即爆发核心冲突"
-        elif chapter == paywall_chapter:
-            phase = "最重伤害与反转卡点"
-            heroine_state = "由痛苦转为心死，停止期待"
-            hero_state = "首次察觉事情不对，但尚未掌握完整真相"
-            required_event = "发生全书最严重伤害，并用反转证据或异常让男主第一次动摇"
-        elif midpoint < 0.25:
-            phase = "虐点叠加"
-            heroine_state = "继续隐忍，同时逐渐看清偏爱与不公"
-            hero_state = "继续偏袒女配，把女主反应误判为矫情或嫉妒"
-            required_event = "升级一个已选虐点，并让女配在女主受伤时获得关注或利益"
-        elif midpoint < 0.50:
-            phase = "伤害升级与心死"
-            heroine_state = "痛苦逐步耗尽，准备停止解释"
-            hero_state = "仍被信息差蒙蔽，做出会后悔的选择"
-            required_event = "让伤害产生不可轻易撤销的后果，推进女主心死"
-        elif chapter < chapters and midpoint < 0.80:
-            phase = "真相揭露与追悔"
-            heroine_state = "平静坚定，拒绝解释、补偿和回头"
-            hero_state = "逐步看见真相，追悔并付出实际代价"
-            required_event = "揭露一层真相，让男主的补偿失败并承担新的损失"
-        else:
-            phase = "独立离开与结局"
-            heroine_state = "独立清醒，主动选择自己的新生活"
-            hero_state = "承担长期后果，无法用道歉抹平伤害"
-            if manifest.get("ending") == "costly_reunion":
+            required_event = beat(
+                "one_chapter",
+                "前300字内爆发核心冲突；随后完成强套路卡点、反转和结局方向兑现",
+            )
+            if is_female_angst:
+                phase = "开篇钩子、最重伤害反转与独立结局"
+                protagonist_state = "从受伤隐忍走向心死与独立清醒"
+                counterpart_state = "偏信造成伤害后才察觉真相，并承担无法抹平的代价"
                 required_event = (
-                    "先完成女主独立与边界建立；男主付出长期且不可逆的代价后，"
-                    "由女主自主决定是否重新开始"
+                    "前300字内爆发核心伤害；随后完成最严重伤害与反转，"
+                    "最终兑现女主独立和确认的结局方向"
                 )
-            else:
-                required_event = "完成女主独立离开与更好生活，男主追悔但无法挽回，明确不复合"
+        elif chapter == 1 and chapter == paywall_chapter:
+            phase = profile.get("hook_turn_phase", "开篇强钩子与核心反转卡点")
+            protagonist_state = profile.get("hook_turn_protagonist", "遭遇核心压力后迅速进入不可回头的选择")
+            counterpart_state = profile.get("hook_turn_counterpart", "关键对立力量首次露出破绽或代价")
+            required_event = beat(
+                "hook_turn",
+                "前300字内爆发核心冲突，并在本章完成全书第一次强反转卡点",
+            )
+            if is_female_angst:
+                phase = "开篇爆钩子与最重伤害反转卡点"
+                protagonist_state = "受伤隐忍后迅速心死，停止期待"
+                counterpart_state = "偏信造成严重伤害后，第一次察觉事情不对"
+                required_event = (
+                    "前300字内爆发核心伤害，并在本章完成全书最严重伤害与反转，"
+                    "让男主第一次动摇"
+                )
+        elif chapter == 1:
+            phase = profile.get("hook_phase", "开篇强钩子")
+            protagonist_state = profile.get("hook_protagonist", "被迫进入核心困境，并看见第一条风险线索")
+            counterpart_state = profile.get("hook_counterpart", "关键压力尚未完全暴露，但已造成直接后果")
+            required_event = beat("hook", "前300字内爆发核心冲突，让强套路主线立刻成立")
+            if is_female_angst:
+                phase = "开篇爆钩子"
+                protagonist_state = "受伤、隐忍，但开始察觉关系失衡"
+                counterpart_state = "偏信女配，尚未意识到自己在伤害女主"
+                required_event = "前300字内让女主遭受伤害、羞辱或被抛弃，立即爆发核心冲突"
+        elif chapter == paywall_chapter:
+            phase = profile.get("turn_phase", "45%-50%核心反转卡点")
+            protagonist_state = profile.get("turn_protagonist", "在最强压力下完成关键认知转折")
+            counterpart_state = profile.get("turn_counterpart", "对立力量或关系方第一次显露不可逆代价")
+            required_event = beat("paywall_turn", "发生全书核心反转，并抛出必须追读的证据、规则或局势变化")
+            if is_female_angst:
+                phase = "最重伤害与反转卡点"
+                protagonist_state = "由痛苦转为心死，停止期待"
+                counterpart_state = "首次察觉事情不对，但尚未掌握完整真相"
+                required_event = "发生全书最严重伤害，并用反转证据或异常让男主第一次动摇"
+        elif midpoint < 0.25:
+            phase = profile.get("accumulation_phase", "压力叠加")
+            protagonist_state = profile.get("accumulation_protagonist", "继续承压，同时积累线索、能力或边界感")
+            counterpart_state = profile.get("accumulation_counterpart", "持续扩大误判、规则压迫或局势优势")
+            required_event = beat("accumulation", "升级一个已选强套路模块，让主线压力变得更具体")
+            if is_female_angst:
+                phase = "虐点叠加"
+                protagonist_state = "继续隐忍，同时逐渐看清偏爱与不公"
+                counterpart_state = "继续偏袒女配，把女主反应误判为矫情或嫉妒"
+                required_event = "升级一个已选虐点，并让女配在女主受伤时获得关注或利益"
+        elif midpoint < 0.50:
+            phase = profile.get("escalation_phase", "压力升级与转折预埋")
+            protagonist_state = profile.get("escalation_protagonist", "从被动承压转向主动判断，准备改变策略")
+            counterpart_state = profile.get("escalation_counterpart", "继续误判局势，并做出会引发反噬的选择")
+            required_event = beat("escalation", "让强套路模块产生不可轻易撤销的后果，逼近核心卡点")
+            if is_female_angst:
+                phase = "伤害升级与心死"
+                protagonist_state = "痛苦逐步耗尽，准备停止解释"
+                counterpart_state = "仍被信息差蒙蔽，做出会后悔的选择"
+                required_event = "让伤害产生不可轻易撤销的后果，推进女主心死"
+        elif chapter < chapters and midpoint < 0.80:
+            phase = profile.get("truth_phase", "真相揭露与反击代价")
+            protagonist_state = profile.get("truth_protagonist", "掌握更多真相，开始主动重排局势")
+            counterpart_state = profile.get("truth_counterpart", "逐步付出代价，但仍无法完全修复前因")
+            required_event = beat("truth_regret", "揭露一层关键真相，让既有选择产生新的代价")
+            if is_female_angst:
+                phase = "真相揭露与追悔"
+                protagonist_state = "平静坚定，拒绝解释、补偿和回头"
+                counterpart_state = "逐步看见真相，追悔并付出实际代价"
+                required_event = "揭露一层真相，让男主的补偿失败并承担新的损失"
+        else:
+            phase = profile.get("ending_phase", "终局兑现")
+            protagonist_state = profile.get("ending_protagonist", "主动掌控结局，并兑现新的身份、秩序或边界")
+            counterpart_state = profile.get("ending_counterpart", "承担长期后果，旧秩序无法轻易复原")
+            required_event = ending_events.get(
+                manifest.get("ending"),
+                f"兑现结局方向：{ending_descriptions.get(manifest.get('ending'), manifest.get('ending_description', '完成强套路结局'))}",
+            )
+            if is_female_angst:
+                phase = "独立离开与结局"
+                protagonist_state = "独立清醒，主动选择自己的新生活"
+                counterpart_state = "承担长期后果，无法用道歉抹平伤害"
+                if manifest.get("ending") == "costly_reunion":
+                    required_event = (
+                        "先完成女主独立与边界建立；男主付出长期且不可逆的代价后，"
+                        "由女主自主决定是否重新开始"
+                    )
+                else:
+                    required_event = "完成女主独立离开与更好生活，男主追悔但无法挽回，明确不复合"
 
         module = conflicts[(chapter - 1) % len(conflicts)] if conflicts else {}
+        conflict_label = labels.get("conflict", "强套路")
         if module.get("category") == "reproductive" and midpoint < 0.25:
             conflict_stage = "只铺垫风险、伤病或信息差，禁止提前发生实际生育伤害"
         elif chapter < paywall_chapter:
-            conflict_stage = "建立前因并升级过程，不得无因果突然发生"
+            conflict_stage = profile.get("before_turn_conflict_stage", "建立前因并升级过程，不得无因果突然发生")
         elif chapter == paywall_chapter:
-            conflict_stage = "让既有前因造成不可轻易撤销的后果"
+            conflict_stage = profile.get("turn_conflict_stage", "让既有前因造成核心反转或不可轻易撤销的后果")
         elif midpoint < 0.80:
-            conflict_stage = "通过真相揭露呈现该虐点的后果与责任"
+            conflict_stage = profile.get("after_turn_conflict_stage", f"通过真相揭露呈现该{conflict_label}模块的后果与责任")
         else:
-            conflict_stage = "兑现长期后果，禁止重复制造同一种伤害"
+            conflict_stage = profile.get("ending_conflict_stage", f"兑现长期后果，禁止重复制造同一种{conflict_label}")
         if chapter == chapters:
-            relationship_change = (
-                "女主保持独立边界，在男主付出高代价后自主决定是否重新开始"
-                if manifest.get("ending") == "costly_reunion"
-                else "女主彻底离开且不复合，男主承担长期后果"
-            )
+            relationship_change = ending_descriptions.get(manifest.get("ending"), manifest.get("ending_description", "完成强套路结局"))
+            if is_female_angst:
+                relationship_change = (
+                    "女主保持独立边界，在男主付出高代价后自主决定是否重新开始"
+                    if manifest.get("ending") == "costly_reunion"
+                    else "女主彻底离开且不复合，男主承担长期后果"
+                )
         elif chapter == paywall_chapter:
-            relationship_change = "女主彻底心死，男主第一次动摇但仍未掌握完整真相"
+            relationship_change = profile.get("turn_relationship_change", "核心关系、规则或局势发生不可逆变化")
+            if is_female_angst:
+                relationship_change = "女主彻底心死，男主第一次动摇但仍未掌握完整真相"
         else:
-            relationship_change = "本章结束时关系必须发生可观察的变化"
+            relationship_change = profile.get("relationship_change", "本章结束时关系、规则或局势必须发生可观察的变化")
         plan[str(chapter)] = {
             "phase": phase,
+            "labels": labels,
             "progress_range": f"{int((chapter - 1) / chapters * 100)}%-{int(chapter / chapters * 100)}%",
             "word_range": f"{(chapter - 1) * words_per_chapter + 1}-{chapter * words_per_chapter}",
-            "heroine_state": heroine_state,
-            "hero_awareness": hero_state,
+            "protagonist_state": protagonist_state,
+            "counterpart_state": counterpart_state,
+            "heroine_state": protagonist_state,
+            "hero_awareness": counterpart_state,
             "required_event": required_event,
             "conflict_module": module.get("name", "按人物因果推进"),
             "conflict_stage": conflict_stage,
             "relationship_change": relationship_change,
-            "ending_hook": "用新的伤害后果、真相证据或离开行动形成钩子",
+            "ending_hook": profile.get("ending_hook", "用新的后果、证据、规则或局势变化形成下一章钩子"),
             "is_paywall_turn": chapter == paywall_chapter,
             "paywall_target_word": paywall_target_word if chapter == paywall_chapter else None,
             "total_words": total_words,
@@ -614,6 +748,7 @@ def build_pattern_plan(manifest: dict, chapters: int, words_per_chapter: int) ->
 def format_pattern_manifest(manifest: dict) -> str:
     if not manifest:
         return "无结构化套路契约"
+    labels = dict(manifest.get("labels") or _manifest_labels(_pattern_from_manifest(manifest)))
     conflicts = "；".join(
         (
             f"{item.get('name', '')}（{item.get('description', '')}）"
@@ -624,11 +759,11 @@ def format_pattern_manifest(manifest: dict) -> str:
     )
     return (
         f"背景：{manifest.get('background', '')}\n"
-        f"女主：{manifest.get('heroine', '')}\n"
-        f"男主：{manifest.get('hero', '')}\n"
-        f"女配：{manifest.get('rival', '')}\n"
-        f"选定虐点：{conflicts}\n"
-        f"结局：{manifest.get('ending_description', '')}\n"
+        f"{labels.get('protagonist', '主角')}：{manifest.get('protagonist') or manifest.get('heroine', '')}\n"
+        f"{labels.get('counterpart', '关系方')}：{manifest.get('counterpart') or manifest.get('hero', '')}\n"
+        f"{labels.get('foil', '对照方')}：{manifest.get('foil') or manifest.get('rival', '')}\n"
+        f"选定{labels.get('conflict', '模块')}：{conflicts}\n"
+        f"{labels.get('ending', '结局')}：{manifest.get('ending_description', '')}\n"
         f"随机种子：{manifest.get('seed', '')}"
     )
 
@@ -636,16 +771,17 @@ def format_pattern_manifest(manifest: dict) -> str:
 def format_pattern_chapter_task(task: dict) -> str:
     if not task:
         return "无结构化章节套路任务"
+    labels = task.get("labels", {})
     return "\n".join(
         f"{label}：{task.get(key, '')}"
         for label, key in (
             ("套路阶段", "phase"),
             ("全书进度", "progress_range"),
-            ("女主状态", "heroine_state"),
-            ("男主认知", "hero_awareness"),
+            (f"{labels.get('protagonist', '主角')}状态", "protagonist_state"),
+            (f"{labels.get('counterpart', '关系方')}状态", "counterpart_state"),
             ("本章必须事件", "required_event"),
-            ("本章虐点模块", "conflict_module"),
-            ("虐点执行阶段", "conflict_stage"),
+            (f"本章{labels.get('conflict', '强套路')}模块", "conflict_module"),
+            (f"{labels.get('conflict', '强套路')}执行阶段", "conflict_stage"),
             ("关系变化", "relationship_change"),
             ("结尾钩子", "ending_hook"),
         )
@@ -678,6 +814,7 @@ def strong_pattern_validation_issues(
     manifest: dict, pattern_plan: dict, outlines: dict, target_chapters: int
 ) -> list[str]:
     issues = validate_pattern_manifest(manifest)
+    pattern = _pattern_from_manifest(manifest)
     expected = {str(index) for index in range(1, max(1, int(target_chapters)) + 1)}
     if set(pattern_plan) != expected:
         issues.append("逐章节拍计划与目标章节数不一致")
@@ -687,18 +824,24 @@ def strong_pattern_validation_issues(
         if isinstance(task, dict) and task.get("is_paywall_turn")
     ]
     if len(paywall) != 1:
-        issues.append("必须且只能有一个45%-50%的最重伤害反转卡点")
+        issues.append("必须且只能有一个45%-50%的核心反转卡点")
     elif not pattern_plan[str(paywall[0])].get("paywall_target_word"):
-        issues.append("最重伤害反转卡点缺少全书字数目标")
+        issues.append("核心反转卡点缺少全书字数目标")
     else:
         paywall_task = pattern_plan[str(paywall[0])]
         ratio = paywall_task["paywall_target_word"] / max(1, paywall_task.get("total_words", 0))
         if not 0.45 <= ratio <= 0.50:
-            issues.append("最重伤害反转卡点必须位于全书累计字数45%-50%")
-    if manifest.get("ending") == "no_reunion":
+            issues.append("核心反转卡点必须位于全书累计字数45%-50%")
+    if manifest.get("pattern_key") == STRONG_PATTERN_KEY and manifest.get("ending") == "no_reunion":
         final_task = pattern_plan.get(str(max(1, int(target_chapters))), {})
         if "独立" not in final_task.get("phase", ""):
             issues.append("默认不复合结局必须以女主独立离开收束")
+    ending_options = pattern.get("ending_options", {})
+    if ending_options and manifest.get("pattern_key") != STRONG_PATTERN_KEY:
+        final_task = pattern_plan.get(str(max(1, int(target_chapters))), {})
+        ending_description = ending_options.get(manifest.get("ending"), "")
+        if ending_description and ending_description not in final_task.get("relationship_change", ""):
+            issues.append("最终章必须兑现已确认的结局方向")
     for key in expected:
         outline = str(outlines.get(key, ""))
         if "【结构化套路任务】" not in outline:
@@ -713,6 +856,14 @@ def strong_pattern_outline_content_warnings(
     chapters = max(1, int(target_chapters))
     outlines = {str(key): str(value) for key, value in (outlines or {}).items()}
     issues = []
+    if manifest.get("pattern_key") != STRONG_PATTERN_KEY:
+        all_outlines = "".join(outlines.values())
+        labels = dict(manifest.get("labels") or _manifest_labels(_pattern_from_manifest(manifest)))
+        for conflict in manifest.get("conflicts", []):
+            name = conflict.get("name", "") if isinstance(conflict, dict) else str(conflict)
+            if name and name not in all_outlines:
+                issues.append(f"细纲未安排已确认{labels.get('conflict', '强套路')}模块：{name}")
+        return issues
 
     first = outlines.get("1", "")
     if "前300字" not in first or not any(word in first for word in ("伤害", "羞辱", "抛弃")):
@@ -932,15 +1083,17 @@ def architect_node(state: NovelState):
     )
     strong_requirement = ""
     if strong_pattern:
+        labels = dict(manifest.get("labels") or _manifest_labels(pattern))
         strong_requirement = (
             "\n【已确认强套路契约】\n"
             f"{format_pattern_manifest(manifest)}\n"
             "【逐章节拍计划】\n"
             f"{json.dumps(pattern_plan, ensure_ascii=False)}\n"
-            "每章细纲必须严格服从对应章节任务，尤其不得提前让男主得知真相，"
-            "不得让后期女主重新反复解释或无代价回头。"
-            "请在细纲中清楚描述开篇伤害、最重伤害与反转、女主觉醒过程、"
-            "确认的结局方向和已选虐点如何建立前因与后果；允许使用符合剧情的自然措辞。"
+            "每章细纲必须严格服从对应章节任务，不得跳过已确认的核心反转卡点，"
+            f"不得让{labels.get('conflict', '强套路')}模块无因果突然发生或被随机素材替代。"
+            f"请在细纲中清楚描述开篇钩子、45%-50%核心反转、{labels.get('protagonist', '主角')}状态变化、"
+            f"确认的{labels.get('ending', '结局')}方向和已选{labels.get('conflict', '强套路')}模块如何建立前因与后果；"
+            "允许使用符合剧情的自然措辞。"
             "若本次随机素材非空，素材只能作为世界观舞台、人物关系或局部冲突补充，"
             "不得替代强套路的核心驱动力和逐章节拍计划。"
         )
@@ -1011,11 +1164,14 @@ def architect_node(state: NovelState):
     # 保存大纲 JSON 到 Outline/ 目录
     try:
         os.makedirs("Outline", exist_ok=True)
-        safe_title = "".join(c for c in result.novel_title if c not in r'\/:*?"<>|')
+        safe_title = _safe_file_stem(result.novel_title, "未命名大纲")
+        if state.get("run_id"):
+            safe_title = f"{safe_title}_{_safe_file_stem(state.get('run_id'), 'run')}"
         save_path = os.path.join("Outline", f"{safe_title}.json")
         with open(save_path, "w", encoding="utf-8") as f:
             json.dump({
                 "title": result.novel_title,
+                "run_id": state.get("run_id", ""),
                 "world_bible": result.world_bible,
                 "chapter_outlines": chapter_outlines,
                 "story_pattern": state.get("story_pattern", "none"),
@@ -1227,7 +1383,7 @@ def summarizer_node(state: NovelState):
     
     current_chap_num = state.get("current_chapter", 1)
     latest_chapter = state.get("current_draft", "")
-    file_path = _build_output_path(state.get("novel_title", "小说输出"))
+    file_path = _build_output_path(state.get("novel_title", "小说输出"), state.get("run_id", ""))
     has_existing_content = os.path.exists(file_path) and os.path.getsize(file_path) > 0
     
     with open(file_path, "a", encoding="utf-8") as f:

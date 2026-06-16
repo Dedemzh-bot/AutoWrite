@@ -121,6 +121,173 @@
       "禁止默认结局中女主因怀孕、家人或舆论压力回头。"
     ]
   },
+  "strong_rule_horror": {
+    "name": "强规则怪谈",
+    "strong": true,
+    "core_driver": "rule_horror_survival",
+    "world_policy": "allow_all",
+    "forbidden_material_drivers": ["male_power_fantasy"],
+    "background_only_drivers": ["world_stage"],
+    "material_note": "世界观题材可作为怪谈发生地；随机素材不能替代“规则-验证-违规代价-真相反转”的生存主线。",
+    "architect": "严格执行规则怪谈契约与逐章节拍计划。每章必须有规则认知推进、规则验证或违规代价，45%-50%必须出现底层机制反转。",
+    "writer": "规则必须通过具体事件验证，不得临时改规则。恐惧来自信息差、选择代价和违反规则后的可追踪后果。",
+    "auditor": "逐项检查本章规则、线索、违规代价和底层机制是否自洽。无依据解题、规则临时失效或代价跳变属于套路执行失败。",
+    "compatible_styles": ["default", "cold", "literary"],
+    "manifest_labels": {"protagonist": "闯关者", "counterpart": "规则系统", "foil": "误导者", "conflict": "规则模块", "ending": "逃生结局"},
+    "ending_options": {
+      "escape_truth": "主角破解核心规则并带着真相逃离，但怪谈源头仍留下余波。",
+      "contain_source": "主角付出代价封存污染源，幸存者脱离当前规则场。",
+      "become_rule": "主角活下来却成为新规则的一部分，留下强反转尾声。"
+    },
+    "protagonist_pool": ["冷静记录规则的新人闯关者", "失去记忆但观察力极强的幸存者", "为了救人主动进入规则场的调查员"],
+    "counterpart_pool": ["会根据违规行为升级的宿舍规则", "伪装成保护条例的列车怪谈", "以广播和纸条发布矛盾指令的医院规则"],
+    "foil_pool": ["故意传播假规则的资深幸存者", "被污染后仍装作正常的同伴", "只遵守表层规则的管理员"],
+    "background_pool": ["废弃学校", "午夜列车", "封闭医院", "地下商场"],
+    "conflict_modules": [
+      {"id": "false_rule", "name": "真假规则混淆", "category": "logic", "description": "部分规则是陷阱，必须通过事件交叉验证。"},
+      {"id": "violation_price", "name": "违规代价递增", "category": "survival", "description": "每次违规都会留下可见代价，并影响后续选择。"},
+      {"id": "identity_pollution", "name": "身份污染", "category": "identity", "description": "幸存者逐步被规则系统改写身份或记忆。"},
+      {"id": "safe_zone_trap", "name": "安全区陷阱", "category": "space", "description": "看似安全的地点藏有更深层限制。"},
+      {"id": "time_loop", "name": "时间回环", "category": "time", "description": "重复时间提供线索，也会让错误累积。"},
+      {"id": "observer_cost", "name": "旁观代价", "category": "ethics", "description": "不做选择也会触发惩罚，迫使主角承担伦理压力。"}
+    ],
+    "beats": [
+      {"id": "hook", "range": "前300字", "requirement": "主角立刻收到第一组规则，并目睹一次违反规则的后果。"},
+      {"id": "accumulation", "range": "0%-25%", "requirement": "验证两条规则，发现至少一条规则存在误导。"},
+      {"id": "escalation", "range": "25%-45%", "requirement": "规则代价升级，同伴选择造成不可逆损失。"},
+      {"id": "paywall_turn", "range": "45%-50%", "requirement": "揭示规则场底层机制或安全区真相，主角策略被迫反转。"},
+      {"id": "truth_regret", "range": "50%-80%", "requirement": "逐步拼出真规则链，并让误导者或规则系统付出代价。"},
+      {"id": "independent_ending", "range": "80%-100%", "requirement": "兑现逃生结局，保留怪谈源头或新规则尾钩。"}
+    ],
+    "writing_techniques": ["规则先落地再解释。", "每次恐怖场面都要回收一条线索。", "真假规则必须能被读者复盘。", "用空间、声音、纸条和时间异常制造压迫。"],
+    "audit_rules": ["规则不得无代价失效。", "解法必须来自已出现的线索。", "底层机制反转必须改变后续行动策略。"],
+    "forbidden": ["禁止靠梦醒或幻觉取消规则。", "禁止无提示临时增加救命规则。", "禁止只堆惊吓不推进规则认知。"]
+  },
+  "strong_historical_power": {
+    "name": "历史权谋强套路",
+    "strong": true,
+    "core_driver": "historical_power_game",
+    "world_policy": "allow_all",
+    "forbidden_material_drivers": ["horror_survival", "rule_horror_survival"],
+    "background_only_drivers": ["world_stage"],
+    "material_note": "随机素材可作为时代、地理或技术背景；主线必须服从“局势-筹码-反制-权力重排”的历史权谋结构。",
+    "architect": "严格执行历史权谋契约。每章必须推进权力格局、筹码交换或阵营博弈，45%-50%必须发生一次足以重排局势的政局反转。",
+    "writer": "权谋胜负必须来自制度、情报、利益和人心，不得靠现代外挂无成本碾压。每次胜利都必须引出新的政治代价。",
+    "auditor": "检查人物行为是否符合时代制度、信息来源是否合理、政治后果是否连锁。凭空掌握情报或无代价夺权属于套路执行失败。",
+    "compatible_styles": ["default", "literary", "cold"],
+    "manifest_labels": {"protagonist": "执棋者", "counterpart": "权力对手", "foil": "变数人物", "conflict": "权谋节点", "ending": "权局结局"},
+    "ending_options": {
+      "stabilize_realm": "主角重排权力格局，建立暂时稳定的新秩序。",
+      "costly_victory": "主角赢得关键权位，但必须牺牲旧关系或理想的一部分。",
+      "hidden_throne": "主角不坐明面高位，却成为幕后真正定局者。"
+    },
+    "protagonist_pool": ["寒门出身却熟悉制度缝隙的谋臣", "被卷入储位之争的边地将领", "掌握商路和粮道的女扮男装幕僚"],
+    "counterpart_pool": ["控制朝堂票拟权的权相", "握有兵权且试探中央的藩镇", "以清流名声操纵舆论的政敌"],
+    "foil_pool": ["摇摆不定的幼主", "被双方争取的边军统帅", "掌握旧案证据的宫中老人"],
+    "background_pool": ["王朝末年", "架空大一统王朝", "藩镇割据乱世", "海贸兴起的沿海朝局"],
+    "conflict_modules": [
+      {"id": "court_vote", "name": "朝议票局", "category": "court", "description": "公开朝议背后是派系利益交换。"},
+      {"id": "grain_route", "name": "粮道筹码", "category": "logistics", "description": "粮草运输决定军政主动权。"},
+      {"id": "border_crisis", "name": "边患借势", "category": "military", "description": "外部战事被各派用来夺权或甩锅。"},
+      {"id": "old_case", "name": "旧案翻盘", "category": "evidence", "description": "沉年旧案牵出合法性危机。"},
+      {"id": "marriage_alliance", "name": "联姻盟约", "category": "alliance", "description": "婚盟、师门或宗族关系成为政治筹码。"},
+      {"id": "public_opinion", "name": "民望舆论", "category": "reputation", "description": "民心、清议和名声左右权力合法性。"}
+    ],
+    "beats": [
+      {"id": "hook", "range": "前300字", "requirement": "主角立刻被卷入一场权力选择，暴露第一枚筹码。"},
+      {"id": "accumulation", "range": "0%-25%", "requirement": "铺开派系利益和制度限制，让主角用小筹码换取入局资格。"},
+      {"id": "escalation", "range": "25%-45%", "requirement": "对手设局反扑，主角的盟友或资源出现裂痕。"},
+      {"id": "paywall_turn", "range": "45%-50%", "requirement": "旧案、兵权或粮道真相反转，朝局权重被迫重排。"},
+      {"id": "truth_regret", "range": "50%-80%", "requirement": "主角连续反制并承担政治代价，阵营关系重新洗牌。"},
+      {"id": "independent_ending", "range": "80%-100%", "requirement": "兑现权局结局，留下新秩序下的隐患或下一轮博弈。"}
+    ],
+    "writing_techniques": ["每场对话都要有筹码交换。", "胜利必须带来新的敌人或债务。", "时代制度限制必须真实约束主角。", "用奏疏、军报、粮价、民望呈现权力变化。"],
+    "audit_rules": ["主角不能知道不可能知道的密信。", "夺权必须有合法性、兵权、财权或舆论支撑。", "政治后果不能被一句话抹平。"],
+    "forbidden": ["禁止现代知识无成本碾压古人。", "禁止敌人突然降智让权。", "禁止只写宫斗嘴仗不改权力格局。"]
+  },
+  "strong_male_power_progression": {
+    "name": "男频升级打脸强套路",
+    "strong": true,
+    "core_driver": "male_power_progression",
+    "world_policy": "allow_all",
+    "forbidden_material_drivers": ["female_relationship"],
+    "background_only_drivers": ["world_stage"],
+    "material_note": "世界观可自由套用；随机素材不能替代“受压-蓄力-爆发-势力升级”的男频爽点主线。",
+    "architect": "严格执行男频升级契约。每章必须推进实力、资源、势力或名望；45%-50%必须完成一次公开爆发，改变主角江湖地位。",
+    "writer": "爽点必须先压后爆，反转来自提前铺设的能力、证据、资源或兄弟协作。禁止无成本开挂和敌人无理由降智。",
+    "auditor": "检查升级资源、打脸证据、敌我实力和势力后果是否闭环。凭空突破、无代价碾压或重复打脸不升级属于套路执行失败。",
+    "compatible_styles": ["default", "hot_blood", "cold", "humor"],
+    "manifest_labels": {"protagonist": "男主", "counterpart": "压迫者", "foil": "见证者", "conflict": "爽点模块", "ending": "登顶结局"},
+    "ending_options": {
+      "claim_throne": "男主完成阶段登顶，公开掌握新的势力或权柄。",
+      "open_bigger_map": "男主碾碎当前压迫者，同时打开更高层级地图。",
+      "protect_brothers": "男主赢下关键战并保住兄弟与底线，建立自己的班底。"
+    },
+    "protagonist_pool": ["被轻视的底层青年，暗中掌握稀缺能力", "背负旧债的退役兵王，重回都市夺回尊严", "宗门外门弟子，靠隐忍和狠劲逆势崛起"],
+    "counterpart_pool": ["仗势欺人的豪门少爷", "垄断资源的宗门长老", "操控灰色势力的商业对手"],
+    "foil_pool": ["一开始看不起男主的旁观者", "愿意押注男主的兄弟", "被男主救下后成为关键证人的红颜知己"],
+    "background_pool": ["都市豪门", "高武宗门", "佣兵归来", "商业江湖"],
+    "conflict_modules": [
+      {"id": "public_contempt", "name": "公开轻视", "category": "reputation", "description": "对手在公开场合羞辱男主，建立反打期待。"},
+      {"id": "resource_lock", "name": "资源封锁", "category": "resource", "description": "对手封锁资金、丹药、人脉或情报。"},
+      {"id": "hidden_skill", "name": "隐藏实力", "category": "ability", "description": "男主隐藏关键能力，在爆点时兑现。"},
+      {"id": "brother_debt", "name": "兄弟债义", "category": "bond", "description": "兄弟或班底遭压迫，迫使男主升级反击。"},
+      {"id": "rank_break", "name": "阶层突破", "category": "status", "description": "男主跨过身份门槛，进入更高局。"},
+      {"id": "evidence_counter", "name": "证据反杀", "category": "evidence", "description": "提前埋下证据，公开翻盘打脸。"}
+    ],
+    "beats": [
+      {"id": "hook", "range": "前300字", "requirement": "男主立刻受压或被轻视，同时露出隐藏底牌的一角。"},
+      {"id": "accumulation", "range": "0%-25%", "requirement": "对手压迫升级，男主暗中积累能力、资源或证据。"},
+      {"id": "escalation", "range": "25%-45%", "requirement": "兄弟、尊严或核心利益被触碰，爆发条件成型。"},
+      {"id": "paywall_turn", "range": "45%-50%", "requirement": "男主公开爆发完成强打脸，身份、战力或势力等级跃迁。"},
+      {"id": "truth_regret", "range": "50%-80%", "requirement": "余波扩大战果，对手背后更高层级浮出水面。"},
+      {"id": "independent_ending", "range": "80%-100%", "requirement": "兑现登顶结局，男主获得新权柄并打开下一阶段爽点。"}
+    ],
+    "writing_techniques": ["先压足再爆发。", "每次打脸后必须升级地图或势力。", "兄弟情、资源线和敌人层级要同步推进。", "爽点用行动和局势变化呈现。"],
+    "audit_rules": ["突破必须有资源或训练铺垫。", "公开打脸必须改变地位。", "敌人不能连续无理由送人头。"],
+    "forbidden": ["禁止开局无铺垫秒杀所有人。", "禁止重复同一种羞辱打脸。", "禁止胜利后局势不变。"]
+  },
+  "male_angst_awakening": {
+    "name": "虐恋觉醒性转",
+    "strong": true,
+    "core_driver": "male_angst_awakening",
+    "world_policy": "allow_all",
+    "forbidden_material_drivers": ["male_power_fantasy", "rule_horror_survival", "horror_survival"],
+    "background_only_drivers": ["world_stage"],
+    "material_note": "世界观题材默认可套用；随机素材只能作为舞台、人物关系或局部冲突补充，不能替代“伤害-心死-觉醒-追悔”的情感主线。",
+    "architect": "严格执行性转虐恋契约。男主必须从隐忍、心死到平静离开；女主必须晚于伤害发生后才逐步察觉真相，并为偏信与伤害承担长期代价。",
+    "writer": "使用对比、信息差和具体场景呈现男主受伤。男主后期必须越来越平静坚定，禁止重复解释求回头；女主追悔必须落实为行动和损失。",
+    "auditor": "逐项检查当前章节的男主情绪状态、女主认知状态和关系变化。缺失当前章节必须完成的事件属于套路执行失败。",
+    "compatible_styles": ["default", "literary", "cold"],
+    "manifest_labels": {"protagonist": "男主", "counterpart": "女主", "foil": "男配", "conflict": "虐点", "ending": "情感结局"},
+    "ending_options": {
+      "no_reunion": "男主彻底离开并拥有更好生活，女主追悔但无法挽回。",
+      "costly_reunion": "女主付出长期且不可逆的代价后，由男主自主决定是否重新开始。"
+    },
+    "protagonist_pool": ["出身普通却长期托举女主事业的男主", "被误认为攀附权势的温柔赘婿", "默默承担家庭债务却被女主误解的男主"],
+    "counterpart_pool": ["事业强势且偏信男配的女总裁", "习惯掌控关系的豪门继承女", "把男主隐忍误判为离不开自己的青梅"],
+    "foil_pool": ["擅长示弱的白月光男配", "用共同事业回忆绑架女主的前搭档", "表面体贴实则挑拨误会的男闺蜜"],
+    "background_pool": ["都市婚恋", "娱乐圈", "豪门赘婿", "职场权力关系"],
+    "conflict_modules": [
+      {"id": "public_humiliation", "name": "公开羞辱", "category": "social", "description": "女主或其圈层在公开场合贬低男主，男配从中获利。"},
+      {"id": "favor_rival", "name": "偏袒男配", "category": "relationship", "description": "每次男主与男配冲突，女主先入为主维护男配。"},
+      {"id": "framed_blame", "name": "诬陷背锅", "category": "plot", "description": "男配制造证据让男主承担错误或恶意行为。"},
+      {"id": "career_sacrifice", "name": "事业牺牲", "category": "career", "description": "男主为女主事业付出，却被误解为无能或拖累。"},
+      {"id": "hidden_illness", "name": "隐瞒伤病", "category": "information_gap", "description": "男主独自承受严重伤病，女主因信息差继续误解他。"},
+      {"id": "critical_abandonment", "name": "关键时刻抛弃", "category": "plot", "description": "男主最需要帮助时，女主因偏信男配选择离开。"}
+    ],
+    "beats": [
+      {"id": "hook", "range": "前300字", "requirement": "男主立即遭受伤害、羞辱或被抛弃，核心冲突爆发。"},
+      {"id": "accumulation", "range": "0%-25%", "requirement": "虐点叠加，男主隐忍并开始察觉异常，女主持续偏袒男配。"},
+      {"id": "escalation", "range": "25%-45%", "requirement": "伤害升级并触发关键事件，男主由痛苦转为心死。"},
+      {"id": "paywall_turn", "range": "45%-50%", "requirement": "发生最严重伤害与反转钩子，女主首次察觉事情不对。"},
+      {"id": "truth_regret", "range": "50%-80%", "requirement": "真相逐步揭露，女主追悔补偿，男主拒绝解释和回头。"},
+      {"id": "independent_ending", "range": "80%-100%", "requirement": "男主独立并进入更好生活，女主承担长期后果。"}
+    ],
+    "writing_techniques": ["对比手法：男主受伤时，男配正在获得信任或利益。", "信息差：女主不知道男主真实付出、伤病或旧债。", "平静伤人：男主越往后越平静，越体现彻底失望。"],
+    "audit_rules": ["缺失当前章节计划中的必须事件时判定不通过。", "男主心死后反复解释或无代价回头时列入套路问题。", "女主追悔必须有实际行动和损失。"],
+    "forbidden": ["禁止女主一句道歉就获得原谅。", "禁止男主后期主动求复合。", "禁止男配和女主为推动剧情突然降智。"]
+  },
   "custom": {
     "name": "自定义套路",
     "architect": "严格提炼并执行用户提供的自定义套路要求，同时保证人物因果自然。",

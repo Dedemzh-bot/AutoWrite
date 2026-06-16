@@ -442,6 +442,24 @@ class TestFemaleAngstAwakeningPattern(unittest.TestCase):
         )
         self.assertEqual(validate_pattern_manifest(first), [])
 
+    def test_new_strong_patterns_generate_valid_manifests_and_plans(self):
+        from Nodes import build_pattern_plan, is_strong_pattern, roll_pattern_manifest, validate_pattern_manifest
+
+        for key in [
+            "strong_rule_horror",
+            "strong_historical_power",
+            "strong_male_power_progression",
+            "male_angst_awakening",
+        ]:
+            with self.subTest(key=key):
+                self.assertTrue(is_strong_pattern(key))
+                manifest = roll_pattern_manifest(key, seed=42)
+                self.assertEqual(validate_pattern_manifest(manifest), [])
+                plan = build_pattern_plan(manifest, 6, 1500)
+                self.assertEqual(len(plan), 6)
+                self.assertEqual(len([task for task in plan.values() if task["is_paywall_turn"]]), 1)
+                self.assertTrue(all(task["protagonist_state"] for task in plan.values()))
+
     def test_paywall_target_uses_total_word_ratio_for_different_lengths(self):
         from Nodes import build_pattern_plan, roll_pattern_manifest
 
@@ -520,10 +538,12 @@ class TestWebDefaults(unittest.TestCase):
         self.assertIn('value="rule_horror"', HTML_PAGE)
         self.assertIn("get_patterns", HTML_PAGE)
         self.assertIn("female_angst_awakening", HTML_PAGE)
+        self.assertIn("strong_rule_horror", HTML_PAGE)
+        self.assertIn("male_angst_awakening", HTML_PAGE)
         self.assertIn("roll_pattern_manifest", HTML_PAGE)
         self.assertIn('id="patternEnding"', HTML_PAGE)
         self.assertIn('id="washPatternEnding"', HTML_PAGE)
-        self.assertIn("请先确认女频虐恋觉醒套路契约", HTML_PAGE)
+        self.assertIn("请先确认强套路契约", HTML_PAGE)
         self.assertIn("随机素材库", HTML_PAGE)
         self.assertIn("isCategoryBlocked", HTML_PAGE)
         self.assertIn("updateMaterialHint", HTML_PAGE)

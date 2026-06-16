@@ -205,8 +205,17 @@ if __name__ == "__main__":
         if writer_style not in compatible_styles:
             writer_style = "default"
             print("   ⚠️ 当前风格与强套路冲突，已切换为默认风格")
-        ending_choice = input("   结局方向: [1] 不复合(默认)  [2] 高代价后由女主决定: ").strip()
-        ending = "costly_reunion" if ending_choice == "2" else "no_reunion"
+        ending_options = patterns.get(story_pattern, {}).get("ending_options", {})
+        ending_keys = list(ending_options) or ["no_reunion"]
+        print("   结局方向: " + "  ".join(
+            f"[{index + 1}] {ending_options.get(key, key)}"
+            for index, key in enumerate(ending_keys)
+        ))
+        ending_choice = input("   选择结局方向 (默认1): ").strip()
+        try:
+            ending = ending_keys[int(ending_choice) - 1] if ending_choice else ending_keys[0]
+        except (ValueError, IndexError):
+            ending = ending_keys[0]
         pattern_manifest = roll_pattern_manifest(story_pattern, ending=ending)
         print("   🎲 已生成强套路契约：")
         print(format_pattern_manifest(pattern_manifest))

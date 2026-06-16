@@ -30,6 +30,7 @@ class NovelState(TypedDict):
     saved_chapter: int        # 刚刚保存的章节号
     summary_skipped: bool     # 最后一章保存后是否跳过摘要模型
     novel_title: str          # 小说标题
+    run_id: str               # 单次网页/命令行运行标识，用于多开时隔离输出
     outline_file: str         # 洗文来源大纲文件名
     wash_original_title: str  # 洗文原始标题
 

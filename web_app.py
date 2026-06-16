@@ -139,8 +139,6 @@ REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子�
 - 精炼设定必须整合所有已获取的信息，用一段通顺的文字呈现"""
 
 app = FastAPI(title="AutoWrite Web")
-pipeline_lock = threading.Lock()
-generation_active = threading.Event()
 
 def _call_refine(history: list[dict]) -> str:
     messages = [("system", REFINE_SYSTEM)]
@@ -165,19 +163,19 @@ HTML_PAGE = r"""
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;color:#c9d1d9;height:100vh;overflow:hidden}
-#app{display:grid;grid-template-columns:340px 1fr;grid-template-rows:1fr;height:100vh}
-#panel{background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;overflow-y:auto;padding:16px}
+#app{display:grid;grid-template-columns:minmax(680px,48vw) minmax(420px,1fr);grid-template-rows:1fr;height:100vh;min-width:1100px}
+#panel{background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;overflow-y:auto;padding:20px 24px}
 #panel h1{font-size:18px;color:#58a6ff;margin-bottom:12px;text-align:center}
 .section{margin-bottom:16px}
 .section label{display:block;font-size:13px;color:#8b949e;margin-bottom:6px}
-#idea{width:100%;height:72px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:8px;border-radius:6px;resize:vertical;font-size:13px}
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:180px;overflow-y:auto}
+#idea{width:100%;height:96px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:8px;border-radius:6px;resize:vertical;font-size:13px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;max-height:260px;overflow-y:auto}
 .cat-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 6px;background:#0d1117;border-radius:4px;cursor:pointer;border:1px solid #30363d;transition:all .15s}
 .cat-item.active{border-color:#58a6ff;background:#1a2332}
 .cat-item.disabled{opacity:.45;cursor:not-allowed}
 .cat-item input{accent-color:#58a6ff}
 .cat-tag{margin-left:auto;color:#8b949e;font-size:10px;white-space:nowrap}
-.scope-row{display:flex;gap:8px;align-items:center}
+.scope-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .scope-row select,.scope-row input{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px}
 .scope-row input{width:80px}
 .btn{display:block;width:100%;padding:10px;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:600;transition:all .15s}
@@ -210,6 +208,12 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 .hidden{display:none!important}
 .mode-tab{flex:1;text-align:center;padding:8px;font-size:13px;cursor:pointer;border-bottom:2px solid #30363d;color:#8b949e;transition:all .15s}
 .mode-tab.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.pattern-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.pattern-tab{text-align:center;padding:7px 4px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#8b949e;font-size:12px;cursor:pointer;transition:all .15s}
+.pattern-tab.active{border-color:#58a6ff;background:#1a2332;color:#58a6ff}
+.pattern-tab.disabled{opacity:.45;cursor:not-allowed}
+.pattern-select{width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px}
+.pattern-value{display:none}
 .outline-item{padding:8px 10px;border-bottom:1px solid #161b22;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center}
 .outline-item:hover{background:#1a2332}
 .outline-item.active{background:#1a2332;border-left:3px solid #58a6ff}
@@ -280,7 +284,12 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     </div>
     <div class="section">
       <label>🎭 创作套路</label>
-      <select id="storyPattern" onchange="onPatternChange('create')" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
+      <div class="pattern-tabs">
+        <div class="pattern-tab active" data-pattern-mode="none" onclick="switchPatternMode('create','none')">无套路</div>
+        <div class="pattern-tab" data-pattern-mode="normal" onclick="switchPatternMode('create','normal')">普通套路</div>
+        <div class="pattern-tab" data-pattern-mode="strong" onclick="switchPatternMode('create','strong')">强套路</div>
+      </div>
+      <select id="storyPattern" class="pattern-value" onchange="onPatternChange('create')">
         <option value="none">无套路</option>
         <option value="wife_chasing">追妻火葬场</option>
         <option value="rule_horror">规则怪谈</option>
@@ -289,8 +298,18 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <option value="infinite_trials">无限流闯关</option>
         <option value="revenge_rebirth">复仇重生</option>
         <option value="female_angst_awakening">女频虐恋觉醒</option>
+        <option value="strong_rule_horror">强规则怪谈</option>
+        <option value="strong_historical_power">历史权谋强套路</option>
+        <option value="strong_male_power_progression">男频升级打脸强套路</option>
+        <option value="male_angst_awakening">虐恋觉醒性转</option>
         <option value="custom">自定义套路</option>
       </select>
+      <div id="normalPatternPanel" class="hidden">
+        <select id="normalStoryPattern" class="pattern-select" onchange="selectVisiblePattern('create','normal')"></select>
+      </div>
+      <div id="strongPatternPanel" class="hidden">
+        <select id="strongStoryPattern" class="pattern-select" onchange="selectVisiblePattern('create','strong')"></select>
+      </div>
       <div id="customPatternWrap" class="hidden" style="margin-top:6px">
         <textarea id="customPattern" placeholder="描述套路节拍、必须出现的桥段与禁忌..." style="width:100%;height:64px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px;border-radius:4px;font-size:12px;resize:vertical"></textarea>
       </div>
@@ -330,7 +349,12 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
   <div id="washPanel" class="hidden">
     <div class="section">
       <label>🎭 创作套路</label>
-      <select id="washStoryPattern" onchange="onPatternChange('wash')" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
+      <div class="pattern-tabs">
+        <div class="pattern-tab active" data-pattern-mode="none" onclick="switchPatternMode('wash','none')">无套路</div>
+        <div class="pattern-tab" data-pattern-mode="normal" onclick="switchPatternMode('wash','normal')">普通套路</div>
+        <div class="pattern-tab" data-pattern-mode="strong" onclick="switchPatternMode('wash','strong')">强套路</div>
+      </div>
+      <select id="washStoryPattern" class="pattern-value" onchange="onPatternChange('wash')">
         <option value="none">无套路</option>
         <option value="wife_chasing">追妻火葬场</option>
         <option value="rule_horror">规则怪谈</option>
@@ -339,8 +363,18 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <option value="infinite_trials">无限流闯关</option>
         <option value="revenge_rebirth">复仇重生</option>
         <option value="female_angst_awakening">女频虐恋觉醒</option>
+        <option value="strong_rule_horror">强规则怪谈</option>
+        <option value="strong_historical_power">历史权谋强套路</option>
+        <option value="strong_male_power_progression">男频升级打脸强套路</option>
+        <option value="male_angst_awakening">虐恋觉醒性转</option>
         <option value="custom">自定义套路</option>
       </select>
+      <div id="washNormalPatternPanel" class="hidden">
+        <select id="washNormalStoryPattern" class="pattern-select" onchange="selectVisiblePattern('wash','normal')"></select>
+      </div>
+      <div id="washStrongPatternPanel" class="hidden">
+        <select id="washStrongStoryPattern" class="pattern-select" onchange="selectVisiblePattern('wash','strong')"></select>
+      </div>
       <div id="washCustomPatternWrap" class="hidden" style="margin-top:6px">
         <textarea id="washCustomPattern" placeholder="描述套路节拍、必须出现的桥段与禁忌..." style="width:100%;height:64px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px;border-radius:4px;font-size:12px;resize:vertical"></textarea>
       </div>
@@ -443,6 +477,108 @@ function escapeHtml(text){
   return String(text||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+function isStrongPatternKey(pattern){
+  return !!(patternMeta[pattern]&&patternMeta[pattern].strong);
+}
+
+function patternKind(pattern){
+  if(!pattern||pattern==='none')return 'none';
+  return isStrongPatternKey(pattern)?'strong':'normal';
+}
+
+function patternEntries(kind){
+  return Object.entries(patternMeta||{}).filter(([key,item])=>{
+    if(kind==='normal')return key!=='none'&&!item.strong;
+    if(kind==='strong')return !!item.strong;
+    return key==='none';
+  });
+}
+
+function fillPatternSelect(selectId,entries){
+  let select=document.getElementById(selectId);
+  if(!select)return;
+  select.innerHTML=entries.length
+    ? entries.map(([key,item])=>`<option value="${key}">${escapeHtml(item.name||key)}</option>`).join('')
+    : '<option value="">暂无可选套路</option>';
+  select.disabled=!entries.length;
+}
+
+function endingOptionsFor(pattern){
+  let options=(patternMeta[pattern]&&patternMeta[pattern].ending_options)||{};
+  if(Object.keys(options).length)return options;
+  return {
+    no_reunion:'女主彻底离开并拥有更好生活，男主追悔但无法挽回。',
+    costly_reunion:'男主付出长期且不可逆的代价后，女主自主决定是否重新开始。'
+  };
+}
+
+function updateEndingOptions(mode,pattern,selected){
+  let ids=patternIds(mode);
+  let select=document.getElementById(ids.ending);
+  if(!select)return;
+  let options=endingOptionsFor(pattern);
+  select.innerHTML=Object.entries(options).map(([key,text])=>
+    `<option value="${key}">${escapeHtml(text)}</option>`
+  ).join('');
+  let target=selected&&options[selected]?selected:Object.keys(options)[0];
+  select.value=target||'';
+}
+
+function syncPatternControls(mode){
+  let ids=patternIds(mode);
+  let hidden=document.getElementById(ids.select);
+  if(!hidden)return;
+  let previous=hidden.value||'none';
+  let allOptions=Object.entries(patternMeta||{}).map(([key,item])=>
+    `<option value="${key}">${escapeHtml(item.name||key)}</option>`
+  ).join('');
+  hidden.innerHTML=allOptions||'<option value="none">无套路</option>';
+  hidden.value=[...hidden.options].some(option=>option.value===previous)?previous:'none';
+
+  fillPatternSelect(ids.normalSelect,patternEntries('normal'));
+  fillPatternSelect(ids.strongSelect,patternEntries('strong'));
+  renderPatternControls(mode);
+}
+
+function renderPatternControls(mode){
+  let ids=patternIds(mode);
+  let hidden=document.getElementById(ids.select);
+  if(!hidden)return;
+  let activeKind=patternKind(hidden.value||'none');
+  document.querySelectorAll(ids.tabs).forEach(tab=>{
+    let kind=tab.dataset.patternMode;
+    let disabled=kind!=='none'&&patternEntries(kind).length===0;
+    tab.classList.toggle('active',kind===activeKind);
+    tab.classList.toggle('disabled',disabled);
+  });
+  document.getElementById(ids.normalPanel).classList.toggle('hidden',activeKind!=='normal');
+  document.getElementById(ids.strongPanel).classList.toggle('hidden',activeKind!=='strong');
+  let visibleSelect=document.getElementById(activeKind==='strong'?ids.strongSelect:ids.normalSelect);
+  if(visibleSelect&&activeKind!=='none'&&[...visibleSelect.options].some(option=>option.value===hidden.value)){
+    visibleSelect.value=hidden.value;
+  }
+}
+
+function setPatternValue(mode,pattern){
+  let ids=patternIds(mode);
+  document.getElementById(ids.select).value=pattern||'none';
+  onPatternChange(mode);
+}
+
+function switchPatternMode(mode,kind){
+  if(kind!=='none'&&patternEntries(kind).length===0)return;
+  if(kind==='none'){setPatternValue(mode,'none');return}
+  let ids=patternIds(mode);
+  let select=document.getElementById(kind==='strong'?ids.strongSelect:ids.normalSelect);
+  setPatternValue(mode,select.value||patternEntries(kind)[0]?.[0]||'none');
+}
+
+function selectVisiblePattern(mode,kind){
+  let ids=patternIds(mode);
+  let select=document.getElementById(kind==='strong'?ids.strongSelect:ids.normalSelect);
+  setPatternValue(mode,select.value||'none');
+}
+
 function materialRulesFor(pattern){
   return (patternMeta[pattern]&&patternMeta[pattern].material_rules)||{};
 }
@@ -490,15 +626,8 @@ function handleMsg(msg){
       break;
     case 'patterns':
       patternMeta=msg.data||{};
-      let patternOptions=Object.entries(patternMeta).map(([key,item])=>
-        `<option value="${key}">${escapeHtml(item.name||key)}</option>`
-      ).join('');
-      for(let id of ['storyPattern','washStoryPattern']){
-        let select=document.getElementById(id);
-        let previous=select.value||'none';
-        select.innerHTML=patternOptions;
-        select.value=[...select.options].some(option=>option.value===previous)?previous:'none';
-      }
+      syncPatternControls('create');
+      syncPatternControls('wash');
       renderCategories();
       break;
     case 'pattern_manifest_result':
@@ -544,6 +673,7 @@ function handleMsg(msg){
       document.getElementById('washChapters').value=msg.data.chapter_outlines?Object.keys(msg.data.chapter_outlines).length:0;
       document.getElementById('washStoryPattern').value=msg.data.story_pattern||'none';
       document.getElementById('washCustomPattern').value=msg.data.custom_pattern||'';
+      renderPatternControls('wash');
       if(msg.data.pattern_manifest){
         applyPatternManifest('wash',msg.data.pattern_manifest,true);
       }else{
@@ -628,8 +758,8 @@ function handleMsg(msg){
       break;
     case 'error':
       log('❌ '+msg.message,'error');
-      document.getElementById('btnStart').disabled=document.getElementById('storyPattern').value==='female_angst_awakening'&&!createPatternConfirmed;
-      document.getElementById('btnWashStart').disabled=!selectedOutlineFile||(document.getElementById('washStoryPattern').value==='female_angst_awakening'&&!washPatternConfirmed);
+      document.getElementById('btnStart').disabled=isStrongPatternKey(document.getElementById('storyPattern').value)&&!createPatternConfirmed;
+      document.getElementById('btnWashStart').disabled=!selectedOutlineFile||(isStrongPatternKey(document.getElementById('washStoryPattern').value)&&!washPatternConfirmed);
       document.getElementById('progressStatus').textContent='❌ 错误: '+msg.message;
       break;
   }
@@ -710,7 +840,7 @@ function startPipeline(){
   let storyPattern=document.getElementById('storyPattern').value||'none';
   let customPattern=document.getElementById('customPattern').value.trim();
   if(storyPattern==='custom'&&!customPattern){log('请填写自定义套路要求','warn');return}
-  if(storyPattern==='female_angst_awakening'&&!createPatternConfirmed){log('请先确认女频虐恋觉醒套路契约','warn');return}
+  if(isStrongPatternKey(storyPattern)&&!createPatternConfirmed){log('请先确认强套路契约','warn');return}
   let blockedCats=selectedCats.filter(cat=>isCategoryBlocked(cat,storyPattern));
   if(blockedCats.length){log('当前套路不支持这些随机素材：'+blockedCats.join('、'),'warn');return}
   document.getElementById('btnStart').disabled=true;
@@ -735,8 +865,8 @@ function toggleCustomPattern(selectId,wrapId){
 
 function patternIds(mode){
   return mode==='wash'
-    ? {select:'washStoryPattern',style:'washWriterStyle',ending:'washPatternEnding',section:'washPatternManifestSection',summary:'washPatternManifestSummary',editor:'washPatternManifestEditor',button:'btnWashStart'}
-    : {select:'storyPattern',style:'writerStyle',ending:'patternEnding',section:'patternManifestSection',summary:'patternManifestSummary',editor:'patternManifestEditor',button:'btnStart'};
+    ? {select:'washStoryPattern',normalSelect:'washNormalStoryPattern',strongSelect:'washStrongStoryPattern',tabs:'#washPanel .pattern-tab',normalPanel:'washNormalPatternPanel',strongPanel:'washStrongPatternPanel',style:'washWriterStyle',ending:'washPatternEnding',section:'washPatternManifestSection',summary:'washPatternManifestSummary',editor:'washPatternManifestEditor',button:'btnWashStart'}
+    : {select:'storyPattern',normalSelect:'normalStoryPattern',strongSelect:'strongStoryPattern',tabs:'#createPanel .pattern-tab',normalPanel:'normalPatternPanel',strongPanel:'strongPatternPanel',style:'writerStyle',ending:'patternEnding',section:'patternManifestSection',summary:'patternManifestSummary',editor:'patternManifestEditor',button:'btnStart'};
 }
 
 function setCompatibleStyles(mode,styles){
@@ -748,9 +878,11 @@ function setCompatibleStyles(mode,styles){
 function onPatternChange(mode){
   let ids=patternIds(mode);
   let pattern=document.getElementById(ids.select).value||'none';
+  renderPatternControls(mode);
   toggleCustomPattern(ids.select,mode==='wash'?'washCustomPatternWrap':'customPatternWrap');
-  let strong=pattern==='female_angst_awakening';
+  let strong=isStrongPatternKey(pattern);
   document.getElementById(ids.section).classList.toggle('hidden',!strong);
+  if(strong)updateEndingOptions(mode,pattern,document.getElementById(ids.ending).value);
   if(mode==='create'){
     document.getElementById('kwSection').classList.remove('hidden');
     renderCategories();
@@ -768,25 +900,30 @@ function onPatternChange(mode){
 
 function rollPatternManifest(mode){
   let ids=patternIds(mode);
-  if(document.getElementById(ids.select).value!=='female_angst_awakening')return;
+  let pattern=document.getElementById(ids.select).value||'none';
+  if(!isStrongPatternKey(pattern))return;
+  updateEndingOptions(mode,pattern,document.getElementById(ids.ending).value);
   if(mode==='wash')washPatternConfirmed=false;else createPatternConfirmed=false;
   document.getElementById(ids.button).disabled=true;
-  document.getElementById(ids.summary).textContent='正在抽取人物关系与虐点模块...';
-  sendMsg({action:'roll_pattern_manifest',data:{pattern:'female_angst_awakening',mode,ending:document.getElementById(ids.ending).value||'no_reunion'}});
+  document.getElementById(ids.summary).textContent='正在抽取强套路契约...';
+  sendMsg({action:'roll_pattern_manifest',data:{pattern,mode,ending:document.getElementById(ids.ending).value}});
 }
 
 function manifestSummary(manifest){
   let conflicts=(manifest.conflicts||[]).map(item=>item.name||item).join('、');
   let beats=(manifest.beat_preview||[]).map(item=>`${item.range} ${item.requirement}`).join('\n');
-  return `背景：${manifest.background||''}\n女主：${manifest.heroine||''}\n男主：${manifest.hero||''}\n女配：${manifest.rival||''}\n虐点：${conflicts}\n结局：${manifest.ending_description||''}\n\n节拍预览：\n${beats}`;
+  let labels=manifest.labels||{};
+  return `背景：${manifest.background||''}\n${labels.protagonist||'主角'}：${manifest.protagonist||manifest.heroine||''}\n${labels.counterpart||'关系方'}：${manifest.counterpart||manifest.hero||''}\n${labels.foil||'对照方'}：${manifest.foil||manifest.rival||''}\n${labels.conflict||'模块'}：${conflicts}\n${labels.ending||'结局'}：${manifest.ending_description||''}\n\n节拍预览：\n${beats}`;
 }
 
 function applyPatternManifest(mode,manifest,confirmed){
   let ids=patternIds(mode);
   if(mode==='wash'){washPatternManifest=manifest;washPatternConfirmed=confirmed}
   else{createPatternManifest=manifest;createPatternConfirmed=confirmed}
+  renderPatternControls(mode);
   document.getElementById(ids.section).classList.remove('hidden');
-  document.getElementById(ids.ending).value=manifest.ending||'no_reunion';
+  updateEndingOptions(mode,manifest.pattern_key||document.getElementById(ids.select).value,manifest.ending);
+  if(manifest.ending)document.getElementById(ids.ending).value=manifest.ending;
   document.getElementById(ids.summary).textContent=manifestSummary(manifest)+(confirmed?'\n\n✅ 契约已确认':'\n\n⏸️ 请确认、重抽或手动修改');
   document.getElementById(ids.editor).classList.add('hidden');
   setCompatibleStyles(mode,manifest.compatible_styles||[]);
@@ -798,9 +935,8 @@ function changePatternEnding(mode){
   let manifest=mode==='wash'?washPatternManifest:createPatternManifest;
   if(!manifest)return;
   let ending=document.getElementById(ids.ending).value||'no_reunion';
-  manifest={...manifest,ending,ending_description:ending==='costly_reunion'
-    ?'男主付出长期且不可逆的代价后，女主自主决定是否重新开始。'
-    :'女主彻底离开并拥有更好生活，男主追悔但无法挽回。'};
+  let options=endingOptionsFor(manifest.pattern_key||document.getElementById(ids.select).value);
+  manifest={...manifest,ending,ending_description:options[ending]||''};
   applyPatternManifest(mode,manifest,false);
   log('结局方向已修改，请重新确认契约','warn');
 }
@@ -870,7 +1006,7 @@ function selectOutline(file){
   document.querySelectorAll('#outlineList .outline-item').forEach(i=>i.classList.remove('active'));
   let items=document.querySelectorAll('#outlineList .outline-item');
   for(let el of items){if(el.dataset.file===file){el.classList.add('active');break}}
-  let needsManifest=document.getElementById('washStoryPattern').value==='female_angst_awakening'&&!washPatternConfirmed;
+  let needsManifest=isStrongPatternKey(document.getElementById('washStoryPattern').value)&&!washPatternConfirmed;
   document.getElementById('btnWashStart').disabled=needsManifest;
   sendMsg({action:'load_outline',data:{file}});
 }
@@ -883,7 +1019,7 @@ function startWash(){
   let storyPattern=document.getElementById('washStoryPattern').value||'none';
   let customPattern=document.getElementById('washCustomPattern').value.trim();
   if(storyPattern==='custom'&&!customPattern){log('请填写自定义套路要求','warn');return}
-  if(storyPattern==='female_angst_awakening'&&!washPatternConfirmed){log('请先确认女频虐恋觉醒套路契约','warn');return}
+  if(isStrongPatternKey(storyPattern)&&!washPatternConfirmed){log('请先确认强套路契约','warn');return}
   document.getElementById('btnWashStart').disabled=true;
   document.getElementById('washStatus').textContent='生成新书名...';
   Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));
@@ -917,7 +1053,6 @@ async def index():
 async def ws_handler(websocket: WebSocket):
     await websocket.accept()
     state = None
-    config = {"configurable": {"thread_id": f"web_{id(websocket)}"}}
     token_counter = 0
 
     async def send(msg: dict):
@@ -946,6 +1081,7 @@ async def ws_handler(websocket: WebSocket):
                     "name": value.get("name", key),
                     "strong": bool(value.get("strong")),
                     "material_rules": material_rules_for_pattern(key),
+                    "ending_options": value.get("ending_options", {}),
                 }
                 for key, value in load_story_patterns().items()
             }
@@ -1041,16 +1177,14 @@ async def ws_handler(websocket: WebSocket):
             pass
         # ── 启动流水线 ──
         elif action == "start":
-            if generation_active.is_set():
-                await send({"type": "error", "message": "已有小说生成任务正在运行，请等待其完成"})
-                continue
-            generation_active.set()
-            retry_counter.reset()
+            run_id = f"web-{uuid.uuid4().hex[:8]}"
+            run_config = {"configurable": {"thread_id": run_id}}
             run_metrics = {
-                "run_id": f"web-{uuid.uuid4().hex[:8]}",
+                "run_id": run_id,
                 "started_at": datetime.now().isoformat(timespec="seconds"),
                 "wall_started": time.perf_counter(),
                 "pre_pipeline": {},
+                "retry_counter_start": retry_counter.value(),
             }
             idea = data.get("idea", "")
             cats = data.get("selected_cats", [])
@@ -1063,18 +1197,16 @@ async def ws_handler(websocket: WebSocket):
             material_issues = validate_material_categories_for_pattern(story_pattern, cats)
             if material_issues:
                 await send({"type": "error", "message": "随机素材与套路冲突：" + "；".join(material_issues)})
-                generation_active.clear()
                 continue
             if is_strong_pattern(story_pattern):
                 manifest_issues = validate_pattern_manifest(pattern_manifest)
                 compatible_styles = compatible_styles_for_pattern(story_pattern)
                 if manifest_issues:
                     await send({"type": "error", "message": f"强套路契约未确认或无效：{'；'.join(manifest_issues)}"})
-                    generation_active.clear()
                     continue
                 if writer_style not in compatible_styles:
-                    await send({"type": "error", "message": f"女频虐恋觉醒仅支持写手风格：{', '.join(compatible_styles)}"})
-                    generation_active.clear()
+                    pattern_name = load_story_patterns().get(story_pattern, {}).get("name", story_pattern)
+                    await send({"type": "error", "message": f"{pattern_name}仅支持写手风格：{', '.join(compatible_styles)}"})
                     continue
             run_metrics["configuration"] = {
                 "target_chapters": target_chapters,
@@ -1116,6 +1248,7 @@ async def ws_handler(websocket: WebSocket):
             # ── 第一阶段: 运行架构师 ──
             init_state = {
                 "user_idea": idea,
+                "run_id": run_id,
                 "keywords": keywords,
                 "target_chapters": target_chapters,
                 "words_per_chapter": words_per_chapter,
@@ -1136,7 +1269,6 @@ async def ws_handler(websocket: WebSocket):
                 )
             except Exception as e:
                 await send({"type": "error", "message": str(e)})
-                generation_active.clear()
                 continue
             run_metrics["pre_pipeline"]["architect_seconds"] = round(
                 time.perf_counter() - architect_started, 3
@@ -1144,7 +1276,6 @@ async def ws_handler(websocket: WebSocket):
 
             if arch_result is None:
                 await send({"type": "error", "message": "架构师输出为空"})
-                generation_active.clear()
                 continue
 
             init_state.update(arch_result)
@@ -1161,7 +1292,6 @@ async def ws_handler(websocket: WebSocket):
                 try:
                     resp = await websocket.receive_json()
                 except WebSocketDisconnect:
-                    generation_active.clear()
                     return
                 if resp.get("action") == "approval":
                     approved = resp.get("data", False)
@@ -1171,12 +1301,11 @@ async def ws_handler(websocket: WebSocket):
             )
             if not approved:
                 await send({"type": "error", "message": "用户拒绝大纲"})
-                generation_active.clear()
                 continue
 
             # ── 第二阶段: 运行完整流水线 ──
             state = init_state
-            await _run_pipeline(websocket, send, state, config, run_metrics)
+            await _run_pipeline(websocket, send, state, run_config, run_metrics)
 
         # ── 洗文：列出大纲 ──
         elif action == "list_outlines":
@@ -1193,16 +1322,14 @@ async def ws_handler(websocket: WebSocket):
 
         # ── 洗文：启动洗文流水线 ──
         elif action == "start_rewash":
-            if generation_active.is_set():
-                await send({"type": "error", "message": "已有小说生成任务正在运行，请等待其完成"})
-                continue
-            generation_active.set()
-            retry_counter.reset()
+            run_id = f"web-{uuid.uuid4().hex[:8]}"
+            run_config = {"configurable": {"thread_id": run_id}}
             run_metrics = {
-                "run_id": f"web-{uuid.uuid4().hex[:8]}",
+                "run_id": run_id,
                 "started_at": datetime.now().isoformat(timespec="seconds"),
                 "wall_started": time.perf_counter(),
                 "pre_pipeline": {},
+                "retry_counter_start": retry_counter.value(),
             }
             file_name = data.get("file", "")
             writer_style = data.get("writer_style", "default")
@@ -1213,7 +1340,6 @@ async def ws_handler(websocket: WebSocket):
                 outline = load_outline_json(file_name)
             except Exception as e:
                 await send({"type": "error", "message": f"加载大纲失败: {e}"})
-                generation_active.clear()
                 continue
 
             story_pattern = data.get("story_pattern") or outline.get("story_pattern", "none")
@@ -1224,11 +1350,10 @@ async def ws_handler(websocket: WebSocket):
                 compatible_styles = compatible_styles_for_pattern(story_pattern)
                 if manifest_issues:
                     await send({"type": "error", "message": f"强套路契约未确认或无效：{'；'.join(manifest_issues)}"})
-                    generation_active.clear()
                     continue
                 if writer_style not in compatible_styles:
-                    await send({"type": "error", "message": f"女频虐恋觉醒仅支持写手风格：{', '.join(compatible_styles)}"})
-                    generation_active.clear()
+                    pattern_name = load_story_patterns().get(story_pattern, {}).get("name", story_pattern)
+                    await send({"type": "error", "message": f"{pattern_name}仅支持写手风格：{', '.join(compatible_styles)}"})
                     continue
             run_metrics["configuration"] = {
                 "target_chapters": target_chapters,
@@ -1257,7 +1382,6 @@ async def ws_handler(websocket: WebSocket):
                         "每章细纲至少需要200字，请重新生成合格大纲后再启动写作。"
                     ),
                 })
-                generation_active.clear()
                 continue
 
             original_title = outline.get("title", "未命名")
@@ -1288,6 +1412,7 @@ async def ws_handler(websocket: WebSocket):
 
             init_state = {
                 "user_idea": f"洗文:《{original_title}》→《{new_title}》",
+                "run_id": run_id,
                 "novel_title": new_title,
                 "wash_original_title": original_title,
                 "outline_file": file_name,
@@ -1307,7 +1432,7 @@ async def ws_handler(websocket: WebSocket):
             }
             await send({"type": "log", "message": f"📝 洗文启动: 《{new_title}》 | {chapters}章 × {words_per_chapter}字 | {writer_style}", "cls": "info"})
             state = init_state
-            await _run_pipeline(websocket, send, state, config, run_metrics)
+            await _run_pipeline(websocket, send, state, run_config, run_metrics)
 
         # ── 关键词决策 (在 start 流程中通过 receive_json 内循环处理) ──
         elif action == "keywords_decision":
@@ -1333,15 +1458,12 @@ def _summarize_web_timings(node_timings: list[dict]) -> dict:
 
 async def _run_pipeline(websocket, send, state, config, run_metrics=None):
     """ 在独立线程中运行 LangGraph pipeline，通过队列同步到 WebSocket """
-    if not pipeline_lock.acquire(blocking=False):
-        await send({"type": "error", "message": "已有小说生成任务正在运行，请等待其完成"})
-        return
-
     run_metrics = run_metrics or {
         "run_id": f"web-{uuid.uuid4().hex[:8]}",
         "started_at": datetime.now().isoformat(timespec="seconds"),
         "wall_started": time.perf_counter(),
         "pre_pipeline": {},
+        "retry_counter_start": retry_counter.value(),
     }
     q: queue.Queue = queue.Queue()
 
@@ -1423,7 +1545,7 @@ async def _run_pipeline(websocket, send, state, config, run_metrics=None):
                 "wall_seconds": round(pipeline_finished - run_metrics["wall_started"], 3),
                 "pipeline_seconds": round(pipeline_finished - pipeline_started, 3),
                 "approval_wait_seconds": pre_pipeline.get("approval_wait_seconds", 0),
-                "api_retry_count": retry_counter.value(),
+                "api_retry_count": max(0, retry_counter.value() - run_metrics.get("retry_counter_start", 0)),
                 "pre_pipeline": pre_pipeline,
                 "configuration": run_metrics.get("configuration", {}),
                 "pattern_plan": state.get("pattern_plan", {}),
@@ -1461,8 +1583,6 @@ async def _run_pipeline(websocket, send, state, config, run_metrics=None):
             else:
                 q.put({"type": "log", "message": "🎉 全部章节写作完成！", "cls": "success"})
                 q.put({"type": "done"})
-            pipeline_lock.release()
-            generation_active.clear()
 
     thread = threading.Thread(target=runner, daemon=True)
     thread.start()
