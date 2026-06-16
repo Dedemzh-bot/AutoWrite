@@ -44,6 +44,17 @@
   "female_angst_awakening": {
     "name": "女频虐恋觉醒",
     "strong": true,
+    "core_driver": "relationship_angst_awakening",
+    "world_policy": "allow_all",
+    "forbidden_material_drivers": [
+      "male_power_fantasy",
+      "rule_horror_survival",
+      "horror_survival"
+    ],
+    "background_only_drivers": [
+      "world_stage"
+    ],
+    "material_note": "世界观题材默认可套用；随机素材只能作为舞台、人物关系或局部冲突补充，不能替代“伤害-心死-觉醒-追悔”的主线驱动力。",
     "architect": "严格执行已确认的套路契约与逐章节拍计划。女主必须沿着隐忍、心死、平静离开的路径成长；男主必须晚于伤害发生后才逐步察觉真相，并为偏信与伤害承担长期代价。",
     "writer": "使用对比、信息差和具体场景呈现伤害。女主前期可以痛苦隐忍，后期必须越来越平静坚定，禁止重复哭闹解释；男主追悔必须落实为行动和损失。",
     "auditor": "逐项检查当前章节的套路任务、女主情绪状态、男主认知状态和关系变化。缺失当前章节必须完成的事件属于套路执行失败；情绪浓度略弱只列为警告。",

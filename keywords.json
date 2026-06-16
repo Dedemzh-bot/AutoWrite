@@ -1,6 +1,10 @@
 {
   "末日": {
     "description": "末世/废土题材",
+    "material_type": "world_stage",
+    "material_type_label": "世界观舞台",
+    "driver": "world_stage",
+    "usage": "提供故事舞台、社会秩序和生存压力，默认可与任意套路搭配。",
     "keywords": [
       "核辐射变异生态系统",
       "地下避难所文明崩塌",
@@ -16,6 +20,10 @@
   },
   "恐怖": {
     "description": "恐怖/惊悚/悬疑题材",
+    "material_type": "core_driver",
+    "material_type_label": "恐怖生存驱动力",
+    "driver": "horror_survival",
+    "usage": "会把主线推向惊悚、生存和恐惧机制；与部分情感强套路冲突。",
     "keywords": [
       "不可名状的旧日支配者",
       "精神污染蔓延",
@@ -31,6 +39,10 @@
   },
   "修仙": {
     "description": "仙侠/修真题材",
+    "material_type": "world_stage",
+    "material_type_label": "世界观舞台",
+    "driver": "world_stage",
+    "usage": "提供修炼体系、宗门社会和力量等级，默认可作为任意套路的舞台。",
     "keywords": [
       "逆天改命渡劫飞升",
       "上古遗迹传承争夺",
@@ -46,6 +58,10 @@
   },
   "科幻": {
     "description": "科幻/未来题材",
+    "material_type": "world_stage",
+    "material_type_label": "世界观舞台",
+    "driver": "world_stage",
+    "usage": "提供未来技术、星际社会和文明尺度，默认可作为任意套路的舞台。",
     "keywords": [
       "星际殖民舰队远征",
       "人工智能觉醒伦理困境",
@@ -61,6 +77,10 @@
   },
   "历史": {
     "description": "历史/架空/穿越题材",
+    "material_type": "world_stage",
+    "material_type_label": "世界观舞台",
+    "driver": "world_stage",
+    "usage": "提供时代制度、权力结构和文化环境，默认可作为任意套路的舞台。",
     "keywords": [
       "古代科举制度博弈",
       "王朝末期农民起义",
@@ -76,6 +96,10 @@
   },
   "都市": {
     "description": "现代都市/职场题材",
+    "material_type": "world_stage",
+    "material_type_label": "世界观舞台",
+    "driver": "world_stage",
+    "usage": "提供现代社会、职场、豪门或校园等舞台，默认可与任意套路搭配。",
     "keywords": [
       "商业帝国资本博弈",
       "娱乐圈潜规则逆袭",
@@ -91,6 +115,10 @@
   },
   "男频": {
     "description": "男性向爽文要素",
+    "material_type": "audience_driver",
+    "material_type_label": "男频爽文驱动力",
+    "driver": "male_power_fantasy",
+    "usage": "会把主线推向升级、碾压、征服和男性向爽点；与部分女频强套路冲突。",
     "keywords": [
       "扮猪吃虎权贵打脸",
       "商业帝国从零崛起",
@@ -106,6 +134,10 @@
   },
   "女频": {
     "description": "女性向文风要素",
+    "material_type": "relationship_material",
+    "material_type_label": "情感关系素材",
+    "driver": "female_relationship",
+    "usage": "提供情感关系、身份错位、复仇成长等素材，适合情感向套路。",
     "keywords": [
       "白月光替身逆袭",
       "宅斗宫斗权谋布局",

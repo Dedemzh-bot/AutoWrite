@@ -10,7 +10,8 @@ from Nodes import (
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, should_retry_short_draft,
     is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
-    format_pattern_manifest,
+    format_pattern_manifest, filter_material_categories_for_pattern,
+    validate_material_categories_for_pattern,
 )
 
 logger = logging.getLogger("AutoWrite")
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     
     # ======== 步骤2: 词库题材选择 ========
     keywords = []
+    selected_cats = []
     keyword_db = load_keywords()
     if keyword_db:
         print("-" * 50)
@@ -191,8 +193,14 @@ if __name__ == "__main__":
     print(f"   ✅ 创作套路: {patterns.get(story_pattern, patterns['none']).get('name', '无套路')}")
     pattern_manifest = {}
     pattern_plan = {}
+    material_issues = validate_material_categories_for_pattern(story_pattern, selected_cats)
+    if material_issues:
+        print("   ⚠️ 已移除与当前套路冲突的随机素材：")
+        for issue in material_issues:
+            print(f"      - {issue}")
+        selected_cats = filter_material_categories_for_pattern(story_pattern, selected_cats)
+        keywords = pick_keywords(selected_cats, 2, story_pattern) if selected_cats else []
     if is_strong_pattern(story_pattern):
-        keywords = []
         compatible_styles = compatible_styles_for_pattern(story_pattern)
         if writer_style not in compatible_styles:
             writer_style = "default"

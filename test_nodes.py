@@ -404,6 +404,29 @@ class TestFemaleAngstAwakeningPattern(unittest.TestCase):
         self.assertIn("强制写作技巧", pattern["writer"])
         self.assertIn("套路审核规则", pattern["auditor"])
 
+    def test_strong_pattern_allows_world_stages_but_blocks_conflicting_drivers(self):
+        from Nodes import (
+            filter_material_categories_for_pattern,
+            validate_material_categories_for_pattern,
+        )
+
+        self.assertEqual(
+            validate_material_categories_for_pattern(
+                "female_angst_awakening", ["科幻", "修仙", "末日", "历史"]
+            ),
+            [],
+        )
+        issues = validate_material_categories_for_pattern(
+            "female_angst_awakening", ["男频", "恐怖"]
+        )
+        self.assertEqual(len(issues), 2)
+        self.assertEqual(
+            filter_material_categories_for_pattern(
+                "female_angst_awakening", ["科幻", "男频", "女频", "恐怖"]
+            ),
+            ["科幻", "女频"],
+        )
+
     def test_manifest_is_reproducible_and_limits_reproductive_harm(self):
         from Nodes import roll_pattern_manifest, validate_pattern_manifest
 
@@ -501,6 +524,9 @@ class TestWebDefaults(unittest.TestCase):
         self.assertIn('id="patternEnding"', HTML_PAGE)
         self.assertIn('id="washPatternEnding"', HTML_PAGE)
         self.assertIn("请先确认女频虐恋觉醒套路契约", HTML_PAGE)
+        self.assertIn("随机素材库", HTML_PAGE)
+        self.assertIn("isCategoryBlocked", HTML_PAGE)
+        self.assertIn("updateMaterialHint", HTML_PAGE)
 
 
 class TestWebPortSelection(unittest.TestCase):

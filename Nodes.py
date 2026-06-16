@@ -353,6 +353,83 @@ def compatible_styles_for_pattern(pattern_key: str) -> list[str]:
     return list(pattern.get("compatible_styles", []))
 
 
+def _as_list(value) -> list:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def material_rules_for_pattern(pattern_key: str) -> dict:
+    pattern = load_story_patterns().get(pattern_key, {})
+    return {
+        "world_policy": pattern.get("world_policy", "allow_all"),
+        "forbidden_drivers": list(pattern.get("forbidden_material_drivers", [])),
+        "background_only_drivers": list(pattern.get("background_only_drivers", [])),
+        "note": pattern.get("material_note", ""),
+    }
+
+
+def keyword_category_metadata() -> dict:
+    metadata = {}
+    for key, value in load_keywords().items():
+        material_type = value.get("material_type", "world_stage")
+        metadata[key] = {
+            "description": value.get("description", ""),
+            "material_type": material_type,
+            "material_type_label": value.get("material_type_label", {
+                "world_stage": "世界观舞台",
+                "relationship_material": "关系素材",
+                "plot_material": "剧情素材",
+                "core_driver": "主驱动力",
+                "audience_driver": "频道驱动力",
+            }.get(material_type, "素材")),
+            "driver": value.get("driver", ""),
+            "drivers": _as_list(value.get("drivers") or value.get("driver")),
+            "usage": value.get("usage", ""),
+        }
+    return metadata
+
+
+def material_category_conflict_reason(pattern_key: str, category: str) -> str:
+    category_meta = keyword_category_metadata().get(category)
+    if not category_meta:
+        return ""
+    if category_meta.get("material_type") == "world_stage":
+        return ""
+
+    rules = material_rules_for_pattern(pattern_key)
+    forbidden = set(rules.get("forbidden_drivers", []))
+    drivers = set(category_meta.get("drivers", []))
+    if not forbidden.intersection(drivers):
+        return ""
+
+    pattern_name = load_story_patterns().get(pattern_key, {}).get("name", pattern_key)
+    driver_label = category_meta.get("material_type_label", "素材")
+    return (
+        f"{pattern_name}不能让“{category}”这类{driver_label}抢主线；"
+        "世界观舞台仍可自由套用。"
+    )
+
+
+def validate_material_categories_for_pattern(pattern_key: str, categories: list[str]) -> list[str]:
+    issues = []
+    for category in categories or []:
+        reason = material_category_conflict_reason(pattern_key, category)
+        if reason:
+            issues.append(reason)
+    return issues
+
+
+def filter_material_categories_for_pattern(pattern_key: str, categories: list[str]) -> list[str]:
+    return [
+        category
+        for category in (categories or [])
+        if not material_category_conflict_reason(pattern_key, category)
+    ]
+
+
 def roll_pattern_manifest(
     pattern_key: str,
     seed: int | None = None,
@@ -691,10 +768,10 @@ def strong_pattern_outline_content_warnings(
 # Backward-compatible alias for callers that used the original helper name.
 strong_pattern_outline_content_issues = strong_pattern_outline_content_warnings
 
-def pick_keywords(categories: list[str], count: int = 2) -> list[str]:
+def pick_keywords(categories: list[str], count: int = 2, story_pattern: str = "none") -> list[str]:
     keyword_db = load_keywords()
     pool = []
-    for cat in categories:
+    for cat in filter_material_categories_for_pattern(story_pattern, categories):
         if cat in keyword_db and keyword_db[cat].get("keywords"):
             pool.extend(keyword_db[cat]["keywords"])
     if not pool:
@@ -843,7 +920,7 @@ def architect_node(state: NovelState):
     if strong_pattern and validate_pattern_manifest(manifest):
         manifest = roll_pattern_manifest(pattern.get("key", STRONG_PATTERN_KEY))
 
-    keywords = [] if strong_pattern else state.get("keywords", [])
+    keywords = state.get("keywords", [])
     keywords_str = "、".join(keywords) if keywords else "无"
 
     chapters = state.get("target_chapters", DEFAULT_CHAPTERS)
@@ -864,6 +941,8 @@ def architect_node(state: NovelState):
             "不得让后期女主重新反复解释或无代价回头。"
             "请在细纲中清楚描述开篇伤害、最重伤害与反转、女主觉醒过程、"
             "确认的结局方向和已选虐点如何建立前因与后果；允许使用符合剧情的自然措辞。"
+            "若本次随机素材非空，素材只能作为世界观舞台、人物关系或局部冲突补充，"
+            "不得替代强套路的核心驱动力和逐章节拍计划。"
         )
     chapter_req = (
         f"规划严格且仅有{chapters}章的详细细纲，每章正文目标{words_per}字。"

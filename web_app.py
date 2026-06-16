@@ -34,7 +34,8 @@ from Nodes import (
     outline_validation_issues, should_retry_short_draft,
     is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
     validate_pattern_manifest, build_pattern_plan, attach_pattern_plan_to_outlines,
-    strip_pattern_plan_from_outlines,
+    strip_pattern_plan_from_outlines, keyword_category_metadata,
+    material_rules_for_pattern, validate_material_categories_for_pattern,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
@@ -173,7 +174,9 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:180px;overflow-y:auto}
 .cat-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 6px;background:#0d1117;border-radius:4px;cursor:pointer;border:1px solid #30363d;transition:all .15s}
 .cat-item.active{border-color:#58a6ff;background:#1a2332}
+.cat-item.disabled{opacity:.45;cursor:not-allowed}
 .cat-item input{accent-color:#58a6ff}
+.cat-tag{margin-left:auto;color:#8b949e;font-size:10px;white-space:nowrap}
 .scope-row{display:flex;gap:8px;align-items:center}
 .scope-row select,.scope-row input{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px}
 .scope-row input{width:80px}
@@ -257,7 +260,8 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       </div>
     </div>
     <div class="section" id="kwSection">
-      <label>📚 随机词库 (可选多选)</label>
+      <label>📚 随机素材库 (可选多选)</label>
+      <div id="materialHint" style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.5">世界观素材可作为舞台；会抢主线的驱动力素材会按套路自动限制。</div>
       <div class="cat-grid" id="catGrid"></div>
       <div id="kwResult" class="hidden" style="margin-top:6px;font-size:12px;color:#d29922"></div>
       <div class="btn-bar hidden" id="kwBtns">
@@ -398,6 +402,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 
 <script>
 let ws=null,token=0,selectedCats=[];
+let categoryMeta={},patternMeta={};
 let createPatternManifest=null,washPatternManifest=null;
 let createPatternConfirmed=false,washPatternConfirmed=false;
 const agentMap={architect:'dot-architect',writer:'dot-writer',reviewer:'dot-reviewer',summarizer:'dot-summarizer'};
@@ -434,16 +439,59 @@ function loadCategories(){
   sendMsg({action:'get_patterns'});
 }
 
+function escapeHtml(text){
+  return String(text||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function materialRulesFor(pattern){
+  return (patternMeta[pattern]&&patternMeta[pattern].material_rules)||{};
+}
+
+function isCategoryBlocked(category,pattern){
+  let meta=categoryMeta[category]||{};
+  if(meta.material_type==='world_stage')return false;
+  let forbidden=(materialRulesFor(pattern).forbidden_drivers)||[];
+  let drivers=meta.drivers||[meta.driver||''];
+  return drivers.some(driver=>forbidden.includes(driver));
+}
+
+function renderCategories(){
+  let pattern=document.getElementById('storyPattern')?.value||'none';
+  let entries=Object.entries(categoryMeta||{});
+  document.getElementById('catGrid').innerHTML=entries.map(([k,v])=>{
+    let blocked=isCategoryBlocked(k,pattern);
+    let checked=selectedCats.includes(k)&&!blocked?'checked':'';
+    let title=blocked?`${k} 会抢当前套路主线，已禁用`:(v.usage||v.description||'');
+    return `<label class="cat-item ${blocked?'disabled':''}" title="${escapeHtml(title)}">
+      <input type="checkbox" value="${escapeHtml(k)}" ${checked} ${blocked?'disabled':''} onchange="onCatChange()">
+      ${escapeHtml(k)}<span style="color:#8b949e;font-size:10px">${escapeHtml(v.description||'')}</span>
+      <span class="cat-tag">${escapeHtml(v.material_type_label||'素材')}</span>
+    </label>`;
+  }).join('');
+  updateMaterialHint(pattern);
+  onCatChange();
+}
+
+function updateMaterialHint(pattern){
+  let rules=materialRulesFor(pattern);
+  let blocked=Object.entries(categoryMeta||{})
+    .filter(([k])=>isCategoryBlocked(k,pattern))
+    .map(([k])=>k);
+  let note=rules.note||'世界观素材默认可作为舞台；只有会抢主线的驱动力素材会被限制。';
+  if(blocked.length)note+=` 当前套路已禁用：${blocked.join('、')}。`;
+  document.getElementById('materialHint').textContent=note;
+}
+
 function handleMsg(msg){
   switch(msg.type){
     case 'categories':
-      document.getElementById('catGrid').innerHTML=Object.entries(msg.data).map(([k,v],i)=>
-        `<label class="cat-item"><input type="checkbox" value="${k}" onchange="onCatChange()">${k}<span style="color:#8b949e;font-size:10px">${v}</span></label>`
-      ).join('');
+      categoryMeta=msg.data||{};
+      renderCategories();
       break;
     case 'patterns':
-      let patternOptions=Object.entries(msg.data||{}).map(([key,name])=>
-        `<option value="${key}">${name}</option>`
+      patternMeta=msg.data||{};
+      let patternOptions=Object.entries(patternMeta).map(([key,item])=>
+        `<option value="${key}">${escapeHtml(item.name||key)}</option>`
       ).join('');
       for(let id of ['storyPattern','washStoryPattern']){
         let select=document.getElementById(id);
@@ -451,6 +499,7 @@ function handleMsg(msg){
         select.innerHTML=patternOptions;
         select.value=[...select.options].some(option=>option.value===previous)?previous:'none';
       }
+      renderCategories();
       break;
     case 'pattern_manifest_result':
       applyPatternManifest(msg.mode||'create',msg.data||{},false);
@@ -662,6 +711,8 @@ function startPipeline(){
   let customPattern=document.getElementById('customPattern').value.trim();
   if(storyPattern==='custom'&&!customPattern){log('请填写自定义套路要求','warn');return}
   if(storyPattern==='female_angst_awakening'&&!createPatternConfirmed){log('请先确认女频虐恋觉醒套路契约','warn');return}
+  let blockedCats=selectedCats.filter(cat=>isCategoryBlocked(cat,storyPattern));
+  if(blockedCats.length){log('当前套路不支持这些随机素材：'+blockedCats.join('、'),'warn');return}
   document.getElementById('btnStart').disabled=true;
   document.getElementById('approvalBar').classList.add('hidden');
   document.getElementById('progressStatus').textContent='提交中...';
@@ -700,7 +751,10 @@ function onPatternChange(mode){
   toggleCustomPattern(ids.select,mode==='wash'?'washCustomPatternWrap':'customPatternWrap');
   let strong=pattern==='female_angst_awakening';
   document.getElementById(ids.section).classList.toggle('hidden',!strong);
-  if(mode==='create')document.getElementById('kwSection').classList.toggle('hidden',strong);
+  if(mode==='create'){
+    document.getElementById('kwSection').classList.remove('hidden');
+    renderCategories();
+  }
   if(!strong){
     setCompatibleStyles(mode,[]);
     if(mode==='wash'){washPatternManifest=null;washPatternConfirmed=false}
@@ -708,6 +762,7 @@ function onPatternChange(mode){
     document.getElementById(ids.button).disabled=mode==='wash'?!selectedOutlineFile:false;
     return;
   }
+  if(mode==='create')renderCategories();
   rollPatternManifest(mode);
 }
 
@@ -883,13 +938,15 @@ async def ws_handler(websocket: WebSocket):
         data = raw.get("data", {})
 
         if action == "get_categories":
-            db = load_keywords()
-            cats = {k: v.get("description", "") for k, v in db.items()}
-            await send({"type": "categories", "data": cats})
+            await send({"type": "categories", "data": keyword_category_metadata()})
 
         elif action == "get_patterns":
             patterns = {
-                key: value.get("name", key)
+                key: {
+                    "name": value.get("name", key),
+                    "strong": bool(value.get("strong")),
+                    "material_rules": material_rules_for_pattern(key),
+                }
                 for key, value in load_story_patterns().items()
             }
             await send({"type": "patterns", "data": patterns})
@@ -982,11 +1039,6 @@ async def ws_handler(websocket: WebSocket):
         elif action == "refine_confirm":
             # 前端会重新发 start 包含精炼后的 idea
             pass
-        if action == "get_categories":
-            db = load_keywords()
-            cats = {k: v.get("description", "") for k, v in db.items()}
-            await send({"type": "categories", "data": cats})
-
         # ── 启动流水线 ──
         elif action == "start":
             if generation_active.is_set():
@@ -1008,6 +1060,11 @@ async def ws_handler(websocket: WebSocket):
             story_pattern = data.get("story_pattern") or "none"
             custom_pattern = data.get("custom_pattern", "")
             pattern_manifest = data.get("pattern_manifest") or {}
+            material_issues = validate_material_categories_for_pattern(story_pattern, cats)
+            if material_issues:
+                await send({"type": "error", "message": "随机素材与套路冲突：" + "；".join(material_issues)})
+                generation_active.clear()
+                continue
             if is_strong_pattern(story_pattern):
                 manifest_issues = validate_pattern_manifest(pattern_manifest)
                 compatible_styles = compatible_styles_for_pattern(story_pattern)
@@ -1019,7 +1076,6 @@ async def ws_handler(websocket: WebSocket):
                     await send({"type": "error", "message": f"女频虐恋觉醒仅支持写手风格：{', '.join(compatible_styles)}"})
                     generation_active.clear()
                     continue
-                cats = []
             run_metrics["configuration"] = {
                 "target_chapters": target_chapters,
                 "words_per_chapter": words_per_chapter,
@@ -1027,12 +1083,13 @@ async def ws_handler(websocket: WebSocket):
                 "story_pattern": story_pattern,
                 "custom_pattern": custom_pattern,
                 "pattern_manifest": pattern_manifest,
+                "selected_material_categories": cats,
             }
 
             # 抽取关键词
             keywords = []
             if cats:
-                keywords = pick_keywords(cats, 2)
+                keywords = pick_keywords(cats, 2, story_pattern)
                 token_counter += 1
                 await send({"type": "keywords", "data": keywords, "token": token_counter})
 
@@ -1046,7 +1103,7 @@ async def ws_handler(websocket: WebSocket):
                     if resp.get("action") == "keywords_decision":
                         dec = resp.get("data", "accept")
                         if dec == "retry":
-                            keywords = pick_keywords(cats, 2)
+                            keywords = pick_keywords(cats, 2, story_pattern)
                             token_counter += 1
                             await send({"type": "keywords", "data": keywords, "token": token_counter})
                         elif dec == "skip":
