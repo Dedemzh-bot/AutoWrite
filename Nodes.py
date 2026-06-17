@@ -1313,6 +1313,19 @@ def _audit_inputs(state: NovelState) -> dict:
     chapter = state.get("current_chapter", 1)
     outlines = state.get("chapter_outlines", {})
     pattern = resolve_story_pattern(state)
+    total_chapters = len(outlines)
+    is_last = chapter >= total_chapters
+    draft = state.get("current_draft", "")
+    target_words = state.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
+    draft_len = len(draft)
+    
+    if draft_len < target_words * 0.5:
+        hint = f"当前{draft_len}字，严重不足目标{target_words}字，可能被强行截断。"
+    elif draft_len < target_words * 0.85:
+        hint = f"当前{draft_len}字，略低于目标{target_words}字，检查是否有完整收束。"
+    else:
+        hint = f"当前{draft_len}字，已达目标{target_words}字范围。"
+    
     return {
         "world_bible": state.get("world_bible", ""),
         "continuity_state": state.get("continuity_state") or state.get("story_summary", "故事刚刚开始。"),
@@ -1322,8 +1335,11 @@ def _audit_inputs(state: NovelState) -> dict:
             state.get("pattern_plan", {}).get(str(chapter), {})
         ),
         "outline": outlines.get(str(chapter), ""),
-        "next_outline": outlines.get(str(chapter + 1), "这是最后一章。"),
-        "draft": state.get("current_draft", ""),
+        "next_outline": outlines.get(str(chapter + 1), "这是最后的结局章节，必须确保故事完整收束。"),
+        "target_words": target_words,
+        "word_count_hint": hint,
+        "chapter_type": "末尾结局章节 — 必须检查完整性收束，大纲中的终局事件必须全部兑现" if is_last else "中间章节",
+        "draft": draft,
     }
 
 
