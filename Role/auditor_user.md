@@ -17,6 +17,12 @@
 【本章大纲】：
 {outline}
 
+【本章结构化契约】：
+{chapter_contract}
+
+【最终章契约】：
+{finale_contract}
+
 【下一章大纲】：
 {next_outline}
 

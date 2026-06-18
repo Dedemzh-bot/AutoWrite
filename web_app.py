@@ -32,6 +32,7 @@ from Nodes import (
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, normalize_chapter_outlines,
     MODEL_MAX_RETRIES, MODEL_TIMEOUT_SECONDS, invoke_with_retry,
     outline_validation_issues, should_retry_short_draft,
+    route_after_review_decision, build_chapter_contracts, build_finale_contract,
     is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
     validate_pattern_manifest, build_pattern_plan, attach_pattern_plan_to_outlines,
     strip_pattern_plan_from_outlines, keyword_category_metadata,
@@ -85,18 +86,7 @@ workflow.add_conditional_edges("writer", route_after_writer, {
 
 
 def route_after_review(state: NovelState):
-    audit = state.get("audit_report", {})
-    editor = state.get("editor_report", {})
-    outlines = state.get("chapter_outlines", {})
-    need_retry = (
-        audit.get("审核状态") == "不通过" or
-        editor.get("文风评分", 10) < STYLE_PASS_SCORE
-    )
-    if need_retry and state.get("iteration_count", 1) < MAX_REVIEW_ATTEMPTS:
-        return "writer"
-    if state.get("current_chapter", 1) <= len(outlines):
-        return "summarizer"
-    return END
+    return route_after_review_decision(state)
 
 
 workflow.add_conditional_edges("reviewer", route_after_review, {
@@ -1258,6 +1248,11 @@ async def ws_handler(websocket: WebSocket):
                 "pattern_manifest": pattern_manifest,
                 "pattern_plan": {},
                 "continuity_state": "",
+                "story_ledger": {},
+                "ledger_delta": {},
+                "continuity_report": {},
+                "scene_plan": {},
+                "draft_candidates": [],
                 "current_chapter": 1,
                 "iteration_count": 0,
             }
@@ -1395,6 +1390,10 @@ async def ws_handler(websocket: WebSocket):
                 if pattern_plan
                 else base_outlines
             )
+            chapter_contracts = build_chapter_contracts(chapter_outlines)
+            finale_contract = build_finale_contract(
+                chapter_contracts, pattern_manifest
+            )
 
             # 生成洗文新书名
             await send({"type": "log", "message": f"🤖 为《{original_title}》生成洗文新书名...", "cls": "info"})
@@ -1418,6 +1417,8 @@ async def ws_handler(websocket: WebSocket):
                 "outline_file": file_name,
                 "world_bible": outline.get("world_bible", ""),
                 "chapter_outlines": chapter_outlines,
+                "chapter_contracts": chapter_contracts,
+                "finale_contract": finale_contract,
                 "keywords": [],
                 "target_chapters": chapters,
                 "words_per_chapter": words_per_chapter,
@@ -1427,6 +1428,11 @@ async def ws_handler(websocket: WebSocket):
                 "pattern_manifest": pattern_manifest,
                 "pattern_plan": pattern_plan,
                 "continuity_state": "",
+                "story_ledger": {},
+                "ledger_delta": {},
+                "continuity_report": {},
+                "scene_plan": {},
+                "draft_candidates": [],
                 "current_chapter": 1,
                 "iteration_count": 0,
             }

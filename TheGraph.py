@@ -9,6 +9,7 @@ from Nodes import (
     load_keywords, pick_keywords, load_story_patterns,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, should_retry_short_draft,
+    route_after_review_decision,
     is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
     format_pattern_manifest, filter_material_categories_for_pattern,
     validate_material_categories_for_pattern,
@@ -44,22 +45,13 @@ workflow.add_conditional_edges("writer", route_after_writer, {
 
 # 5. 统一路由：审查完去哪？
 def route_after_review(state: NovelState):
-    audit = state.get("audit_report", {})
-    editor = state.get("editor_report", {})
-    outlines = state.get("chapter_outlines", {})
-    
-    need_retry = (
-        audit.get("审核状态") == "不通过" or
-        editor.get("文风评分", 10) < STYLE_PASS_SCORE
-    )
-    if need_retry and state.get("iteration_count", 1) < MAX_REVIEW_ATTEMPTS:
+    decision = route_after_review_decision(state)
+    if decision == "writer":
+        audit = state.get("audit_report", {})
+        editor = state.get("editor_report", {})
         logger.warning("   ⚠️ 审稿退稿 审计:%s 评分:%d/10 → 发回写手重写",
                       audit.get("审核状态"), editor.get("文风评分", 0))
-        return "writer"
-    
-    if state.get("current_chapter", 1) <= len(outlines):
-        return "summarizer"
-    return END
+    return decision
 
 workflow.add_conditional_edges("reviewer", route_after_review, {
     "writer": "writer",
@@ -234,6 +226,11 @@ if __name__ == "__main__":
         "pattern_manifest": pattern_manifest,
         "pattern_plan": pattern_plan,
         "continuity_state": "",
+        "story_ledger": {},
+        "ledger_delta": {},
+        "continuity_report": {},
+        "scene_plan": {},
+        "draft_candidates": [],
         "current_chapter": 1,
         "iteration_count": 0
     }

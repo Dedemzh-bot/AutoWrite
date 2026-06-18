@@ -102,18 +102,7 @@ def build_timed_graph(timings: list[dict], run_info: dict):
     )
 
     def route_after_review(state):
-        audit = state.get("audit_report", {})
-        editor = state.get("editor_report", {})
-        outlines = state.get("chapter_outlines", {})
-        need_retry = (
-            audit.get("审核状态") == "不通过"
-            or editor.get("文风评分", 10) < Nodes.STYLE_PASS_SCORE
-        )
-        if need_retry and state.get("iteration_count", 1) < Nodes.MAX_REVIEW_ATTEMPTS:
-            return "writer"
-        if state.get("current_chapter", 1) <= len(outlines):
-            return "summarizer"
-        return END
+        return Nodes.route_after_review_decision(state)
 
     workflow.add_conditional_edges(
         "reviewer",
@@ -260,6 +249,9 @@ def main():
         "pattern_manifest": pattern_manifest,
         "pattern_plan": {},
         "continuity_state": "",
+        "story_ledger": {},
+        "ledger_delta": {},
+        "continuity_report": {},
         "current_chapter": 1,
         "iteration_count": 0,
     }
@@ -297,11 +289,16 @@ def main():
     excessive_reviews = {
         chapter: count
         for chapter, count in review_counts.items()
-        if count > Nodes.MAX_REVIEW_ATTEMPTS
+        if count > (
+            Nodes.MAX_FINALE_REVIEW_ATTEMPTS
+            if chapter == args.chapters
+            else Nodes.MAX_REVIEW_ATTEMPTS + Nodes.MAX_CONTINUITY_REPAIR_ATTEMPTS
+        )
     }
     if excessive_reviews:
         run_info["execution_issues"].append(
-            f"检测到章节审核次数超过{Nodes.MAX_REVIEW_ATTEMPTS}次：{excessive_reviews}"
+            "检测到章节审核次数超过普通章4稿+2次连续性修复/最终章6稿限制："
+            f"{excessive_reviews}"
         )
 
     novel_title = run_info.get("novel_title")
