@@ -114,6 +114,10 @@ llm_refine = ChatOpenAI(
     temperature=0.5,
     timeout=MODEL_TIMEOUT_SECONDS,
     max_retries=MODEL_MAX_RETRIES,
+    max_tokens=4096,
+    extra_body={
+        "thinking": {"type": "disabled"},
+    },
 )
 
 REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子精炼为完整的故事设定。

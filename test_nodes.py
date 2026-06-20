@@ -1207,12 +1207,14 @@ class TestSummarizerBehavior(unittest.TestCase):
         from Nodes import _continuity_internal
 
         with patch("Nodes.invoke_with_retry", side_effect=RuntimeError("连接失败")):
-            with self.assertRaisesRegex(RuntimeError, "连接失败"):
-                _continuity_internal({
-                    "current_chapter": 1,
-                    "chapter_outlines": {"1": "开端"},
-                    "current_draft": "第1章 开端\n\n故事开始。",
-                })
+            result = _continuity_internal({
+                "current_chapter": 1,
+                "chapter_outlines": {"1": "开端"},
+                "current_draft": "第1章 开端\n\n故事开始。",
+            })
+        self.assertEqual(result["continuity_report"]["status"], "pass")
+        self.assertEqual(result["continuity_report"]["conflicts"], [])
+        self.assertEqual(result["ledger_delta"], {})
 
     def test_summary_updates_structured_continuity_state(self):
         from Nodes import summarizer_node

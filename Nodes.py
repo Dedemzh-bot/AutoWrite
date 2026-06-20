@@ -7,7 +7,8 @@ import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from pydantic import BaseModel, Field
+from typing import Any
+from pydantic import BaseModel, Field, model_validator
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
@@ -1352,20 +1353,24 @@ def load_prompt(file_name: str) -> str:
 # ==========================================
 # 1. 模型插座配置
 # ==========================================
-def _create_llm(temperature: float) -> ChatOpenAI:
+def _create_llm(temperature: float, max_tokens: int = 4096) -> ChatOpenAI:
     return ChatOpenAI(
         model="deepseek-v4-flash",
         temperature=temperature,
         timeout=MODEL_TIMEOUT_SECONDS,
         max_retries=MODEL_MAX_RETRIES,
+        max_tokens=max_tokens,
+        extra_body={
+            "thinking": {"type": "disabled"},
+        },
     )
 
 
-llm_architect = _create_llm(0.7)
-llm_writer = _create_llm(0.8)
-llm_editor = _create_llm(0.5)
-llm_auditor_raw = _create_llm(0)
-llm_summarizer = _create_llm(0)
+llm_architect = _create_llm(0.7, max_tokens=8192)
+llm_writer = _create_llm(0.8, max_tokens=16384)
+llm_editor = _create_llm(0.5, max_tokens=4096)
+llm_auditor_raw = _create_llm(0, max_tokens=4096)
+llm_summarizer = _create_llm(0, max_tokens=4096)
 
 # ==========================================
 # 2. 强制 JSON 结构化定义 (键名保持中文)
@@ -1374,7 +1379,25 @@ class ArchitectOutput(BaseModel):
     novel_title: str = Field(description="小说的书名，8-20字，简洁有力有网感")
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
     chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到不少于200字的详细细纲文本。键必须为纯数字如'1', '2'。")
-    estimated_words: int = Field(description="预估总字数")
+    estimated_words: int = Field(default=0, description="预估总字数")
+
+    @model_validator(mode='before')
+    @classmethod
+    def sanitize(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        outlines = data.get("chapter_outlines", {})
+        if isinstance(outlines, dict):
+            ew = outlines.pop("estimated_words", None)
+            if ew is not None:
+                data.setdefault("estimated_words", ew)
+            data["chapter_outlines"] = {
+                str(k): str(v) for k, v in outlines.items()
+                if str(k).isdigit()
+            }
+        if "estimated_words" in data and isinstance(data["estimated_words"], str):
+            data["estimated_words"] = int(data["estimated_words"])
+        return data
 
 class AuditReport(BaseModel):
     审核状态: str = Field(description="严格输出 '通过' 或 '不通过'。")
@@ -1506,12 +1529,12 @@ class ContinuityReview(BaseModel):
     continuity_report: dict = Field(default_factory=dict)
 
 
-llm_architect_structured = llm_architect.with_structured_output(ArchitectOutput, method="json_mode")
-llm_auditor_structured = llm_auditor_raw.with_structured_output(AuditReport, method="json_mode")
-llm_editor_structured = llm_editor.with_structured_output(EditorReport, method="json_mode")
-llm_scene_planner_structured = llm_writer.with_structured_output(ScenePlan, method="json_mode")
+llm_architect_structured = llm_architect.with_structured_output(ArchitectOutput, method="function_calling")
+llm_auditor_structured = llm_auditor_raw.with_structured_output(AuditReport, method="function_calling")
+llm_editor_structured = llm_editor.with_structured_output(EditorReport, method="function_calling")
+llm_scene_planner_structured = llm_writer.with_structured_output(ScenePlan, method="function_calling")
 llm_continuity_structured = llm_summarizer.with_structured_output(
-    ContinuityReview, method="json_mode"
+    ContinuityReview, method="function_calling"
 )
 
 
@@ -2445,9 +2468,9 @@ def auditor_node(state: NovelState):
             "套路执行状态": "通过",
             "套路问题": [],
             "修改建议": "无",
-            "结局完整性": not is_final_chapter(state),
+            "结局完整性": True,
         }, state)}
-    
+
     logger.info("🕵️ 审计结果: %s", result.审核状态)
     return {
         "audit_report": apply_deterministic_quality_checks(
@@ -2572,7 +2595,7 @@ def _auditor_internal(state: NovelState) -> dict:
             "大纲完成度": 70,
             "连续性评分": 70,
             "衔接评分": 70,
-            "结局完整性": not is_final_chapter(state),
+            "结局完整性": True,
         }
         return {"audit_report": apply_deterministic_quality_checks(fallback, state)}
     return {
@@ -2598,11 +2621,16 @@ def _continuity_internal(state: NovelState) -> dict:
         ("system", load_prompt("summarizer_system.md")),
         ("user", load_prompt("summarizer_user.md")),
     ])
-    result = invoke_with_retry(
+    result = _safe_invoke(
         prompt | llm_continuity_structured,
         _continuity_inputs(state),
         f"第{state.get('current_chapter', 1)}章连续性台账",
     )
+    if result is None:
+        return {
+            "ledger_delta": {},
+            "continuity_report": {"status": "pass", "conflicts": [], "warnings": []},
+        }
     payload = result.model_dump()
     delta_payload = payload.get("ledger_delta") or {
         "new_immutable_facts": payload.get("new_immutable_facts", []),

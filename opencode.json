@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "siliconflow/deepseek-ai/DeepSeek-V3.1-Pro",
+  "small_model": "siliconflow/deepseek-ai/DeepSeek-V3.1-Pro",
+  "provider": {
+    "siliconflow": {
+      "options": {
+        "apiKey": "sk-voifehkrvyyjvtvlpgcgmimicabzbguinhybmcmvizatvvuv",
+        "baseURL": "https://api.siliconflow.cn/v1"
+      }
+    },
+    "deepseek": {
+      "options": {
+        "apiKey": "sk-aa64bdd54c3941dfbeea2e18ee74a352",
+        "baseURL": "https://api.deepseek.com/v1"
+      }
+    }
+  }
+}
