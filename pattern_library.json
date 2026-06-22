@@ -1,0 +1,3259 @@
+{
+  "schema_version": 2,
+  "patterns": {
+    "none": {
+      "id": "none",
+      "name": "无固定主套路",
+      "category": "自由",
+      "strong": false,
+      "tags": [],
+      "architect": "按用户设定和人物因果自然组织故事。",
+      "writer": "按大纲和人物动机自然推进。",
+      "auditor": "只检查大纲、逻辑、连续性和结局完整性。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "custom": {
+      "id": "custom",
+      "name": "自定义主套路",
+      "category": "自定义",
+      "strong": false,
+      "tags": [
+        "自定义"
+      ],
+      "architect": "提炼用户提供的主线、阶段目标、必备桥段和禁忌。",
+      "writer": "执行用户确认的自定义要求，但不得破坏大纲和连续性。",
+      "auditor": "检查自定义要求是否兑现；无法确定的偏好只作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "waste_counterattack": {
+      "id": "waste_counterattack",
+      "name": "废柴逆袭",
+      "category": "升级",
+      "strong": false,
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "architect": "以“从被否定到凭真实积累翻盘”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“从被否定到凭真实积累翻盘”，不得用旁白直接宣布结果。",
+      "auditor": "检查“从被否定到凭真实积累翻盘”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "return_of_king": {
+      "id": "return_of_king",
+      "name": "王者归来",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "回归",
+        "掉马"
+      ],
+      "architect": "以“隐藏实力逐层揭开并清算旧账”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“隐藏实力逐层揭开并清算旧账”，不得用旁白直接宣布结果。",
+      "auditor": "检查“隐藏实力逐层揭开并清算旧账”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "hidden_boss": {
+      "id": "hidden_boss",
+      "name": "隐藏大佬",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "architect": "以“普通身份与真实权能形成反差”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“普通身份与真实权能形成反差”，不得用旁白直接宣布结果。",
+      "auditor": "检查“普通身份与真实权能形成反差”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "system_arrival": {
+      "id": "system_arrival",
+      "name": "系统降临",
+      "category": "系统",
+      "strong": false,
+      "tags": [
+        "系统",
+        "任务"
+      ],
+      "architect": "以“任务、奖励与代价推动阶段成长”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“任务、奖励与代价推动阶段成长”，不得用旁白直接宣布结果。",
+      "auditor": "检查“任务、奖励与代价推动阶段成长”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "time_travel": {
+      "id": "time_travel",
+      "name": "穿越异世",
+      "category": "穿越",
+      "strong": false,
+      "tags": [
+        "穿越",
+        "世界"
+      ],
+      "architect": "以“利用有限认知适应新制度”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“利用有限认知适应新制度”，不得用旁白直接宣布结果。",
+      "auditor": "检查“利用有限认知适应新制度”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "rebirth_revenge": {
+      "id": "rebirth_revenge",
+      "name": "重生复仇",
+      "category": "复仇",
+      "strong": false,
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "architect": "以“前世信息优势与蝴蝶效应并行”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“前世信息优势与蝴蝶效应并行”，不得用旁白直接宣布结果。",
+      "auditor": "检查“前世信息优势与蝴蝶效应并行”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "broken_engagement": {
+      "id": "broken_engagement",
+      "name": "退婚逆袭",
+      "category": "关系",
+      "strong": false,
+      "tags": [
+        "退婚",
+        "打脸"
+      ],
+      "architect": "以“关系决裂后以成长重建价值”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“关系决裂后以成长重建价值”，不得用旁白直接宣布结果。",
+      "auditor": "检查“关系决裂后以成长重建价值”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "son_in_law": {
+      "id": "son_in_law",
+      "name": "赘婿翻身",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "赘婿",
+        "逆袭"
+      ],
+      "architect": "以“低位身份下积蓄资源与话语权”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“低位身份下积蓄资源与话语权”，不得用旁白直接宣布结果。",
+      "auditor": "检查“低位身份下积蓄资源与话语权”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "prison_return": {
+      "id": "prison_return",
+      "name": "出狱归来",
+      "category": "复仇",
+      "strong": false,
+      "tags": [
+        "回归",
+        "旧案"
+      ],
+      "architect": "以“查清入狱真相并重建生活”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“查清入狱真相并重建生活”，不得用旁白直接宣布结果。",
+      "auditor": "检查“查清入狱真相并重建生活”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "terminal_countdown": {
+      "id": "terminal_countdown",
+      "name": "绝症倒计时",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "绝症",
+        "选择"
+      ],
+      "architect": "以“有限时间迫使人物重新排序人生”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“有限时间迫使人物重新排序人生”，不得用旁白直接宣布结果。",
+      "auditor": "检查“有限时间迫使人物重新排序人生”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "portable_space": {
+      "id": "portable_space",
+      "name": "随身空间经营",
+      "category": "经营",
+      "strong": false,
+      "tags": [
+        "空间",
+        "经营"
+      ],
+      "architect": "以“资源经营与现实关系同步升级”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“资源经营与现实关系同步升级”，不得用旁白直接宣布结果。",
+      "auditor": "检查“资源经营与现实关系同步升级”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "soul_swap": {
+      "id": "soul_swap",
+      "name": "灵魂互换",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "互换",
+        "反差"
+      ],
+      "architect": "以“借他人身份看见偏见与秘密”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“借他人身份看见偏见与秘密”，不得用旁白直接宣布结果。",
+      "auditor": "检查“借他人身份看见偏见与秘密”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "book_transmigration": {
+      "id": "book_transmigration",
+      "name": "穿书改命",
+      "category": "穿书",
+      "strong": false,
+      "tags": [
+        "穿书",
+        "改命"
+      ],
+      "architect": "以“已知剧情逐渐失效后的主动选择”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“已知剧情逐渐失效后的主动选择”，不得用旁白直接宣布结果。",
+      "auditor": "检查“已知剧情逐渐失效后的主动选择”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "quick_transmigration": {
+      "id": "quick_transmigration",
+      "name": "快穿任务",
+      "category": "任务",
+      "strong": false,
+      "tags": [
+        "快穿",
+        "任务"
+      ],
+      "architect": "以“单元任务推进总目标与人格变化”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“单元任务推进总目标与人格变化”，不得用旁白直接宣布结果。",
+      "auditor": "检查“单元任务推进总目标与人格变化”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "fake_death": {
+      "id": "fake_death",
+      "name": "假死脱身",
+      "category": "悬疑",
+      "strong": false,
+      "tags": [
+        "假死",
+        "身份"
+      ],
+      "architect": "以“旧身份死亡后重建新局”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“旧身份死亡后重建新局”，不得用旁白直接宣布结果。",
+      "auditor": "检查“旧身份死亡后重建新局”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "exile_survival": {
+      "id": "exile_survival",
+      "name": "流放求生",
+      "category": "生存",
+      "strong": false,
+      "tags": [
+        "流放",
+        "经营"
+      ],
+      "architect": "以“恶劣环境中建立生存共同体”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“恶劣环境中建立生存共同体”，不得用旁白直接宣布结果。",
+      "auditor": "检查“恶劣环境中建立生存共同体”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "bankruptcy_rebuild": {
+      "id": "bankruptcy_rebuild",
+      "name": "破产重来",
+      "category": "事业",
+      "strong": false,
+      "tags": [
+        "破产",
+        "创业"
+      ],
+      "architect": "以“从资源清零到重建信用”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“从资源清零到重建信用”，不得用旁白直接宣布结果。",
+      "auditor": "检查“从资源清零到重建信用”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "public_face_slap": {
+      "id": "public_face_slap",
+      "name": "公开打脸",
+      "category": "爽点",
+      "strong": false,
+      "tags": [
+        "打脸",
+        "证据"
+      ],
+      "architect": "以“先建立对方确信再用证据翻盘”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“先建立对方确信再用证据翻盘”，不得用旁白直接宣布结果。",
+      "auditor": "检查“先建立对方确信再用证据翻盘”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "identity_reveal": {
+      "id": "identity_reveal",
+      "name": "身份掉马",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "掉马",
+        "反转"
+      ],
+      "architect": "以“身份揭晓改变关系和权力结构”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“身份揭晓改变关系和权力结构”，不得用旁白直接宣布结果。",
+      "auditor": "检查“身份揭晓改变关系和权力结构”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "evidence_counter": {
+      "id": "evidence_counter",
+      "name": "证据反杀",
+      "category": "悬疑",
+      "strong": false,
+      "tags": [
+        "证据",
+        "反杀"
+      ],
+      "architect": "以“完整证据链在关键场合闭环”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“完整证据链在关键场合闭环”，不得用旁白直接宣布结果。",
+      "auditor": "检查“完整证据链在关键场合闭环”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "heroic_rescue": {
+      "id": "heroic_rescue",
+      "name": "危机救援",
+      "category": "行动",
+      "strong": false,
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "architect": "以“能力在高压行动中被验证”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“能力在高压行动中被验证”，不得用旁白直接宣布结果。",
+      "auditor": "检查“能力在高压行动中被验证”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "misunderstanding_truth": {
+      "id": "misunderstanding_truth",
+      "name": "误会解开",
+      "category": "关系",
+      "strong": false,
+      "tags": [
+        "误会",
+        "真相"
+      ],
+      "architect": "以“信息来源、选择与伤害逐层澄清”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“信息来源、选择与伤害逐层澄清”，不得用旁白直接宣布结果。",
+      "auditor": "检查“信息来源、选择与伤害逐层澄清”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "multiple_vests": {
+      "id": "multiple_vests",
+      "name": "多重马甲",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "马甲",
+        "掉马"
+      ],
+      "architect": "以“不同身份分别承担功能并有序揭晓”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“不同身份分别承担功能并有序揭晓”，不得用旁白直接宣布结果。",
+      "auditor": "检查“不同身份分别承担功能并有序揭晓”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "secret_realm": {
+      "id": "secret_realm",
+      "name": "秘境夺宝",
+      "category": "冒险",
+      "strong": false,
+      "tags": [
+        "秘境",
+        "资源"
+      ],
+      "architect": "以“规则探索、资源争夺与队伍博弈”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“规则探索、资源争夺与队伍博弈”，不得用旁白直接宣布结果。",
+      "auditor": "检查“规则探索、资源争夺与队伍博弈”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "auction_war": {
+      "id": "auction_war",
+      "name": "拍卖争夺",
+      "category": "商业",
+      "strong": false,
+      "tags": [
+        "拍卖",
+        "资源"
+      ],
+      "architect": "以“竞价背后是情报和势力较量”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“竞价背后是情报和势力较量”，不得用旁白直接宣布结果。",
+      "auditor": "检查“竞价背后是情报和势力较量”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "tournament": {
+      "id": "tournament",
+      "name": "比武扬名",
+      "category": "竞技",
+      "strong": false,
+      "tags": [
+        "竞技",
+        "升级"
+      ],
+      "architect": "以“每轮对手验证不同能力短板”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“每轮对手验证不同能力短板”，不得用旁白直接宣布结果。",
+      "auditor": "检查“每轮对手验证不同能力短板”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "assessment": {
+      "id": "assessment",
+      "name": "考核晋级",
+      "category": "竞技",
+      "strong": false,
+      "tags": [
+        "考核",
+        "成长"
+      ],
+      "architect": "以“制度化关卡推动身份跃迁”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“制度化关卡推动身份跃迁”，不得用旁白直接宣布结果。",
+      "auditor": "检查“制度化关卡推动身份跃迁”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "family_banquet": {
+      "id": "family_banquet",
+      "name": "家族宴会翻盘",
+      "category": "豪门",
+      "strong": false,
+      "tags": [
+        "家族",
+        "打脸"
+      ],
+      "architect": "以“公开场合完成关系与利益重排”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“公开场合完成关系与利益重排”，不得用旁白直接宣布结果。",
+      "auditor": "检查“公开场合完成关系与利益重排”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "conspiracy_break": {
+      "id": "conspiracy_break",
+      "name": "阴谋破局",
+      "category": "权谋",
+      "strong": false,
+      "tags": [
+        "阴谋",
+        "证据"
+      ],
+      "architect": "以“从异常结果逆推利益链”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“从异常结果逆推利益链”，不得用旁白直接宣布结果。",
+      "auditor": "检查“从异常结果逆推利益链”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "desperate_counterkill": {
+      "id": "desperate_counterkill",
+      "name": "绝境反杀",
+      "category": "行动",
+      "strong": false,
+      "tags": [
+        "绝境",
+        "反杀"
+      ],
+      "architect": "以“依靠前置资源在极限条件翻盘”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“依靠前置资源在极限条件翻盘”，不得用旁白直接宣布结果。",
+      "auditor": "检查“依靠前置资源在极限条件翻盘”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "undercover": {
+      "id": "undercover",
+      "name": "卧底潜伏",
+      "category": "悬疑",
+      "strong": false,
+      "tags": [
+        "卧底",
+        "身份"
+      ],
+      "architect": "以“双重身份与信任成本持续升级”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“双重身份与信任成本持续升级”，不得用旁白直接宣布结果。",
+      "auditor": "检查“双重身份与信任成本持续升级”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "kinship_reveal": {
+      "id": "kinship_reveal",
+      "name": "认亲风波",
+      "category": "家庭",
+      "strong": false,
+      "tags": [
+        "认亲",
+        "身份"
+      ],
+      "architect": "以“血缘、法律和情感归属发生冲突”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“血缘、法律和情感归属发生冲突”，不得用旁白直接宣布结果。",
+      "auditor": "检查“血缘、法律和情感归属发生冲突”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "amnesia": {
+      "id": "amnesia",
+      "name": "失忆追真",
+      "category": "悬疑",
+      "strong": false,
+      "tags": [
+        "失忆",
+        "真相"
+      ],
+      "architect": "以“用证据而非直觉重建过去”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“用证据而非直觉重建过去”，不得用旁白直接宣布结果。",
+      "auditor": "检查“用证据而非直觉重建过去”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "substitute_love": {
+      "id": "substitute_love",
+      "name": "替身觉醒",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "替身",
+        "觉醒"
+      ],
+      "architect": "以“停止扮演他人后重建自我”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“停止扮演他人后重建自我”，不得用旁白直接宣布结果。",
+      "auditor": "检查“停止扮演他人后重建自我”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "wife_chasing": {
+      "id": "wife_chasing",
+      "name": "追妻火葬场",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "追妻",
+        "悔悟"
+      ],
+      "architect": "以“伤害、离开、代价和边界依次成立”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“伤害、离开、代价和边界依次成立”，不得用旁白直接宣布结果。",
+      "auditor": "检查“伤害、离开、代价和边界依次成立”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "husband_chasing": {
+      "id": "husband_chasing",
+      "name": "追夫火葬场",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "追夫",
+        "悔悟"
+      ],
+      "architect": "以“性转关系中的伤害与追悔闭环”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“性转关系中的伤害与追悔闭环”，不得用旁白直接宣布结果。",
+      "auditor": "检查“性转关系中的伤害与追悔闭环”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "contract_love": {
+      "id": "contract_love",
+      "name": "契约恋爱",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "契约",
+        "恋爱"
+      ],
+      "architect": "以“规则边界在共同经历中改变”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“规则边界在共同经历中改变”，不得用旁白直接宣布结果。",
+      "auditor": "检查“规则边界在共同经历中改变”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "marriage_first": {
+      "id": "marriage_first",
+      "name": "先婚后爱",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "婚姻",
+        "成长"
+      ],
+      "architect": "以“从利益合作到可见信任积累”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“从利益合作到可见信任积累”，不得用旁白直接宣布结果。",
+      "auditor": "检查“从利益合作到可见信任积累”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [
+        "strong_rule_horror"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "second_chance": {
+      "id": "second_chance",
+      "name": "破镜重圆",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "重逢",
+        "修复"
+      ],
+      "architect": "以“先解决旧伤再决定是否重建”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“先解决旧伤再决定是否重建”，不得用旁白直接宣布结果。",
+      "auditor": "检查“先解决旧伤再决定是否重建”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "true_fake_heir": {
+      "id": "true_fake_heir",
+      "name": "真假千金",
+      "category": "身份",
+      "strong": false,
+      "tags": [
+        "千金",
+        "身份"
+      ],
+      "architect": "以“身份错位引发家庭与资源重排”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“身份错位引发家庭与资源重排”，不得用旁白直接宣布结果。",
+      "auditor": "检查“身份错位引发家庭与资源重排”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "runaway_pregnancy": {
+      "id": "runaway_pregnancy",
+      "name": "带球跑",
+      "category": "情感",
+      "strong": false,
+      "tags": [
+        "亲子",
+        "分离"
+      ],
+      "architect": "以“隐瞒原因、责任与边界必须合理”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“隐瞒原因、责任与边界必须合理”，不得用旁白直接宣布结果。",
+      "auditor": "检查“隐瞒原因、责任与边界必须合理”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "cute_child": {
+      "id": "cute_child",
+      "name": "萌宝助攻",
+      "category": "家庭",
+      "strong": false,
+      "tags": [
+        "萌宝",
+        "亲情"
+      ],
+      "architect": "以“孩子推动关系但不替成人做决定”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“孩子推动关系但不替成人做决定”，不得用旁白直接宣布结果。",
+      "auditor": "检查“孩子推动关系但不替成人做决定”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [
+        "strong_rule_horror"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "xianxia_progression": {
+      "id": "xianxia_progression",
+      "name": "修仙升级",
+      "category": "升级",
+      "strong": false,
+      "tags": [
+        "修仙",
+        "升级"
+      ],
+      "architect": "以“境界、资源、地图和责任同步扩张”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“境界、资源、地图和责任同步扩张”，不得用旁白直接宣布结果。",
+      "auditor": "检查“境界、资源、地图和责任同步扩张”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "fallen_genius": {
+      "id": "fallen_genius",
+      "name": "天才陨落再起",
+      "category": "升级",
+      "strong": false,
+      "tags": [
+        "天才",
+        "逆袭"
+      ],
+      "architect": "以“失去旧优势后重建能力体系”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“失去旧优势后重建能力体系”，不得用旁白直接宣布结果。",
+      "auditor": "检查“失去旧优势后重建能力体系”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "inheritance_trial": {
+      "id": "inheritance_trial",
+      "name": "传承试炼",
+      "category": "冒险",
+      "strong": false,
+      "tags": [
+        "传承",
+        "试炼"
+      ],
+      "architect": "以“获得力量必须通过价值选择”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“获得力量必须通过价值选择”，不得用旁白直接宣布结果。",
+      "auditor": "检查“获得力量必须通过价值选择”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "sect_rise": {
+      "id": "sect_rise",
+      "name": "宗门崛起",
+      "category": "经营",
+      "strong": false,
+      "tags": [
+        "宗门",
+        "经营"
+      ],
+      "architect": "以“人才、资源、制度和外敌共同推进”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“人才、资源、制度和外敌共同推进”，不得用旁白直接宣布结果。",
+      "auditor": "检查“人才、资源、制度和外敌共同推进”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "demon_conversion": {
+      "id": "demon_conversion",
+      "name": "正魔立场反转",
+      "category": "修仙",
+      "strong": false,
+      "tags": [
+        "正邪",
+        "反转"
+      ],
+      "architect": "以“阵营标签与真实行为形成冲突”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“阵营标签与真实行为形成冲突”，不得用旁白直接宣布结果。",
+      "auditor": "检查“阵营标签与真实行为形成冲突”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "urban_doctor": {
+      "id": "urban_doctor",
+      "name": "都市神医",
+      "category": "都市",
+      "strong": false,
+      "tags": [
+        "医术",
+        "逆袭"
+      ],
+      "architect": "以“专业救治带出利益链与身份线”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“专业救治带出利益链与身份线”，不得用旁白直接宣布结果。",
+      "auditor": "检查“专业救治带出利益链与身份线”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "veteran_return": {
+      "id": "veteran_return",
+      "name": "兵王归来",
+      "category": "都市",
+      "strong": false,
+      "tags": [
+        "兵王",
+        "回归"
+      ],
+      "architect": "以“旧能力进入现代秩序后的克制使用”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“旧能力进入现代秩序后的克制使用”，不得用旁白直接宣布结果。",
+      "auditor": "检查“旧能力进入现代秩序后的克制使用”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "business_empire": {
+      "id": "business_empire",
+      "name": "商业帝国",
+      "category": "事业",
+      "strong": false,
+      "tags": [
+        "商业",
+        "成长"
+      ],
+      "architect": "以“产品、现金流、团队和资本博弈”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“产品、现金流、团队和资本博弈”，不得用旁白直接宣布结果。",
+      "auditor": "检查“产品、现金流、团队和资本博弈”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "entertainment_rise": {
+      "id": "entertainment_rise",
+      "name": "娱乐圈逆袭",
+      "category": "事业",
+      "strong": false,
+      "tags": [
+        "娱乐圈",
+        "掉马"
+      ],
+      "architect": "以“作品能力与舆论资本双线推进”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“作品能力与舆论资本双线推进”，不得用旁白直接宣布结果。",
+      "auditor": "检查“作品能力与舆论资本双线推进”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "official_career": {
+      "id": "official_career",
+      "name": "官场沉浮",
+      "category": "权谋",
+      "strong": false,
+      "tags": [
+        "官场",
+        "制度"
+      ],
+      "architect": "以“程序、民意、利益和责任相互制衡”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“程序、民意、利益和责任相互制衡”，不得用旁白直接宣布结果。",
+      "auditor": "检查“程序、民意、利益和责任相互制衡”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "historical_hegemony": {
+      "id": "historical_hegemony",
+      "name": "历史争霸",
+      "category": "历史",
+      "strong": false,
+      "tags": [
+        "争霸",
+        "权谋"
+      ],
+      "architect": "以“地盘、财政、军队和合法性共同扩张”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“地盘、财政、军队和合法性共同扩张”，不得用旁白直接宣布结果。",
+      "auditor": "检查“地盘、财政、军队和合法性共同扩张”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "court_intrigue": {
+      "id": "court_intrigue",
+      "name": "宫斗夺权",
+      "category": "古言",
+      "strong": false,
+      "tags": [
+        "宫斗",
+        "权谋"
+      ],
+      "architect": "以“信息、人心和制度决定胜负”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“信息、人心和制度决定胜负”，不得用旁白直接宣布结果。",
+      "auditor": "检查“信息、人心和制度决定胜负”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "house_intrigue": {
+      "id": "house_intrigue",
+      "name": "宅斗自救",
+      "category": "古言",
+      "strong": false,
+      "tags": [
+        "宅斗",
+        "经营"
+      ],
+      "architect": "以“财产、名分与家族规则逐步破局”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“财产、名分与家族规则逐步破局”，不得用旁白直接宣布结果。",
+      "auditor": "检查“财产、名分与家族规则逐步破局”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "farming_management": {
+      "id": "farming_management",
+      "name": "种田经营",
+      "category": "经营",
+      "strong": false,
+      "tags": [
+        "种田",
+        "经营"
+      ],
+      "architect": "以“生产、交易、社区关系形成增长循环”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“生产、交易、社区关系形成增长循环”，不得用旁白直接宣布结果。",
+      "auditor": "检查“生产、交易、社区关系形成增长循环”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [
+        "strong_infinite_dungeon"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "apocalypse_survival": {
+      "id": "apocalypse_survival",
+      "name": "末世求生",
+      "category": "末日",
+      "strong": false,
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "architect": "以“物资、规则、队伍和人性持续受压”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“物资、规则、队伍和人性持续受压”，不得用旁白直接宣布结果。",
+      "auditor": "检查“物资、规则、队伍和人性持续受压”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "base_building": {
+      "id": "base_building",
+      "name": "基地建设",
+      "category": "末日",
+      "strong": false,
+      "tags": [
+        "基地",
+        "经营"
+      ],
+      "architect": "以“安全、生产、人口与制度同步建设”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“安全、生产、人口与制度同步建设”，不得用旁白直接宣布结果。",
+      "auditor": "检查“安全、生产、人口与制度同步建设”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "interstellar_mecha": {
+      "id": "interstellar_mecha",
+      "name": "星际机甲",
+      "category": "科幻",
+      "strong": false,
+      "tags": [
+        "机甲",
+        "军校"
+      ],
+      "architect": "以“训练、战斗、团队和文明危机升级”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“训练、战斗、团队和文明危机升级”，不得用旁白直接宣布结果。",
+      "auditor": "检查“训练、战斗、团队和文明危机升级”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [
+        "strong_historical_power"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "rule_horror": {
+      "id": "rule_horror",
+      "name": "规则怪谈",
+      "category": "悬疑",
+      "strong": false,
+      "tags": [
+        "规则",
+        "生存"
+      ],
+      "architect": "以“规则验证、真假辨别与代价闭环”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“规则验证、真假辨别与代价闭环”，不得用旁白直接宣布结果。",
+      "auditor": "检查“规则验证、真假辨别与代价闭环”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "infinite_trials": {
+      "id": "infinite_trials",
+      "name": "无限副本",
+      "category": "悬疑",
+      "strong": false,
+      "tags": [
+        "副本",
+        "闯关"
+      ],
+      "architect": "以“单元关卡与总谜团同步推进”为主线设计完整因果链，每次兑现都必须改变局势，避免只重复同一种桥段。",
+      "writer": "本章如轮到该套路推进，应通过具体行动兑现“单元关卡与总谜团同步推进”，不得用旁白直接宣布结果。",
+      "auditor": "检查“单元关卡与总谜团同步推进”是否有前因、行动、结果和后续影响；辅助使用时缺失仅作警告。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [],
+      "forbidden_material_tags": [],
+      "soft_material_tags": [],
+      "compatible_styles": [],
+      "ending_options": {}
+    },
+    "female_angst_awakening": {
+      "id": "female_angst_awakening",
+      "name": "女频虐恋觉醒",
+      "category": "情感",
+      "strong": true,
+      "tags": [
+        "虐恋",
+        "觉醒"
+      ],
+      "architect": "严格按虐恋、觉醒主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进虐恋、觉醒，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和虐恋、觉醒因果闭环；缺失必须退稿。",
+      "hard_conflicts": [
+        "strong_male_power_progression"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "cheat_device"
+      ],
+      "forbidden_material_tags": [
+        "hot_blood",
+        "humor"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "literary",
+        "cold",
+        "emotional_tension",
+        "realist_ensemble",
+        "ancient_elegant"
+      ],
+      "ending_options": {
+        "no_reunion": "主角独立离开且不复合",
+        "costly_reunion": "伤害方付出长期代价后由主角决定是否重启关系"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在虐恋、觉醒压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习虐恋、觉醒规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有虐恋、觉醒秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压情感环境",
+        "资源紧缺的情感舞台",
+        "规则正在变化的情感社会",
+        "多方势力交错的情感核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发虐恋、觉醒核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "male_angst_awakening": {
+      "id": "male_angst_awakening",
+      "name": "虐恋觉醒性转",
+      "category": "情感",
+      "strong": true,
+      "tags": [
+        "虐恋",
+        "觉醒"
+      ],
+      "architect": "严格按虐恋、觉醒主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进虐恋、觉醒，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和虐恋、觉醒因果闭环；缺失必须退稿。",
+      "hard_conflicts": [
+        "strong_male_power_progression"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "cheat_device"
+      ],
+      "forbidden_material_tags": [
+        "hot_blood",
+        "humor"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "literary",
+        "cold",
+        "emotional_tension",
+        "realist_ensemble",
+        "ancient_elegant"
+      ],
+      "ending_options": {
+        "no_reunion": "男主独立离开且不复合",
+        "costly_reunion": "女主付出长期代价后由男主决定是否重启关系"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在虐恋、觉醒压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习虐恋、觉醒规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有虐恋、觉醒秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压情感环境",
+        "资源紧缺的情感舞台",
+        "规则正在变化的情感社会",
+        "多方势力交错的情感核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发虐恋、觉醒核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_rule_horror": {
+      "id": "strong_rule_horror",
+      "name": "强规则怪谈",
+      "category": "悬疑",
+      "strong": true,
+      "tags": [
+        "规则",
+        "生存"
+      ],
+      "architect": "严格按规则、生存主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进规则、生存，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和规则、生存因果闭环；缺失必须退稿。",
+      "hard_conflicts": [
+        "marriage_first",
+        "cute_child"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "love_interest"
+      ],
+      "forbidden_material_tags": [
+        "甜宠",
+        "无代价外挂"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "cold",
+        "literary",
+        "suspense",
+        "realist_ensemble"
+      ],
+      "ending_options": {
+        "escape_truth": "破解核心规则并带着真相逃离",
+        "contain_source": "付出代价封存污染源",
+        "become_rule": "幸存但成为新规则的一部分"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在规则、生存压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习规则、生存规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有规则、生存秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压悬疑环境",
+        "资源紧缺的悬疑舞台",
+        "规则正在变化的悬疑社会",
+        "多方势力交错的悬疑核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发规则、生存核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_historical_power": {
+      "id": "strong_historical_power",
+      "name": "历史权谋强套路",
+      "category": "历史",
+      "strong": true,
+      "tags": [
+        "权谋",
+        "制度"
+      ],
+      "architect": "严格按权谋、制度主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进权谋、制度，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和权谋、制度因果闭环；缺失必须退稿。",
+      "hard_conflicts": [
+        "interstellar_mecha"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "cheat_device"
+      ],
+      "forbidden_material_tags": [
+        "无成本现代碾压"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "cold",
+        "literary",
+        "ancient_elegant",
+        "realist_ensemble"
+      ],
+      "ending_options": {
+        "claim_legitimacy": "取得合法性并重排权力格局",
+        "retire_after_reform": "完成改革后退出权力中心",
+        "tragic_balance": "以个人代价换取阶段平衡"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在权谋、制度压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习权谋、制度规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有权谋、制度秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压历史环境",
+        "资源紧缺的历史舞台",
+        "规则正在变化的历史社会",
+        "多方势力交错的历史核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发权谋、制度核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_male_power_progression": {
+      "id": "strong_male_power_progression",
+      "name": "男频升级打脸强套路",
+      "category": "升级",
+      "strong": true,
+      "tags": [
+        "升级",
+        "打脸"
+      ],
+      "architect": "严格按升级、打脸主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进升级、打脸，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和升级、打脸因果闭环；缺失必须退稿。",
+      "hard_conflicts": [
+        "female_angst_awakening",
+        "male_angst_awakening"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "love_interest"
+      ],
+      "forbidden_material_tags": [
+        "纯虐恋"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "hot_blood",
+        "cold",
+        "humor",
+        "business"
+      ],
+      "ending_options": {
+        "claim_throne": "完成阶段登顶并掌握新权柄",
+        "open_bigger_map": "击败当前压迫者并打开更高地图",
+        "protect_brothers": "赢下关键战并建立自己的班底"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在升级、打脸压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习升级、打脸规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有升级、打脸秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压升级环境",
+        "资源紧缺的升级舞台",
+        "规则正在变化的升级社会",
+        "多方势力交错的升级核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发升级、打脸核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_system_progression": {
+      "id": "strong_system_progression",
+      "name": "系统任务升级强套路",
+      "category": "系统",
+      "strong": true,
+      "tags": [
+        "系统",
+        "任务"
+      ],
+      "architect": "严格按系统、任务主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进系统、任务，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和系统、任务因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "atmosphere"
+      ],
+      "forbidden_material_tags": [
+        "无代价奖励"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "hot_blood",
+        "humor",
+        "suspense"
+      ],
+      "ending_options": {
+        "break_system": "识破系统终极目的并获得自主权",
+        "master_system": "完成终局任务并重写系统规则",
+        "pay_the_price": "以明确代价换取最终奖励"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在系统、任务压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习系统、任务规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有系统、任务秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压系统环境",
+        "资源紧缺的系统舞台",
+        "规则正在变化的系统社会",
+        "多方势力交错的系统核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发系统、任务核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_xuanhuan_map_progression": {
+      "id": "strong_xuanhuan_map_progression",
+      "name": "玄幻升级换地图强套路",
+      "category": "升级",
+      "strong": true,
+      "tags": [
+        "玄幻",
+        "升级"
+      ],
+      "architect": "严格按玄幻、升级主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进玄幻、升级，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和玄幻、升级因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "love_interest"
+      ],
+      "forbidden_material_tags": [
+        "纯日常"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "hot_blood",
+        "cold",
+        "ancient_elegant"
+      ],
+      "ending_options": {
+        "ascend_realm": "完成大境界突破进入更高世界",
+        "found_sect": "建立自己的势力与传承",
+        "seal_catastrophe": "付出代价封印跨界灾难"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在玄幻、升级压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习玄幻、升级规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有玄幻、升级秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压升级环境",
+        "资源紧缺的升级舞台",
+        "规则正在变化的升级社会",
+        "多方势力交错的升级核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发玄幻、升级核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_apocalypse_base": {
+      "id": "strong_apocalypse_base",
+      "name": "末世基地生存强套路",
+      "category": "末日",
+      "strong": true,
+      "tags": [
+        "末日",
+        "基地"
+      ],
+      "architect": "严格按末日、基地主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进末日、基地，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和末日、基地因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "love_interest"
+      ],
+      "forbidden_material_tags": [
+        "无资源压力"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "cold",
+        "hot_blood",
+        "suspense",
+        "realist_ensemble"
+      ],
+      "ending_options": {
+        "stable_base": "建立可持续基地与公开制度",
+        "migrate_survivors": "带领幸存者迁往新安全区",
+        "cure_with_cost": "获得阶段解药但承担长期代价"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在末日、基地压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习末日、基地规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有末日、基地秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压末日环境",
+        "资源紧缺的末日舞台",
+        "规则正在变化的末日社会",
+        "多方势力交错的末日核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发末日、基地核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_infinite_dungeon": {
+      "id": "strong_infinite_dungeon",
+      "name": "无限副本闯关强套路",
+      "category": "悬疑",
+      "strong": true,
+      "tags": [
+        "副本",
+        "规则"
+      ],
+      "architect": "严格按副本、规则主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进副本、规则，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和副本、规则因果闭环；缺失必须退稿。",
+      "hard_conflicts": [
+        "farming_management"
+      ],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "career_resource"
+      ],
+      "forbidden_material_tags": [
+        "无规则闯关"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "cold",
+        "literary",
+        "suspense"
+      ],
+      "ending_options": {
+        "return_reality": "破解主系统返回现实",
+        "free_players": "摧毁控制核心释放参与者",
+        "new_gatekeeper": "成为守门人并改变副本规则"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在副本、规则压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习副本、规则规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有副本、规则秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压悬疑环境",
+        "资源紧缺的悬疑舞台",
+        "规则正在变化的悬疑社会",
+        "多方势力交错的悬疑核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发副本、规则核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_ancient_house_revenge": {
+      "id": "strong_ancient_house_revenge",
+      "name": "古言宅斗复仇强套路",
+      "category": "古言",
+      "strong": true,
+      "tags": [
+        "宅斗",
+        "复仇"
+      ],
+      "architect": "严格按宅斗、复仇主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进宅斗、复仇，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和宅斗、复仇因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "cheat_device"
+      ],
+      "forbidden_material_tags": [
+        "无证据打脸"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "literary",
+        "cold",
+        "ancient_elegant",
+        "emotional_tension"
+      ],
+      "ending_options": {
+        "independent_household": "脱离旧家族建立独立生活",
+        "restore_name": "恢复名誉并夺回合法财产",
+        "enter_power_center": "借宅斗成果进入更大权力局"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在宅斗、复仇压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习宅斗、复仇规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有宅斗、复仇秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压古言环境",
+        "资源紧缺的古言舞台",
+        "规则正在变化的古言社会",
+        "多方势力交错的古言核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发宅斗、复仇核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_true_fake_heir": {
+      "id": "strong_true_fake_heir",
+      "name": "真假千金身份逆袭强套路",
+      "category": "身份",
+      "strong": true,
+      "tags": [
+        "千金",
+        "身份"
+      ],
+      "architect": "严格按千金、身份主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进千金、身份，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和千金、身份因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "cheat_device"
+      ],
+      "forbidden_material_tags": [
+        "强行团宠"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "literary",
+        "cold",
+        "emotional_tension",
+        "realist_ensemble",
+        "sweet_romcom"
+      ],
+      "ending_options": {
+        "leave_family": "确认身份后仍选择离开失衡家庭",
+        "rebuild_family": "在责任清算后重建有限关系",
+        "career_independence": "用事业与新关系完成独立"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在千金、身份压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习千金、身份规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有千金、身份秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压身份环境",
+        "资源紧缺的身份舞台",
+        "规则正在变化的身份社会",
+        "多方势力交错的身份核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发千金、身份核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_entertainment_reveal": {
+      "id": "strong_entertainment_reveal",
+      "name": "娱乐圈掉马逆袭强套路",
+      "category": "事业",
+      "strong": true,
+      "tags": [
+        "娱乐圈",
+        "掉马"
+      ],
+      "architect": "严格按娱乐圈、掉马主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进娱乐圈、掉马，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和娱乐圈、掉马因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "world_stage"
+      ],
+      "forbidden_material_tags": [
+        "空降热搜翻盘"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "humor",
+        "hot_blood",
+        "business",
+        "sweet_romcom"
+      ],
+      "ending_options": {
+        "award_reveal": "用作品成绩与身份揭晓完成翻盘",
+        "studio_independence": "脱离旧资本建立独立团队",
+        "expose_chain": "公开证据摧毁造谣利益链"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在娱乐圈、掉马压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习娱乐圈、掉马规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有娱乐圈、掉马秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压事业环境",
+        "资源紧缺的事业舞台",
+        "规则正在变化的事业社会",
+        "多方势力交错的事业核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发娱乐圈、掉马核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    },
+    "strong_interstellar_mecha": {
+      "id": "strong_interstellar_mecha",
+      "name": "星际机甲军校成长强套路",
+      "category": "科幻",
+      "strong": true,
+      "tags": [
+        "机甲",
+        "军校"
+      ],
+      "architect": "严格按机甲、军校主驱动力规划全书；每一阶段必须改变资源、关系、身份或规则，禁止原地重复。",
+      "writer": "必须完成本章结构化任务，通过场景、行动和后果推进机甲、军校，不能用总结代替剧情。",
+      "auditor": "逐项检查本章强制任务、主角状态变化和机甲、军校因果闭环；缺失必须退稿。",
+      "hard_conflicts": [],
+      "soft_conflicts": [],
+      "forbidden_material_categories": [
+        "love_interest"
+      ],
+      "forbidden_material_tags": [
+        "单兵无团队"
+      ],
+      "soft_material_tags": [],
+      "compatible_styles": [
+        "default",
+        "hot_blood",
+        "cold",
+        "suspense"
+      ],
+      "ending_options": {
+        "fleet_command": "赢得关键战并获得舰队指挥权",
+        "academy_reform": "揭露制度问题并推动军校改革",
+        "civilization_gate": "守住边境并打开文明新阶段"
+      },
+      "material_note": "素材只能补充舞台、人物、资源和局部冲突，不得替代主套路核心驱动力。",
+      "manifest_labels": {
+        "protagonist": "主角",
+        "counterpart": "核心对手或关系方",
+        "foil": "对照人物",
+        "conflict": "核心冲突",
+        "ending": "结局"
+      },
+      "protagonist_pool": [
+        "在机甲、军校压力下仍坚持底线的行动者",
+        "曾因误判付出代价、必须重新学习机甲、军校规则的主角",
+        "资源有限但擅长观察和组织的成长型主角"
+      ],
+      "counterpart_pool": [
+        "掌握主要资源并代表旧有机甲、军校秩序的对手",
+        "与主角目标相似但手段相反的竞争者",
+        "能借制度和舆论扩大压力的关键关系方"
+      ],
+      "foil_pool": [
+        "前期轻视主角、后期被迫重新站队的见证者",
+        "提供错误路线并承担后果的对照人物",
+        "在共同危机中暴露真实立场的临时盟友"
+      ],
+      "background_pool": [
+        "高压科幻环境",
+        "资源紧缺的科幻舞台",
+        "规则正在变化的科幻社会",
+        "多方势力交错的科幻核心区"
+      ],
+      "conflict_modules": [
+        {
+          "id": "resource_lock",
+          "name": "资源封锁",
+          "category": "resource",
+          "description": "关键资源被对手控制，主角必须建立替代路径。"
+        },
+        {
+          "id": "public_pressure",
+          "name": "公开压力",
+          "category": "reputation",
+          "description": "公开场合的质疑迫使主角用行动和证据回应。"
+        },
+        {
+          "id": "false_information",
+          "name": "错误情报",
+          "category": "information",
+          "description": "半真半假的信息诱导主角付出阶段代价。"
+        },
+        {
+          "id": "team_split",
+          "name": "团队分裂",
+          "category": "relationship",
+          "description": "价值冲突导致队伍分裂，必须重新建立合作条件。"
+        },
+        {
+          "id": "rule_escalation",
+          "name": "规则升级",
+          "category": "rule",
+          "description": "原有策略失效，主角必须理解更深层机制。"
+        },
+        {
+          "id": "irreversible_cost",
+          "name": "不可逆代价",
+          "category": "cost",
+          "description": "关键选择造成无法轻易撤销的损失并影响终局。"
+        }
+      ],
+      "beats": [
+        {
+          "id": "hook",
+          "range": "前300字",
+          "requirement": "立即爆发机甲、军校核心压力并给出可追踪目标。"
+        },
+        {
+          "id": "accumulation",
+          "range": "0%-25%",
+          "requirement": "连续验证规则、资源或关系限制，主角开始积累有效筹码。"
+        },
+        {
+          "id": "escalation",
+          "range": "25%-45%",
+          "requirement": "对手升级压力，既有选择产生不可忽略的后果。"
+        },
+        {
+          "id": "paywall_turn",
+          "range": "45%-50%",
+          "requirement": "完成改变行动策略的核心反转，旧方案彻底失效。"
+        },
+        {
+          "id": "truth_regret",
+          "range": "50%-80%",
+          "requirement": "真相与代价逐层兑现，主角开始主动重排局势。"
+        },
+        {
+          "id": "independent_ending",
+          "range": "80%-100%",
+          "requirement": "回收核心伏笔并兑现已确认结局，禁止临时开启新主线。"
+        }
+      ],
+      "writing_techniques": [
+        "每次升级或反转都必须来自已出现的能力、证据、资源或关系。",
+        "用行动结果展示地位变化，不用旁白宣布主角变强。",
+        "同一种冲突不得连续重复，必须提高层级或改变性质。",
+        "阶段胜利必须带出新的责任、敌人或代价。"
+      ],
+      "audit_rules": [
+        "本章结构化任务未完成时判定不通过。",
+        "核心反转必须改变后续策略，只有惊讶效果不算完成。",
+        "主角获得关键能力或资源必须有来源和代价。",
+        "辅助套路不得覆盖主套路结局和人物弧线。"
+      ],
+      "forbidden": [
+        "禁止敌人无理由降智送资源。",
+        "禁止临时增加未铺垫的万能能力。",
+        "禁止胜利后局势、关系和资源完全不变。"
+      ]
+    }
+  },
+  "structure_templates": {
+    "three_act": [
+      "建立目标与困境",
+      "升级对抗并完成核心反转",
+      "承担代价并完成结局"
+    ],
+    "golden_three": [
+      "首章立即爆发冲突",
+      "第二章扩大信息差与目标",
+      "第三章兑现第一次有效反转"
+    ],
+    "quest_loop": [
+      "接受目标",
+      "遭遇限制",
+      "付出行动",
+      "结算结果",
+      "引出更高层目标"
+    ],
+    "progression_map": [
+      "当前层级受压",
+      "积累资源能力",
+      "公开突破",
+      "重排势力",
+      "进入更高地图"
+    ]
+  }
+}

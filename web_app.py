@@ -26,18 +26,30 @@ from langgraph.checkpoint.memory import MemorySaver
 from State import NovelState
 from Nodes import (
     architect_node, writer_node, reviewer_node, summarizer_node,
-    load_keywords, pick_keywords, load_story_patterns,
     list_outline_files, load_outline_json, generate_wash_title,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, normalize_chapter_outlines,
     MODEL_MAX_RETRIES, MODEL_TIMEOUT_SECONDS, invoke_with_retry,
     outline_validation_issues, should_retry_short_draft,
     route_after_review_decision, build_chapter_contracts, build_finale_contract,
-    is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
+    is_strong_pattern, roll_pattern_manifest,
     validate_pattern_manifest, build_pattern_plan, attach_pattern_plan_to_outlines,
-    strip_pattern_plan_from_outlines, keyword_category_metadata,
-    material_rules_for_pattern, validate_material_categories_for_pattern,
+    strip_pattern_plan_from_outlines,
 )
+from LibraryV2 import (
+    LibraryValidationError,
+    default_material_config,
+    default_pattern_config,
+    material_library_metadata,
+    normalize_material_config,
+    normalize_pattern_config,
+    pattern_library_metadata,
+    resample_material_item,
+    sample_materials,
+    validate_material_config,
+    validate_pattern_config,
+)
+from WriterStyles import writer_style_options
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger("AutoWrite")
@@ -169,6 +181,17 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 .cat-item.disabled{opacity:.45;cursor:not-allowed}
 .cat-item input{accent-color:#58a6ff}
 .cat-tag{margin-left:auto;color:#8b949e;font-size:10px;white-space:nowrap}
+.material-groups{display:grid;gap:10px;max-height:380px;overflow-y:auto;padding-right:3px}
+.material-group{border:1px solid #30363d;border-radius:7px;background:#0d1117;overflow:hidden}
+.material-group-head{display:flex;align-items:center;gap:8px;padding:7px 9px;border-bottom:1px solid #30363d;background:#161b22}
+.material-group-head strong{color:#58a6ff;font-size:12px}
+.material-group-head .quota{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:#8b949e}
+.material-group-head select{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:4px;padding:3px 5px}
+.material-group-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;padding:7px}
+.material-card{display:flex;align-items:flex-start;gap:7px;padding:7px;border:1px solid #30363d;border-radius:6px;background:#0d1117;font-size:11px}
+.material-card .material-text{flex:1;line-height:1.5}
+.material-card-actions{display:flex;gap:4px;flex-wrap:wrap}
+.material-card-actions button{width:auto;padding:3px 6px;font-size:10px}
 .scope-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .scope-row select,.scope-row input{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px}
 .scope-row input{width:80px}
@@ -258,23 +281,24 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       </div>
     </div>
     <div class="section" id="kwSection">
-      <label>📚 随机素材库 (可选多选)</label>
-      <div id="materialHint" style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.5">世界观素材可作为舞台；会抢主线的驱动力素材会按套路自动限制。</div>
-      <div class="cat-grid" id="catGrid"></div>
-      <div id="kwResult" class="hidden" style="margin-top:6px;font-size:12px;color:#d29922"></div>
-      <div class="btn-bar hidden" id="kwBtns">
-        <button class="btn btn-warning" onclick="sendCmd('keywords_decision','accept')">确认</button>
-        <button class="btn" style="background:#30363d;color:#c9d1d9" onclick="sendCmd('keywords_decision','retry')">重抽</button>
-        <button class="btn" style="background:#30363d;color:#c9d1d9" onclick="sendCmd('keywords_decision','skip')">跳过</button>
+      <label>📚 结构化素材库</label>
+      <div id="materialHint" style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.5">按八个大类分别设置0/1/2项配额；世界舞台、主角人设最多1项，其余最多2项。与主辅套路硬冲突的分类会被禁用。</div>
+      <div class="scope-row" style="margin-bottom:6px">
+        <input id="materialSearch" placeholder="搜索分类" style="width:150px" oninput="renderCategories()">
+        总数 <strong id="materialTotal" style="color:#58a6ff">4</strong>
+        <button class="btn btn-warning" style="width:auto;padding:6px 12px" onclick="drawMaterials('create',false)">重抽素材</button>
+        <button class="btn" style="width:auto;padding:6px 12px;background:#30363d;color:#c9d1d9" onclick="drawMaterials('create',true)">换类型重抽</button>
       </div>
+      <div class="material-groups" id="catGrid"></div>
+      <div id="materialCards" style="margin-top:8px;display:grid;gap:6px"></div>
     </div>
     <div class="section">
       <label>📏 篇幅设置</label>
       <div class="scope-row">
-        章节数 <input id="chapters" type="number" value="10" min="1" max="200" style="width:60px"> 章
+        章节数 <input id="chapters" type="number" value="8" min="1" max="200" style="width:60px"> 章
         &nbsp;每章 <input id="wordsPerCh" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
       </div>
-      <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 15,000 字</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 12,000 字</div>
     </div>
     <div class="section">
       <label>🎭 创作套路</label>
@@ -283,6 +307,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <div class="pattern-tab" data-pattern-mode="normal" onclick="switchPatternMode('create','normal')">普通套路</div>
         <div class="pattern-tab" data-pattern-mode="strong" onclick="switchPatternMode('create','strong')">强套路</div>
       </div>
+      <input id="primaryPatternSearch" class="pattern-select" placeholder="搜索主套路名称、分类或标签" oninput="syncPatternControls('create')" style="margin-bottom:6px">
       <select id="storyPattern" class="pattern-value" onchange="onPatternChange('create')">
         <option value="none">无套路</option>
         <option value="wife_chasing">追妻火葬场</option>
@@ -307,6 +332,11 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <div id="customPatternWrap" class="hidden" style="margin-top:6px">
         <textarea id="customPattern" placeholder="描述套路节拍、必须出现的桥段与禁忌..." style="width:100%;height:64px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px;border-radius:4px;font-size:12px;resize:vertical"></textarea>
       </div>
+      <div style="margin-top:8px">
+        <label>辅助套路（最多2个，仅作软约束）</label>
+        <input id="secondaryPatternSearch" class="pattern-select" placeholder="搜索辅助套路" oninput="renderSecondaryPatterns('create')">
+        <div id="secondaryPatterns" class="cat-grid" style="margin-top:6px;max-height:150px"></div>
+      </div>
       <div id="patternManifestSection" class="hidden" style="margin-top:8px;background:#0d1117;border:1px solid #d29922;border-radius:6px;padding:8px">
         <label style="margin-bottom:4px">结局方向</label>
         <select id="patternEnding" onchange="changePatternEnding('create')" style="width:100%;margin-bottom:6px;background:#161b22;border:1px solid #30363d;color:#c9d1d9;padding:5px;border-radius:4px;font-size:11px">
@@ -325,12 +355,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     <div class="section">
       <label>✍️ 写手风格</label>
       <select id="writerStyle" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
-        <option value="default">默认</option>
-        <option value="hot_blood">热血爽文</option>
-        <option value="literary">文艺细腻</option>
-        <option value="cold">冷峻纪实</option>
-        <option value="humor">轻松搞笑</option>
-        <option value="18xx">18XX</option>
+        <option value="default">默认自然</option>
       </select>
     </div>
     <button class="btn btn-primary" id="btnStart" onclick="startPipeline()">▶ 启动流水线</button>
@@ -348,6 +373,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <div class="pattern-tab" data-pattern-mode="normal" onclick="switchPatternMode('wash','normal')">普通套路</div>
         <div class="pattern-tab" data-pattern-mode="strong" onclick="switchPatternMode('wash','strong')">强套路</div>
       </div>
+      <input id="washPrimaryPatternSearch" class="pattern-select" placeholder="搜索主套路名称、分类或标签" oninput="syncPatternControls('wash')" style="margin-bottom:6px">
       <select id="washStoryPattern" class="pattern-value" onchange="onPatternChange('wash')">
         <option value="none">无套路</option>
         <option value="wife_chasing">追妻火葬场</option>
@@ -372,6 +398,11 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <div id="washCustomPatternWrap" class="hidden" style="margin-top:6px">
         <textarea id="washCustomPattern" placeholder="描述套路节拍、必须出现的桥段与禁忌..." style="width:100%;height:64px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px;border-radius:4px;font-size:12px;resize:vertical"></textarea>
       </div>
+      <div style="margin-top:8px">
+        <label>辅助套路（最多2个，仅作软约束）</label>
+        <input id="washSecondaryPatternSearch" class="pattern-select" placeholder="搜索辅助套路" oninput="renderSecondaryPatterns('wash')">
+        <div id="washSecondaryPatterns" class="cat-grid" style="margin-top:6px;max-height:150px"></div>
+      </div>
       <div id="washPatternManifestSection" class="hidden" style="margin-top:8px;background:#0d1117;border:1px solid #d29922;border-radius:6px;padding:8px">
         <label style="margin-bottom:4px">结局方向</label>
         <select id="washPatternEnding" onchange="changePatternEnding('wash')" style="width:100%;margin-bottom:6px;background:#161b22;border:1px solid #30363d;color:#c9d1d9;padding:5px;border-radius:4px;font-size:11px">
@@ -388,14 +419,21 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       </div>
     </div>
     <div class="section">
+      <label>📚 洗文素材配置</label>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.5">按八个大类分别设置配额；同类多项会作为独立卡片，可分别锁定和重抽。</div>
+      <div class="scope-row" style="margin-bottom:6px">
+        <input id="washMaterialSearch" placeholder="搜索分类" style="width:150px" oninput="renderCategories('wash')">
+        总数 <strong id="washMaterialTotal" style="color:#58a6ff">4</strong>
+        <button class="btn btn-warning" style="width:auto;padding:6px 12px" onclick="drawMaterials('wash',false)">重抽素材</button>
+        <button class="btn" style="width:auto;padding:6px 12px;background:#30363d;color:#c9d1d9" onclick="drawMaterials('wash',true)">换类型重抽</button>
+      </div>
+      <div class="material-groups" id="washCatGrid"></div>
+      <div id="washMaterialCards" style="margin-top:8px;display:grid;gap:6px"></div>
+    </div>
+    <div class="section">
       <label>✍️ 写手风格</label>
       <select id="washWriterStyle" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
-        <option value="default">默认</option>
-        <option value="hot_blood">热血爽文</option>
-        <option value="literary">文艺细腻</option>
-        <option value="cold">冷峻纪实</option>
-        <option value="humor">轻松搞笑</option>
-        <option value="18xx">18XX</option>
+        <option value="default">默认自然</option>
       </select>
     </div>
     <div class="section">
@@ -430,7 +468,12 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
 
 <script>
 let ws=null,token=0,selectedCats=[];
-let categoryMeta={},patternMeta={};
+let materialMeta={groups:{}},patternMeta={};
+const defaultGroupCounts={world_stage:1,protagonist:1,supporting_role:0,cheat_device:1,plot_event:0,core_conflict:1,career_resource:0,atmosphere:0};
+let materialConfig={schema_version:2,filters:{categories:[],subcategories:[],tags:[]},group_counts:{...defaultGroupCounts},count:4,items:[],locked_item_keys:[],auto_selected_subcategories:[]};
+let washSelectedCats=[];
+let washMaterialConfig={schema_version:2,filters:{categories:[],subcategories:[],tags:[]},group_counts:{...defaultGroupCounts},count:4,items:[],locked_item_keys:[],auto_selected_subcategories:[]};
+let createSecondaryPatterns=[],washSecondaryPatterns=[];
 let createPatternManifest=null,washPatternManifest=null;
 let createPatternConfirmed=false,washPatternConfirmed=false;
 const agentMap={architect:'dot-architect',writer:'dot-writer',reviewer:'dot-reviewer',summarizer:'dot-summarizer'};
@@ -463,8 +506,9 @@ function sendCmd(action,data){
 }
 
 function loadCategories(){
-  sendMsg({action:'get_categories'});
+  sendMsg({action:'get_material_library'});
   sendMsg({action:'get_patterns'});
+  sendMsg({action:'get_writer_styles'});
 }
 
 function escapeHtml(text){
@@ -492,7 +536,7 @@ function fillPatternSelect(selectId,entries){
   let select=document.getElementById(selectId);
   if(!select)return;
   select.innerHTML=entries.length
-    ? entries.map(([key,item])=>`<option value="${key}">${escapeHtml(item.name||key)}</option>`).join('')
+    ? entries.map(([key,item])=>`<option value="${key}">[${escapeHtml(item.category||'其他')}] ${escapeHtml(item.name||key)}</option>`).join('')
     : '<option value="">暂无可选套路</option>';
   select.disabled=!entries.length;
 }
@@ -529,9 +573,15 @@ function syncPatternControls(mode){
   hidden.innerHTML=allOptions||'<option value="none">无套路</option>';
   hidden.value=[...hidden.options].some(option=>option.value===previous)?previous:'none';
 
-  fillPatternSelect(ids.normalSelect,patternEntries('normal'));
-  fillPatternSelect(ids.strongSelect,patternEntries('strong'));
+  let search=(document.getElementById(mode==='wash'?'washPrimaryPatternSearch':'primaryPatternSearch')?.value||'').trim().toLowerCase();
+  let matches=entries=>entries.filter(([key,item])=>{
+    if(!search)return true;
+    return `${item.name||''}${item.category||''}${(item.tags||[]).join('')}${key}`.toLowerCase().includes(search);
+  });
+  fillPatternSelect(ids.normalSelect,matches(patternEntries('normal')));
+  fillPatternSelect(ids.strongSelect,matches(patternEntries('strong')));
   renderPatternControls(mode);
+  renderSecondaryPatterns(mode);
 }
 
 function renderPatternControls(mode){
@@ -559,6 +609,17 @@ function setPatternValue(mode,pattern){
   onPatternChange(mode);
 }
 
+function fillWriterStyles(items){
+  for(let id of ['writerStyle','washWriterStyle']){
+    let select=document.getElementById(id);
+    let previous=select.value||'default';
+    select.innerHTML=(items||[]).map(item=>
+      `<option value="${escapeHtml(item.key)}">${escapeHtml(item.name)}</option>`
+    ).join('');
+    if([...select.options].some(option=>option.value===previous))select.value=previous;
+  }
+}
+
 function switchPatternMode(mode,kind){
   if(kind!=='none'&&patternEntries(kind).length===0)return;
   if(kind==='none'){setPatternValue(mode,'none');return}
@@ -573,56 +634,218 @@ function selectVisiblePattern(mode,kind){
   setPatternValue(mode,select.value||'none');
 }
 
-function materialRulesFor(pattern){
-  return (patternMeta[pattern]&&patternMeta[pattern].material_rules)||{};
+function selectedSecondary(mode){
+  return mode==='wash'?washSecondaryPatterns:createSecondaryPatterns;
 }
 
-function isCategoryBlocked(category,pattern){
-  let meta=categoryMeta[category]||{};
-  if(meta.material_type==='world_stage')return false;
-  let forbidden=(materialRulesFor(pattern).forbidden_drivers)||[];
-  let drivers=meta.drivers||[meta.driver||''];
-  return drivers.some(driver=>forbidden.includes(driver));
+function patternConfigFor(mode){
+  let ids=patternIds(mode);
+  let primary=document.getElementById(ids.select)?.value||'none';
+  let custom=document.getElementById(mode==='wash'?'washCustomPattern':'customPattern')?.value.trim()||'';
+  let manifest=mode==='wash'?washPatternManifest:createPatternManifest;
+  return {schema_version:2,primary,secondary:[...selectedSecondary(mode)],custom_instruction:custom,manifest:manifest||{},structure_plan:{}};
 }
 
-function renderCategories(){
-  let pattern=document.getElementById('storyPattern')?.value||'none';
-  let entries=Object.entries(categoryMeta||{});
-  document.getElementById('catGrid').innerHTML=entries.map(([k,v])=>{
-    let blocked=isCategoryBlocked(k,pattern);
-    let checked=selectedCats.includes(k)&&!blocked?'checked':'';
-    let title=blocked?`${k} 会抢当前套路主线，已禁用`:(v.usage||v.description||'');
-    return `<label class="cat-item ${blocked?'disabled':''}" title="${escapeHtml(title)}">
-      <input type="checkbox" value="${escapeHtml(k)}" ${checked} ${blocked?'disabled':''} onchange="onCatChange()">
-      ${escapeHtml(k)}<span style="color:#8b949e;font-size:10px">${escapeHtml(v.description||'')}</span>
-      <span class="cat-tag">${escapeHtml(v.material_type_label||'素材')}</span>
+function patternPairConflict(primary,secondary){
+  let p=patternMeta[primary]||{},s=patternMeta[secondary]||{};
+  if(secondary===primary)return '不能与主套路重复';
+  if(s.strong)return '辅助套路不能使用强套路';
+  if((p.hard_conflicts||[]).includes(secondary)||(s.hard_conflicts||[]).includes(primary))return '与主套路存在硬冲突';
+  return '';
+}
+
+function renderSecondaryPatterns(mode){
+  let primary=document.getElementById(patternIds(mode).select)?.value||'none';
+  let selected=selectedSecondary(mode);
+  let search=(document.getElementById(mode==='wash'?'washSecondaryPatternSearch':'secondaryPatternSearch')?.value||'').trim().toLowerCase();
+  let target=document.getElementById(mode==='wash'?'washSecondaryPatterns':'secondaryPatterns');
+  if(!target)return;
+  target.innerHTML=patternEntries('normal').filter(([key,item])=>{
+    if(key==='custom')return false;
+    return !search||`${item.name||''}${item.category||''}${(item.tags||[]).join('')}`.toLowerCase().includes(search);
+  }).map(([key,item])=>{
+    let reason=patternPairConflict(primary,key);
+    let checked=selected.includes(key);
+    let disabled=!!reason||(!checked&&selected.length>=2);
+    return `<label class="cat-item ${disabled?'disabled':''}" title="${escapeHtml(reason)}">
+      <input type="checkbox" value="${key}" ${checked?'checked':''} ${disabled?'disabled':''} onchange="toggleSecondaryPattern('${mode}','${key}',this.checked)">
+      ${escapeHtml(item.name||key)}<span class="cat-tag">${escapeHtml(item.category||'')}</span>
     </label>`;
   }).join('');
-  updateMaterialHint(pattern);
-  onCatChange();
 }
 
-function updateMaterialHint(pattern){
-  let rules=materialRulesFor(pattern);
-  let blocked=Object.entries(categoryMeta||{})
-    .filter(([k])=>isCategoryBlocked(k,pattern))
-    .map(([k])=>k);
-  let note=rules.note||'世界观素材默认可作为舞台；只有会抢主线的驱动力素材会被限制。';
-  if(blocked.length)note+=` 当前套路已禁用：${blocked.join('、')}。`;
-  document.getElementById('materialHint').textContent=note;
+function toggleSecondaryPattern(mode,key,checked){
+  let selected=selectedSecondary(mode);
+  if(checked&&!selected.includes(key)&&selected.length<2)selected.push(key);
+  if(!checked){
+    let idx=selected.indexOf(key);if(idx>=0)selected.splice(idx,1);
+  }
+  renderSecondaryPatterns(mode);
+  if(mode==='create'){
+    materialConfig.items=[];renderMaterialCards();renderCategories();
+  }else{
+    washMaterialConfig.items=[];renderMaterialCards('wash');renderCategories('wash');
+  }
+}
+
+function isSubcategoryBlocked(groupId,child,mode='create'){
+  let config=patternConfigFor(mode);
+  for(let patternId of [config.primary,...config.secondary]){
+    let pattern=patternMeta[patternId]||{};
+    if((pattern.forbidden_material_categories||[]).includes(groupId))return `${pattern.name}禁止该素材大类`;
+    if((child.tags||[]).some(tag=>(pattern.forbidden_material_tags||[]).includes(tag)))return `${pattern.name}禁止标签：${(child.tags||[]).join('、')}`;
+  }
+  return '';
+}
+
+function renderCategories(mode='create'){
+  let isWash=mode==='wash';
+  let search=(document.getElementById(isWash?'washMaterialSearch':'materialSearch')?.value||'').trim().toLowerCase();
+  let selected=isWash?washSelectedCats:selectedCats;
+  let config=isWash?washMaterialConfig:materialConfig;
+  let html=[];
+  for(let [groupId,group] of Object.entries(materialMeta.groups||{})){
+    let children=[];
+    for(let child of group.subcategories||[]){
+      let hay=`${group.name||''}${child.name||''}${(child.tags||[]).join('')}`.toLowerCase();
+      if(search&&!hay.includes(search))continue;
+      let reason=isSubcategoryBlocked(groupId,child,mode);
+      let checked=selected.includes(child.id)&&!reason;
+      let hitCount=(config.items||[]).filter(item=>item.subcategory===child.id).length;
+      children.push(`<label class="cat-item ${reason?'disabled':''}" title="${escapeHtml(reason)}">
+        <input type="checkbox" value="${escapeHtml(child.id)}" data-group="${escapeHtml(groupId)}" ${checked?'checked':''} ${reason?'disabled':''} onchange="onCatChange('${mode}')">
+        ${escapeHtml(child.name)}<span style="color:#8b949e;font-size:10px">${escapeHtml(group.name)}</span>
+        <span class="cat-tag">${hitCount?`命中${hitCount} · `:''}${child.count||0}条</span>
+      </label>`);
+    }
+    if(search&&!children.length)continue;
+    let max=group.max_count??1;
+    let current=(config.group_counts||{})[groupId]??0;
+    let groupBlocked=(group.subcategories||[]).length>0&&(group.subcategories||[]).every(
+      child=>!!isSubcategoryBlocked(groupId,child,mode)
+    );
+    if(groupBlocked&&current>0){
+      config.group_counts[groupId]=0;
+      config.items=(config.items||[]).filter(item=>item.category!==groupId);
+      let remainingKeys=new Set((config.items||[]).map(item=>item.selection_key));
+      config.locked_item_keys=(config.locked_item_keys||[]).filter(key=>remainingKeys.has(key));
+      current=0;
+    }
+    let options=Array.from({length:max+1},(_,index)=>
+      `<option value="${index}" ${index===current?'selected':''}>${index}</option>`
+    ).join('');
+    html.push(`<section class="material-group">
+      <div class="material-group-head">
+        <strong>${escapeHtml(group.name||groupId)}</strong>
+        <span style="color:#8b949e;font-size:10px">${group.count||0}条素材</span>
+        <label class="quota">抽取数量
+          <select onchange="changeGroupCount('${mode}','${groupId}',this.value)" ${groupBlocked?'disabled':''}>${options}</select>
+          / ${max}
+        </label>
+      </div>
+      <div class="material-group-body">${children.join('')||'<span style="color:#8b949e;font-size:11px">无匹配子类</span>'}</div>
+    </section>`);
+  }
+  document.getElementById(isWash?'washCatGrid':'catGrid').innerHTML=html.join('');
+  updateMaterialTotal(mode);
+}
+
+function updateMaterialTotal(mode='create'){
+  let config=mode==='wash'?washMaterialConfig:materialConfig;
+  let total=Object.values(config.group_counts||{}).reduce((sum,value)=>sum+(parseInt(value)||0),0);
+  config.count=total;
+  document.getElementById(mode==='wash'?'washMaterialTotal':'materialTotal').textContent=String(total);
+}
+
+function changeGroupCount(mode,groupId,value){
+  let config=mode==='wash'?washMaterialConfig:materialConfig;
+  config.group_counts={...(config.group_counts||defaultGroupCounts),[groupId]:parseInt(value)||0};
+  let desired=new Set(Object.entries(config.group_counts).flatMap(([group,count])=>
+    Array.from({length:count},(_,index)=>`${group}:${index+1}`)
+  ));
+  config.items=(config.items||[]).filter(item=>desired.has(item.selection_key));
+  config.locked_item_keys=(config.locked_item_keys||[]).filter(key=>desired.has(key));
+  updateMaterialTotal(mode);
+  renderMaterialCards(mode);
+}
+
+function drawMaterials(mode='create',randomizeTypes=false){
+  let isWash=mode==='wash';
+  let selected=isWash?washSelectedCats:selectedCats;
+  let config=isWash?washMaterialConfig:materialConfig;
+  updateMaterialTotal(mode);
+  if(config.count<2||config.count>8){log('素材总数必须在2到8之间','warn');return}
+  config={...config,filters:{categories:[],subcategories:[...selected],tags:[]}};
+  if(isWash)washMaterialConfig=config;else materialConfig=config;
+  sendMsg({action:'sample_materials',data:{mode,randomize_types:randomizeTypes,material_config:config,pattern_config:patternConfigFor(mode)}});
+}
+
+function rerollMaterial(selectionKey,mode='create',changeType=false){
+  let config=mode==='wash'?washMaterialConfig:materialConfig;
+  sendMsg({action:'resample_material',data:{mode,selection_key:selectionKey,change_type:changeType,material_config:config,pattern_config:patternConfigFor(mode)}});
+}
+
+function toggleMaterialLock(selectionKey,mode='create'){
+  let config=mode==='wash'?washMaterialConfig:materialConfig;
+  let locks=new Set(config.locked_item_keys||[]);
+  if(locks.has(selectionKey))locks.delete(selectionKey);else locks.add(selectionKey);
+  config.locked_item_keys=[...locks];
+  renderMaterialCards(mode);
+}
+
+function renderMaterialCards(mode='create'){
+  let isWash=mode==='wash';
+  let config=isWash?washMaterialConfig:materialConfig;
+  let target=document.getElementById(isWash?'washMaterialCards':'materialCards');
+  if(!target)return;
+  target.innerHTML=(config.items||[]).map(item=>{
+    let group=materialMeta.groups?.[item.category]||{};
+    let child=(group.subcategories||[]).find(value=>value.id===item.subcategory)||{};
+    let locked=(config.locked_item_keys||[]).includes(item.selection_key);
+    return `<div class="material-card">
+    <span style="color:#58a6ff;white-space:nowrap">${escapeHtml(group.name||item.category)} ${escapeHtml(item.selection_key.split(':').pop())}</span>
+    <div class="material-text"><strong>${escapeHtml(child.name||item.subcategory)}</strong><br>${escapeHtml(item.text)}</div>
+    <div class="material-card-actions">
+      <button class="btn" style="background:${locked?'#1f6feb':'#30363d'};color:#fff" onclick="toggleMaterialLock('${escapeHtml(item.selection_key)}','${mode}')">${locked?'已锁定':'锁定'}</button>
+      <button class="btn" style="background:#30363d;color:#c9d1d9" onclick="rerollMaterial('${escapeHtml(item.selection_key)}','${mode}',false)">重抽</button>
+      <button class="btn" style="background:#30363d;color:#c9d1d9" onclick="rerollMaterial('${escapeHtml(item.selection_key)}','${mode}',true)">换类型</button>
+    </div>
+  </div>`;
+  }).join('');
 }
 
 function handleMsg(msg){
   switch(msg.type){
-    case 'categories':
-      categoryMeta=msg.data||{};
+    case 'material_library':
+      materialMeta=msg.data||{groups:{}};
       renderCategories();
+      renderCategories('wash');
+      break;
+    case 'material_result':
+      if(msg.mode==='wash'){
+        washMaterialConfig=msg.data||washMaterialConfig;
+        washSelectedCats=[...((washMaterialConfig.filters||{}).subcategories||[])];
+        updateMaterialTotal('wash');
+        renderMaterialCards('wash');
+        renderCategories('wash');
+      }else{
+        materialConfig=msg.data||materialConfig;
+        selectedCats=[...((materialConfig.filters||{}).subcategories||[])];
+        updateMaterialTotal('create');
+        renderMaterialCards('create');
+        renderCategories('create');
+      }
+      log('✅ 素材已生成，可独立锁定、重抽或更换类型','success');
       break;
     case 'patterns':
       patternMeta=msg.data||{};
       syncPatternControls('create');
       syncPatternControls('wash');
       renderCategories();
+      renderCategories('wash');
+      break;
+    case 'writer_styles':
+      fillWriterStyles(msg.data||[]);
       break;
     case 'pattern_manifest_result':
       applyPatternManifest(msg.mode||'create',msg.data||{},false);
@@ -665,27 +888,27 @@ function handleMsg(msg){
       }
       document.getElementById('outlineArea').textContent=ocText;
       document.getElementById('washChapters').value=msg.data.chapter_outlines?Object.keys(msg.data.chapter_outlines).length:0;
-      document.getElementById('washStoryPattern').value=msg.data.story_pattern||'none';
-      document.getElementById('washCustomPattern').value=msg.data.custom_pattern||'';
+      let loadedPattern=msg.data.pattern_config||{primary:'none',secondary:[],custom_instruction:'',manifest:{}};
+      document.getElementById('washStoryPattern').value=loadedPattern.primary||'none';
+      document.getElementById('washCustomPattern').value=loadedPattern.custom_instruction||'';
+      washSecondaryPatterns=[...(loadedPattern.secondary||[])];
+      washMaterialConfig=msg.data.material_config||washMaterialConfig;
+      washSelectedCats=[...((washMaterialConfig.filters||{}).subcategories||[])];
+      updateMaterialTotal('wash');
       renderPatternControls('wash');
-      if(msg.data.pattern_manifest){
-        applyPatternManifest('wash',msg.data.pattern_manifest,true);
+      renderSecondaryPatterns('wash');
+      renderCategories('wash');
+      renderMaterialCards('wash');
+      if(loadedPattern.manifest&&Object.keys(loadedPattern.manifest).length){
+        applyPatternManifest('wash',loadedPattern.manifest,true);
       }else{
-        onPatternChange('wash');
+        washPatternManifest=null;washPatternConfirmed=false;
+        document.getElementById('washPatternManifestSection').classList.add('hidden');
+        setCompatibleStyles('wash',[]);
       }
       break;
     case 'rewash_title':
       document.getElementById('washStatus').textContent='✨ 新书名: 《'+msg.title+'》';
-      break;
-    case 'keywords':
-      document.getElementById('kwResult').textContent='🎲 命中: ['+msg.data.join('] [')+']';
-      document.getElementById('kwResult').classList.remove('hidden');
-      document.getElementById('kwBtns').classList.remove('hidden');
-      token=msg.token;
-      break;
-    case 'keywords_skip':
-      document.getElementById('kwResult').classList.add('hidden');
-      document.getElementById('kwBtns').classList.add('hidden');
       break;
     case 'architect_start':
       log('🧠 架构师正在推演大纲...','info');
@@ -728,6 +951,7 @@ function handleMsg(msg){
         for(let warning of (a['警告']||[]))log('  逻辑警告: '+warning,'warn');
         for(let issue of (a['套路问题']||[]))log('  套路问题: '+issue,'warn');
         for(let issue of (e['AI痕迹问题']||[]))log('  AI痕迹: '+issue,'warn');
+        for(let warning of (e['AI痕迹警告']||[]))log('  AI提醒: '+warning,'info');
       }
       break;
     case 'chapter_saved':
@@ -767,8 +991,19 @@ function setAgentState(name,state){
   else if(state==='done')dot.classList.add('done');
 }
 
-function onCatChange(){
-  selectedCats=[...document.querySelectorAll('#catGrid input:checked')].map(c=>c.value);
+function onCatChange(mode='create'){
+  let isWash=mode==='wash';
+  let target=isWash?'#washCatGrid input:checked':'#catGrid input:checked';
+  let selected=[...document.querySelectorAll(target)].map(c=>c.value);
+  if(isWash){
+    washSelectedCats=selected;
+    washMaterialConfig={...washMaterialConfig,filters:{categories:[],subcategories:[...selected],tags:[]},items:[],locked_item_keys:[],auto_selected_subcategories:[]};
+    renderMaterialCards('wash');
+  }else{
+    selectedCats=selected;
+    materialConfig={...materialConfig,filters:{categories:[],subcategories:[...selected],tags:[]},items:[],locked_item_keys:[],auto_selected_subcategories:[]};
+    renderMaterialCards('create');
+  }
 }
 
 let refineActive=false,refinedIdea='';
@@ -828,20 +1063,18 @@ function editRefineResult(){
 function startPipeline(){
   let idea=document.getElementById('idea').value.trim();
   if(!idea){log('请输入小说灵感','warn');return}
-  let targetChapters=parseInt(document.getElementById('chapters').value)||10;
+  let targetChapters=parseInt(document.getElementById('chapters').value)||8;
   let wordsPerChapter=parseInt(document.getElementById('wordsPerCh').value)||1500;
   let writerStyle=document.getElementById('writerStyle').value||'default';
-  let storyPattern=document.getElementById('storyPattern').value||'none';
-  let customPattern=document.getElementById('customPattern').value.trim();
-  if(storyPattern==='custom'&&!customPattern){log('请填写自定义套路要求','warn');return}
-  if(isStrongPatternKey(storyPattern)&&!createPatternConfirmed){log('请先确认强套路契约','warn');return}
-  let blockedCats=selectedCats.filter(cat=>isCategoryBlocked(cat,storyPattern));
-  if(blockedCats.length){log('当前套路不支持这些随机素材：'+blockedCats.join('、'),'warn');return}
+  let patternConfig=patternConfigFor('create');
+  if(patternConfig.primary==='custom'&&!patternConfig.custom_instruction){log('请填写自定义套路要求','warn');return}
+  if(isStrongPatternKey(patternConfig.primary)&&!createPatternConfirmed){log('请先确认强套路契约','warn');return}
+  if((materialConfig.items||[]).length!==(materialConfig.count||4)){log('请先抽取并确认完整素材配置','warn');return}
   document.getElementById('btnStart').disabled=true;
   document.getElementById('approvalBar').classList.add('hidden');
   document.getElementById('progressStatus').textContent='提交中...';
   Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));
-  sendMsg({action:'start',data:{idea,selected_cats:selectedCats,target_chapters:targetChapters,words_per_chapter:wordsPerChapter,writer_style:writerStyle,story_pattern:storyPattern,custom_pattern:customPattern,pattern_manifest:createPatternManifest}});
+  sendMsg({action:'start',data:{idea,material_config:materialConfig,pattern_config:patternConfig,target_chapters:targetChapters,words_per_chapter:wordsPerChapter,writer_style:writerStyle}});
 }
 
 // Live word count estimate
@@ -879,8 +1112,17 @@ function onPatternChange(mode){
   if(strong)updateEndingOptions(mode,pattern,document.getElementById(ids.ending).value);
   if(mode==='create'){
     document.getElementById('kwSection').classList.remove('hidden');
+    materialConfig.items=[];
+    materialConfig.locked_item_keys=[];
+    renderMaterialCards();
     renderCategories();
+  }else{
+    washMaterialConfig.items=[];
+    washMaterialConfig.locked_item_keys=[];
+    renderMaterialCards('wash');
+    renderCategories('wash');
   }
+  renderSecondaryPatterns(mode);
   if(!strong){
     setCompatibleStyles(mode,[]);
     if(mode==='wash'){washPatternManifest=null;washPatternConfirmed=false}
@@ -1010,17 +1252,17 @@ function startWash(){
   let ch=parseInt(document.getElementById('washChapters').value)||0;
   let w=parseInt(document.getElementById('washWords').value)||1500;
   let style=document.getElementById('washWriterStyle').value||'default';
-  let storyPattern=document.getElementById('washStoryPattern').value||'none';
-  let customPattern=document.getElementById('washCustomPattern').value.trim();
-  if(storyPattern==='custom'&&!customPattern){log('请填写自定义套路要求','warn');return}
-  if(isStrongPatternKey(storyPattern)&&!washPatternConfirmed){log('请先确认强套路契约','warn');return}
+  let patternConfig=patternConfigFor('wash');
+  if(patternConfig.primary==='custom'&&!patternConfig.custom_instruction){log('请填写自定义套路要求','warn');return}
+  if(isStrongPatternKey(patternConfig.primary)&&!washPatternConfirmed){log('请先确认强套路契约','warn');return}
+  if((washMaterialConfig.items||[]).length!==(washMaterialConfig.count||4)){log('请先确认完整的洗文素材配置','warn');return}
   document.getElementById('btnWashStart').disabled=true;
   document.getElementById('washStatus').textContent='生成新书名...';
   Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));
   document.getElementById('novelArea').textContent='';
   document.getElementById('approvalBar').classList.add('hidden');
   sendMsg({action:'start_rewash',data:{
-    file:selectedOutlineFile,writer_style:style,story_pattern:storyPattern,custom_pattern:customPattern,pattern_manifest:washPatternManifest,
+    file:selectedOutlineFile,writer_style:style,pattern_config:patternConfig,material_config:washMaterialConfig,
     target_chapters:ch,words_per_chapter:w
   }});
 }
@@ -1066,20 +1308,53 @@ async def ws_handler(websocket: WebSocket):
         action = raw.get("action", "")
         data = raw.get("data", {})
 
-        if action == "get_categories":
-            await send({"type": "categories", "data": keyword_category_metadata()})
+        if action == "get_material_library":
+            await send({
+                "type": "material_library",
+                "data": material_library_metadata(),
+            })
+
+        elif action == "get_writer_styles":
+            await send({
+                "type": "writer_styles",
+                "data": writer_style_options(),
+            })
 
         elif action == "get_patterns":
-            patterns = {
-                key: {
-                    "name": value.get("name", key),
-                    "strong": bool(value.get("strong")),
-                    "material_rules": material_rules_for_pattern(key),
-                    "ending_options": value.get("ending_options", {}),
-                }
-                for key, value in load_story_patterns().items()
-            }
-            await send({"type": "patterns", "data": patterns})
+            await send({"type": "patterns", "data": pattern_library_metadata()})
+
+        elif action == "sample_materials":
+            try:
+                material_config = sample_materials(
+                    data.get("material_config"),
+                    data.get("pattern_config"),
+                    seed=data.get("seed"),
+                    randomize_types=bool(data.get("randomize_types")),
+                )
+                await send({
+                    "type": "material_result",
+                    "mode": data.get("mode", "create"),
+                    "data": material_config,
+                })
+            except (LibraryValidationError, ValueError) as error:
+                await send({"type": "error", "message": str(error)})
+
+        elif action == "resample_material":
+            try:
+                material_config = resample_material_item(
+                    data.get("material_config"),
+                    data.get("pattern_config"),
+                    str(data.get("selection_key") or ""),
+                    seed=data.get("seed"),
+                    change_type=bool(data.get("change_type")),
+                )
+                await send({
+                    "type": "material_result",
+                    "mode": data.get("mode", "create"),
+                    "data": material_config,
+                })
+            except (LibraryValidationError, ValueError) as error:
+                await send({"type": "error", "message": str(error)})
 
         elif action == "roll_pattern_manifest":
             pattern_key = data.get("pattern", "")
@@ -1181,76 +1456,48 @@ async def ws_handler(websocket: WebSocket):
                 "retry_counter_start": retry_counter.value(),
             }
             idea = data.get("idea", "")
-            cats = data.get("selected_cats", [])
             target_chapters = data.get("target_chapters", DEFAULT_CHAPTERS)
             words_per_chapter = data.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
             writer_style = data.get("writer_style", "default")
-            story_pattern = data.get("story_pattern") or "none"
-            custom_pattern = data.get("custom_pattern", "")
-            pattern_manifest = data.get("pattern_manifest") or {}
-            material_issues = validate_material_categories_for_pattern(story_pattern, cats)
-            if material_issues:
-                await send({"type": "error", "message": "随机素材与套路冲突：" + "；".join(material_issues)})
+            pattern_config = normalize_pattern_config(data.get("pattern_config"))
+            material_config = normalize_material_config(data.get("material_config"))
+            configuration_issues = validate_pattern_config(
+                pattern_config, writer_style
+            )
+            configuration_issues.extend(
+                validate_material_config(material_config, pattern_config)
+            )
+            if configuration_issues:
+                await send({
+                    "type": "error",
+                    "message": "创作配置无效：" + "；".join(configuration_issues),
+                })
                 continue
-            if is_strong_pattern(story_pattern):
-                manifest_issues = validate_pattern_manifest(pattern_manifest)
-                compatible_styles = compatible_styles_for_pattern(story_pattern)
+            primary_pattern = pattern_config["primary"]
+            if is_strong_pattern(primary_pattern):
+                manifest_issues = validate_pattern_manifest(
+                    pattern_config.get("manifest", {})
+                )
                 if manifest_issues:
                     await send({"type": "error", "message": f"强套路契约未确认或无效：{'；'.join(manifest_issues)}"})
-                    continue
-                if writer_style not in compatible_styles:
-                    pattern_name = load_story_patterns().get(story_pattern, {}).get("name", story_pattern)
-                    await send({"type": "error", "message": f"{pattern_name}仅支持写手风格：{', '.join(compatible_styles)}"})
                     continue
             run_metrics["configuration"] = {
                 "target_chapters": target_chapters,
                 "words_per_chapter": words_per_chapter,
                 "writer_style": writer_style,
-                "story_pattern": story_pattern,
-                "custom_pattern": custom_pattern,
-                "pattern_manifest": pattern_manifest,
-                "selected_material_categories": cats,
+                "pattern_config": pattern_config,
+                "material_config": material_config,
             }
-
-            # 抽取关键词
-            keywords = []
-            if cats:
-                keywords = pick_keywords(cats, 2, story_pattern)
-                token_counter += 1
-                await send({"type": "keywords", "data": keywords, "token": token_counter})
-
-                # 等待用户确认关键词
-                kw_decided = False
-                while not kw_decided:
-                    try:
-                        resp = await websocket.receive_json()
-                    except WebSocketDisconnect:
-                        return
-                    if resp.get("action") == "keywords_decision":
-                        dec = resp.get("data", "accept")
-                        if dec == "retry":
-                            keywords = pick_keywords(cats, 2, story_pattern)
-                            token_counter += 1
-                            await send({"type": "keywords", "data": keywords, "token": token_counter})
-                        elif dec == "skip":
-                            keywords = []
-                            kw_decided = True
-                            await send({"type": "keywords_skip"})
-                        else:
-                            kw_decided = True
 
             # ── 第一阶段: 运行架构师 ──
             init_state = {
                 "user_idea": idea,
                 "run_id": run_id,
-                "keywords": keywords,
+                "material_config": material_config,
+                "pattern_config": pattern_config,
                 "target_chapters": target_chapters,
                 "words_per_chapter": words_per_chapter,
                 "writer_style": writer_style,
-                "story_pattern": story_pattern,
-                "custom_pattern": custom_pattern,
-                "pattern_manifest": pattern_manifest,
-                "pattern_plan": {},
                 "continuity_state": "",
                 "story_ledger": {},
                 "ledger_delta": {},
@@ -1341,26 +1588,37 @@ async def ws_handler(websocket: WebSocket):
                 await send({"type": "error", "message": f"加载大纲失败: {e}"})
                 continue
 
-            story_pattern = data.get("story_pattern") or outline.get("story_pattern", "none")
-            custom_pattern = data.get("custom_pattern") or outline.get("custom_pattern", "")
-            pattern_manifest = data.get("pattern_manifest") or outline.get("pattern_manifest", {})
-            if is_strong_pattern(story_pattern):
+            pattern_config = normalize_pattern_config(
+                data.get("pattern_config") or outline.get("pattern_config")
+            )
+            material_config = normalize_material_config(
+                data.get("material_config") or outline.get("material_config")
+            )
+            configuration_issues = validate_pattern_config(
+                pattern_config, writer_style
+            )
+            configuration_issues.extend(
+                validate_material_config(material_config, pattern_config)
+            )
+            if configuration_issues:
+                await send({
+                    "type": "error",
+                    "message": "洗文配置无效：" + "；".join(configuration_issues),
+                })
+                continue
+            primary_pattern = pattern_config["primary"]
+            pattern_manifest = pattern_config.get("manifest", {})
+            if is_strong_pattern(primary_pattern):
                 manifest_issues = validate_pattern_manifest(pattern_manifest)
-                compatible_styles = compatible_styles_for_pattern(story_pattern)
                 if manifest_issues:
                     await send({"type": "error", "message": f"强套路契约未确认或无效：{'；'.join(manifest_issues)}"})
-                    continue
-                if writer_style not in compatible_styles:
-                    pattern_name = load_story_patterns().get(story_pattern, {}).get("name", story_pattern)
-                    await send({"type": "error", "message": f"{pattern_name}仅支持写手风格：{', '.join(compatible_styles)}"})
                     continue
             run_metrics["configuration"] = {
                 "target_chapters": target_chapters,
                 "words_per_chapter": words_per_chapter,
                 "writer_style": writer_style,
-                "story_pattern": story_pattern,
-                "custom_pattern": custom_pattern,
-                "pattern_manifest": pattern_manifest,
+                "pattern_config": pattern_config,
+                "material_config": material_config,
             }
 
             chapters = target_chapters if target_chapters > 0 else len(outline.get("chapter_outlines", {}))
@@ -1386,9 +1644,10 @@ async def ws_handler(websocket: WebSocket):
             original_title = outline.get("title", "未命名")
             pattern_plan = (
                 build_pattern_plan(pattern_manifest, chapters, words_per_chapter)
-                if is_strong_pattern(story_pattern)
+                if is_strong_pattern(primary_pattern)
                 else {}
             )
+            pattern_config["structure_plan"] = pattern_plan
             chapter_outlines = (
                 attach_pattern_plan_to_outlines(base_outlines, pattern_plan)
                 if pattern_plan
@@ -1423,14 +1682,11 @@ async def ws_handler(websocket: WebSocket):
                 "chapter_outlines": chapter_outlines,
                 "chapter_contracts": chapter_contracts,
                 "finale_contract": finale_contract,
-                "keywords": [],
+                "material_config": material_config,
+                "pattern_config": pattern_config,
                 "target_chapters": chapters,
                 "words_per_chapter": words_per_chapter,
                 "writer_style": writer_style,
-                "story_pattern": story_pattern,
-                "custom_pattern": custom_pattern,
-                "pattern_manifest": pattern_manifest,
-                "pattern_plan": pattern_plan,
                 "continuity_state": "",
                 "story_ledger": {},
                 "ledger_delta": {},
@@ -1443,10 +1699,6 @@ async def ws_handler(websocket: WebSocket):
             await send({"type": "log", "message": f"📝 洗文启动: 《{new_title}》 | {chapters}章 × {words_per_chapter}字 | {writer_style}", "cls": "info"})
             state = init_state
             await _run_pipeline(websocket, send, state, run_config, run_metrics)
-
-        # ── 关键词决策 (在 start 流程中通过 receive_json 内循环处理) ──
-        elif action == "keywords_decision":
-            pass  # handled in the inner loop above
 
         elif action == "approval":
             pass  # handled in the inner loop above
@@ -1558,7 +1810,9 @@ async def _run_pipeline(websocket, send, state, config, run_metrics=None):
                 "api_retry_count": max(0, retry_counter.value() - run_metrics.get("retry_counter_start", 0)),
                 "pre_pipeline": pre_pipeline,
                 "configuration": run_metrics.get("configuration", {}),
-                "pattern_plan": state.get("pattern_plan", {}),
+                "pattern_plan": (
+                    state.get("pattern_config", {}).get("structure_plan", {})
+                ),
                 "nodes": nodes,
                 "node_calls": node_timings,
                 "rewrite_reasons": [

@@ -5,4 +5,7 @@ __pycache__/
 小说输出.txt
 Novel/*.txt
 Outline/*.json
+OutlineBackup/
+outline_migration_*.json
+.tmp_capabilities_v2.*
 TestResults/

@@ -13,6 +13,21 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 from State import NovelState 
+from WriterStyles import (
+    AI_STOCK_EXPRESSIONS,
+    writer_style,
+    writer_style_editor_context,
+)
+from LibraryV2 import (
+    LibraryValidationError,
+    format_selected_materials,
+    normalize_material_config,
+    normalize_pattern_config,
+    pattern_map,
+    resolve_pattern_bundle,
+    validate_material_config,
+    validate_pattern_config,
+)
 
 load_dotenv()
 
@@ -49,6 +64,8 @@ def list_outline_files() -> list[dict]:
             try:
                 with open(os.path.join("Outline", name), "r", encoding="utf-8") as f:
                     data = json.load(f)
+                if data.get("schema_version") != 2:
+                    continue
                 files.append({
                     "file": name,
                     "title": data.get("title", name),
@@ -62,7 +79,12 @@ def list_outline_files() -> list[dict]:
 def load_outline_json(file_name: str) -> dict:
     path = os.path.join("Outline", file_name)
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    if data.get("schema_version") != 2:
+        raise ValueError(
+            "该大纲仍是旧格式，请先运行 migrate_outlines.py 完成一次性迁移"
+        )
+    return data
 
 WASH_TITLE_SYSTEM = """你是一位资深编辑，为洗文（同人大纲二次创作）生成新书名。
 规则：
@@ -72,8 +94,7 @@ WASH_TITLE_SYSTEM = """你是一位资深编辑，为洗文（同人大纲二次
 4. 直接输出新书名，不要任何前缀后缀"""
 
 def generate_wash_title(original_title: str, style: str) -> str:
-    style_names = {"hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "18xx": "18XX", "default": "默认风格"}
-    style_cn = style_names.get(style, "默认风格")
+    style_cn = writer_style(style)["name"]
     prompt = ChatPromptTemplate.from_messages([
         ("system", WASH_TITLE_SYSTEM),
         ("user", f"原书名《{original_title}》，写手风格【{style_cn}】。请生成洗文新书名。")
@@ -84,7 +105,7 @@ def generate_wash_title(original_title: str, style: str) -> str:
         title = title.replace(ch, "")
     return title.strip() or f"{original_title}·重制版"
 
-DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "10"))
+DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "8"))
 DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "1500"))
 MIN_OUTLINE_CHARS = 200
 MIN_CHAPTER_RATIO = 0.85
@@ -129,7 +150,7 @@ SCENE_PLAN_SYSTEM_PROMPT = """你是小说执行导演。请先把本章契约�
 每个必须事件都要在 coverage 中出现。不得新增改变主线方向的事件。最终章必须把终局事件分配到具体场景并留出明确收束场景。"""
 
 EDITOR_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
-字段必须完整：文风评分为 1 到 10 的整数；AI痕迹问题为字符串数组；改进建议为字符串。"""
+字段必须完整：文风评分为 1 到 10 的整数；AI痕迹问题为字符串数组；AI痕迹警告为字符串数组；改进建议为字符串。"""
 
 _CHAPTER_HEADING_RE = re.compile(
     r"^\s*[【\[\(（《]?\s*第\s*[0-9一二三四五六七八九十百千万零〇两]+\s*章"
@@ -686,36 +707,8 @@ def format_story_ledger(state: NovelState) -> str:
         state.get("current_draft", ""),
     )
 
-# ==========================================
-# 0. 辅助函数：词库操作
-# ==========================================
-def load_keywords() -> dict:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(current_dir, "keywords.json")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        logger.warning("⚠️ 词库文件不存在或格式错误，跳过随机关键词功能: %s", path)
-        return {}
-
-
 def load_story_patterns() -> dict:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(current_dir, "story_patterns.json")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        logger.warning("⚠️ 套路配置不存在或格式错误，回退为无套路: %s", path)
-        return {
-            "none": {
-                "name": "无套路",
-                "architect": "不强制套用固定套路。",
-                "writer": "自然推进本章。",
-                "auditor": "仅检查故事自身逻辑。",
-            }
-        }
+    return pattern_map()
 
 
 def _format_rule_list(title: str, values: list) -> str:
@@ -729,16 +722,19 @@ def _format_rule_list(title: str, values: list) -> str:
 
 
 def resolve_story_pattern(state: NovelState) -> dict:
+    bundle = resolve_pattern_bundle(state.get("pattern_config", {}))
+    pattern = dict(bundle["primary"])
+    pattern_key = bundle["config"]["primary"]
     patterns = load_story_patterns()
-    pattern_key = state.get("story_pattern", "none")
-    pattern = patterns.get(pattern_key, patterns.get("none", {})).copy()
-    if pattern_key == "custom":
-        custom = str(state.get("custom_pattern", "")).strip()
-        if custom:
-            pattern["name"] = f"自定义：{custom}"
-            pattern["architect"] = f"{pattern.get('architect', '')}\n用户要求：{custom}"
-            pattern["writer"] = f"{pattern.get('writer', '')}\n用户要求：{custom}"
-            pattern["auditor"] = f"{pattern.get('auditor', '')}\n用户要求：{custom}"
+    secondary_names = [item.get("name", "") for item in bundle["secondary"]]
+    if secondary_names:
+        pattern["name"] = (
+            f"{pattern.get('name', pattern_key)}"
+            f"（辅助：{'、'.join(secondary_names)}）"
+        )
+    pattern["architect"] = bundle["architect"]
+    pattern["writer"] = bundle["writer"]
+    pattern["auditor"] = bundle["auditor"]
     if pattern.get("strong"):
         pattern["architect"] = (
             f"{pattern.get('architect', '')}"
@@ -766,83 +762,6 @@ def is_strong_pattern(pattern_key: str) -> bool:
 def compatible_styles_for_pattern(pattern_key: str) -> list[str]:
     pattern = load_story_patterns().get(pattern_key, {})
     return list(pattern.get("compatible_styles", []))
-
-
-def _as_list(value) -> list:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    return [value]
-
-
-def material_rules_for_pattern(pattern_key: str) -> dict:
-    pattern = load_story_patterns().get(pattern_key, {})
-    return {
-        "world_policy": pattern.get("world_policy", "allow_all"),
-        "forbidden_drivers": list(pattern.get("forbidden_material_drivers", [])),
-        "background_only_drivers": list(pattern.get("background_only_drivers", [])),
-        "note": pattern.get("material_note", ""),
-    }
-
-
-def keyword_category_metadata() -> dict:
-    metadata = {}
-    for key, value in load_keywords().items():
-        material_type = value.get("material_type", "world_stage")
-        metadata[key] = {
-            "description": value.get("description", ""),
-            "material_type": material_type,
-            "material_type_label": value.get("material_type_label", {
-                "world_stage": "世界观舞台",
-                "relationship_material": "关系素材",
-                "plot_material": "剧情素材",
-                "core_driver": "主驱动力",
-                "audience_driver": "频道驱动力",
-            }.get(material_type, "素材")),
-            "driver": value.get("driver", ""),
-            "drivers": _as_list(value.get("drivers") or value.get("driver")),
-            "usage": value.get("usage", ""),
-        }
-    return metadata
-
-
-def material_category_conflict_reason(pattern_key: str, category: str) -> str:
-    category_meta = keyword_category_metadata().get(category)
-    if not category_meta:
-        return ""
-    if category_meta.get("material_type") == "world_stage":
-        return ""
-
-    rules = material_rules_for_pattern(pattern_key)
-    forbidden = set(rules.get("forbidden_drivers", []))
-    drivers = set(category_meta.get("drivers", []))
-    if not forbidden.intersection(drivers):
-        return ""
-
-    pattern_name = load_story_patterns().get(pattern_key, {}).get("name", pattern_key)
-    driver_label = category_meta.get("material_type_label", "素材")
-    return (
-        f"{pattern_name}不能让“{category}”这类{driver_label}抢主线；"
-        "世界观舞台仍可自由套用。"
-    )
-
-
-def validate_material_categories_for_pattern(pattern_key: str, categories: list[str]) -> list[str]:
-    issues = []
-    for category in categories or []:
-        reason = material_category_conflict_reason(pattern_key, category)
-        if reason:
-            issues.append(reason)
-    return issues
-
-
-def filter_material_categories_for_pattern(pattern_key: str, categories: list[str]) -> list[str]:
-    return [
-        category
-        for category in (categories or [])
-        if not material_category_conflict_reason(pattern_key, category)
-    ]
 
 
 def _manifest_labels(pattern: dict) -> dict:
@@ -1325,19 +1244,6 @@ def strong_pattern_outline_content_warnings(
     return issues
 
 
-# Backward-compatible alias for callers that used the original helper name.
-strong_pattern_outline_content_issues = strong_pattern_outline_content_warnings
-
-def pick_keywords(categories: list[str], count: int = 2, story_pattern: str = "none") -> list[str]:
-    keyword_db = load_keywords()
-    pool = []
-    for cat in filter_material_categories_for_pattern(story_pattern, categories):
-        if cat in keyword_db and keyword_db[cat].get("keywords"):
-            pool.extend(keyword_db[cat]["keywords"])
-    if not pool:
-        return []
-    return random.sample(pool, min(count, len(pool)))
-
 # ==========================================
 # 0. 辅助函数：读取本地 Prompt 文件 (绝对路径版)
 # ==========================================
@@ -1418,6 +1324,7 @@ class AuditReport(BaseModel):
 class EditorReport(BaseModel):
     文风评分: int = Field(description="给出1-10的评分，7分及格。")
     AI痕迹问题: list[str] = Field(default_factory=list, description="可定位的具体AI写作痕迹。")
+    AI痕迹警告: list[str] = Field(default_factory=list, description="单次出现、暂不触发退稿的模板表达。")
     改进建议: str = Field(description="关于遣词造句、剧情节奏的润色建议。")
 
 
@@ -1529,7 +1436,11 @@ class ContinuityReview(BaseModel):
     continuity_report: dict = Field(default_factory=dict)
 
 
-llm_architect_structured = llm_architect.with_structured_output(ArchitectOutput, method="function_calling")
+llm_architect_structured = llm_architect.with_structured_output(
+    ArchitectOutput,
+    method="function_calling",
+    include_raw=True,
+)
 llm_auditor_structured = llm_auditor_raw.with_structured_output(AuditReport, method="function_calling")
 llm_editor_structured = llm_editor.with_structured_output(EditorReport, method="function_calling")
 llm_scene_planner_structured = llm_writer.with_structured_output(ScenePlan, method="function_calling")
@@ -1577,11 +1488,44 @@ def normalize_audit_report(report: dict) -> dict:
 def normalize_editor_report(report: dict) -> dict:
     normalized = dict(report or {})
     normalized["AI痕迹问题"] = _normalize_issue_list(normalized.get("AI痕迹问题", []))
+    normalized["AI痕迹警告"] = _normalize_issue_list(normalized.get("AI痕迹警告", []))
     score = max(1, min(10, int(normalized.get("文风评分", 8))))
     if not normalized["AI痕迹问题"] and score < STYLE_PASS_SCORE:
         score = STYLE_PASS_SCORE
     normalized["文风评分"] = score
     normalized["改进建议"] = str(normalized.get("改进建议", "无"))
+    return normalized
+
+
+def apply_deterministic_ai_trace_checks(report: dict, draft: str) -> dict:
+    normalized = normalize_editor_report(report)
+    hard_issues = list(normalized["AI痕迹问题"])
+    warnings = list(normalized["AI痕迹警告"])
+    text = str(draft or "")
+    for expression in AI_STOCK_EXPRESSIONS:
+        count = text.count(expression)
+        if count >= 2:
+            hard_issues.append(
+                f"库存表达“{expression}”重复出现{count}次"
+            )
+        elif count == 1:
+            warnings.append(f"库存表达“{expression}”出现1次")
+    template_patterns = {
+        "“不是……而是……”模板": r"不是[^。！？\n]{0,30}而是",
+        "“仿佛……似的”模板": r"仿佛[^。！？\n]{0,30}似的",
+    }
+    for label, pattern in template_patterns.items():
+        count = len(re.findall(pattern, text))
+        if count >= 2:
+            hard_issues.append(f"{label}重复出现{count}次")
+        elif count == 1:
+            warnings.append(f"{label}出现1次")
+    normalized["AI痕迹问题"] = list(dict.fromkeys(hard_issues))
+    normalized["AI痕迹警告"] = list(dict.fromkeys(warnings))
+    if normalized["AI痕迹问题"]:
+        normalized["文风评分"] = min(normalized["文风评分"], STYLE_PASS_SCORE - 1)
+        if normalized["改进建议"] == "无":
+            normalized["改进建议"] = "删除重复库存表达，改用人物动作、选择和具体感官事实呈现。"
     return normalized
 
 
@@ -2101,6 +2045,153 @@ def _safe_invoke(chain, inputs, node_name: str, max_retries: int = APP_INVOKE_AT
         logger.error("   ❌ %s", error)
     return None
 
+
+def _architect_raw_message(value: Any) -> Any:
+    if isinstance(value, dict) and "raw" in value:
+        return value.get("raw")
+    return value
+
+
+def _architect_tool_payloads(value: Any) -> list[Any]:
+    raw = _architect_raw_message(value)
+    payloads: list[Any] = []
+    tool_calls = getattr(raw, "tool_calls", None) or []
+    for call in tool_calls:
+        if not isinstance(call, dict):
+            continue
+        args = call.get("args")
+        if args is not None:
+            payloads.append(args)
+    additional = getattr(raw, "additional_kwargs", None) or {}
+    for call in additional.get("tool_calls", []) or []:
+        if not isinstance(call, dict):
+            continue
+        function = call.get("function") if isinstance(call.get("function"), dict) else {}
+        arguments = function.get("arguments")
+        if arguments is not None:
+            payloads.append(arguments)
+    return payloads
+
+
+def _architect_content(value: Any) -> str:
+    raw = _architect_raw_message(value)
+    if isinstance(raw, str):
+        return raw
+    content = getattr(raw, "content", "")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text") or item.get("content")
+                if text:
+                    parts.append(str(text))
+        return "\n".join(parts)
+    return str(content or "")
+
+
+def _extract_first_json_object(text: str) -> dict:
+    source = str(text or "").strip()
+    if not source:
+        raise ValueError("模型返回空内容")
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(source):
+        if char != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(source[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload
+    raise ValueError("未找到完整 JSON 对象")
+
+
+def _architect_output_from_candidate(value: Any) -> ArchitectOutput:
+    if isinstance(value, ArchitectOutput):
+        return value
+    if isinstance(value, dict):
+        parsed = value.get("parsed")
+        if parsed is not None:
+            return _architect_output_from_candidate(parsed)
+        if {"novel_title", "world_bible", "chapter_outlines"}.intersection(value):
+            return ArchitectOutput.model_validate(value)
+    for payload in _architect_tool_payloads(value):
+        if isinstance(payload, dict):
+            return ArchitectOutput.model_validate(payload)
+        if isinstance(payload, str) and payload.strip():
+            return ArchitectOutput.model_validate(
+                _extract_first_json_object(payload)
+            )
+    content = _architect_content(value)
+    return ArchitectOutput.model_validate(_extract_first_json_object(content))
+
+
+def _architect_response_diagnostics(value: Any) -> str:
+    raw = _architect_raw_message(value)
+    content_length = len(_architect_content(value))
+    tool_call_count = len(getattr(raw, "tool_calls", None) or [])
+    if isinstance(getattr(raw, "additional_kwargs", None), dict):
+        tool_call_count = max(
+            tool_call_count,
+            len(raw.additional_kwargs.get("tool_calls", []) or []),
+        )
+    metadata = getattr(raw, "response_metadata", None) or {}
+    finish_reason = (
+        metadata.get("finish_reason")
+        or metadata.get("stop_reason")
+        or "unknown"
+    )
+    return (
+        f"内容长度={content_length}，工具调用={tool_call_count}，"
+        f"结束原因={finish_reason}"
+    )
+
+
+def _invoke_architect_function_calling(prompt, inputs: dict) -> Any:
+    return (prompt | llm_architect_structured).invoke(inputs)
+
+
+def _invoke_architect_json_object(prompt, inputs: dict) -> Any:
+    model = llm_architect.bind(response_format={"type": "json_object"})
+    return (prompt | model).invoke(inputs)
+
+
+def _invoke_architect_plain_text(prompt, inputs: dict) -> Any:
+    return (prompt | llm_architect).invoke(inputs)
+
+
+def invoke_architect_with_fallback(prompt, inputs: dict) -> ArchitectOutput:
+    strategies = (
+        ("function_calling", _invoke_architect_function_calling),
+        ("json_object", _invoke_architect_json_object),
+        ("plain_text_json_extract", _invoke_architect_plain_text),
+    )
+    failures = []
+    for strategy_name, invoke_strategy in strategies:
+        response = None
+        try:
+            response = invoke_strategy(prompt, inputs)
+            result = _architect_output_from_candidate(response)
+            logger.info("   ✅ 架构师输出策略成功：%s", strategy_name)
+            return result
+        except Exception as error:
+            diagnostics = _architect_response_diagnostics(response)
+            detail = f"{type(error).__name__}: {error}"
+            failures.append(f"{strategy_name}（{diagnostics}）：{detail}")
+            logger.warning(
+                "   ⚠️ 架构师输出策略 %s 失败：%s；%s",
+                strategy_name,
+                detail,
+                diagnostics,
+            )
+    raise RuntimeError(
+        "架构师三种输出策略全部失败：\n- " + "\n- ".join(failures)
+    )
+
 # ==========================================
 # 3. 核心节点
 # ==========================================
@@ -2110,22 +2201,34 @@ def architect_node(state: NovelState):
     if state.get("world_bible"):
         return {}
 
+    pattern_config = normalize_pattern_config(state.get("pattern_config", {}))
+    material_config = normalize_material_config(state.get("material_config", {}))
+    config_issues = validate_pattern_config(
+        pattern_config, state.get("writer_style", "")
+    )
+    config_issues.extend(
+        validate_material_config(material_config, pattern_config)
+    )
+    if config_issues:
+        raise LibraryValidationError("创作配置无效：" + "；".join(config_issues))
+
     pattern = resolve_story_pattern(state)
     strong_pattern = bool(pattern.get("strong"))
-    manifest = state.get("pattern_manifest", {}) if strong_pattern else {}
+    manifest = pattern_config.get("manifest", {}) if strong_pattern else {}
     if strong_pattern and validate_pattern_manifest(manifest):
         manifest = roll_pattern_manifest(pattern.get("key", STRONG_PATTERN_KEY))
+    pattern_config["manifest"] = manifest
 
-    keywords = state.get("keywords", [])
-    keywords_str = "、".join(keywords) if keywords else "无"
+    materials_str = format_selected_materials(material_config)
 
     chapters = state.get("target_chapters", DEFAULT_CHAPTERS)
     words_per = state.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER)
     pattern_plan = (
         build_pattern_plan(manifest, chapters, words_per)
         if strong_pattern
-        else state.get("pattern_plan", {})
+        else pattern_config.get("structure_plan", {})
     )
+    pattern_config["structure_plan"] = pattern_plan
     strong_requirement = ""
     if strong_pattern:
         labels = dict(manifest.get("labels") or _manifest_labels(pattern))
@@ -2157,17 +2260,16 @@ def architect_node(state: NovelState):
         ("user", load_prompt("architect_user.md"))
         ])
     
-    architect_chain = prompt | llm_architect_structured
     result = None
     outline_issues = []
     outline_warnings = []
     active_chapter_req = chapter_req
     for outline_attempt in range(APP_INVOKE_ATTEMPTS):
-        result = invoke_with_retry(architect_chain, {
+        result = invoke_architect_with_fallback(prompt, {
             "user_idea": state.get("user_idea"),
-            "keywords": keywords_str,
+            "materials": materials_str,
             "chapter_requirement": active_chapter_req
-        }, "架构师")
+        })
         chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
         outline_issues = outline_validation_issues(chapter_outlines, chapters)
         if strong_pattern:
@@ -2217,16 +2319,15 @@ def architect_node(state: NovelState):
         save_path = os.path.join("Outline", f"{safe_title}.json")
         with open(save_path, "w", encoding="utf-8") as f:
             json.dump({
+                "schema_version": 2,
                 "title": result.novel_title,
                 "run_id": state.get("run_id", ""),
                 "world_bible": result.world_bible,
                 "chapter_outlines": chapter_outlines,
                 "chapter_contracts": chapter_contracts,
                 "finale_contract": finale_contract,
-                "story_pattern": state.get("story_pattern", "none"),
-                "custom_pattern": state.get("custom_pattern", ""),
-                "pattern_manifest": manifest,
-                "pattern_plan": pattern_plan,
+                "material_config": material_config,
+                "pattern_config": pattern_config,
                 "estimated_words": chapters * words_per,
                 "created_at": datetime.datetime.now().isoformat()
             }, f, ensure_ascii=False, indent=2)
@@ -2240,8 +2341,8 @@ def architect_node(state: NovelState):
         "chapter_outlines": chapter_outlines,
         "chapter_contracts": chapter_contracts,
         "finale_contract": finale_contract,
-        "pattern_manifest": manifest,
-        "pattern_plan": pattern_plan,
+        "material_config": material_config,
+        "pattern_config": pattern_config,
         "story_ledger": {},
         "ledger_delta": {},
         "continuity_report": {},
@@ -2328,23 +2429,17 @@ def writer_node(state: NovelState):
     preferred_words = int(words_per * 0.93)
     style = state.get("writer_style", "default")
     pattern = resolve_story_pattern(state)
-    pattern_task = state.get("pattern_plan", {}).get(str(chapter_num), {})
+    pattern_config = normalize_pattern_config(state.get("pattern_config", {}))
+    pattern_task = pattern_config.get("structure_plan", {}).get(str(chapter_num), {})
     continuity_state = format_story_ledger(state)
     contracts = state.get("chapter_contracts") or build_chapter_contracts(outlines)
     chapter_contract = contracts.get(str(chapter_num), {})
     finale_contract = state.get("finale_contract") or build_finale_contract(
-        contracts, state.get("pattern_manifest", {})
+        contracts, pattern_config.get("manifest", {})
     )
     length_guidance = chapter_length_guidance(words_per, final_chapter)
     
-    style_map = {
-        "hot_blood": "writer_system_hot_blood.md",
-        "literary": "writer_system_literary.md",
-        "cold": "writer_system_cold.md",
-        "humor": "writer_system_humor.md",
-        "18xx": "writer_system_18xx.md",
-    }
-    system_file = style_map.get(style, "writer_system.md")
+    system_file = writer_style(style)["prompt_file"]
     
     audit_report = state.get("audit_report", {})
     editor_report = state.get("editor_report", {})
@@ -2430,7 +2525,7 @@ def writer_node(state: NovelState):
         "length_guidance": length_guidance,
         "previous_draft": state.get("current_draft", "") if iteration > 1 else "无",
         "pattern_writer": pattern.get("writer", ""),
-        "pattern_manifest": format_pattern_manifest(state.get("pattern_manifest", {})),
+        "pattern_contract": format_pattern_manifest(pattern_config.get("manifest", {})),
         "pattern_chapter_task": format_pattern_chapter_task(pattern_task),
         "feedback": feedback,
         "chapter_num": chapter_num,
@@ -2491,11 +2586,20 @@ def editor_node(state: NovelState):
     
     if result is None:
         logger.warning("👓 责编评估失败，默认放行(评分8)")
-        result = EditorReport(文风评分=8, AI痕迹问题=[], 改进建议="无")
+        result = EditorReport(
+            文风评分=8,
+            AI痕迹问题=[],
+            AI痕迹警告=[],
+            改进建议="无",
+        )
     
     logger.info("👓 责编评分: %d/10", result.文风评分)
     
-    return {"editor_report": normalize_editor_report(result.model_dump())}
+    return {
+        "editor_report": apply_deterministic_ai_trace_checks(
+            result.model_dump(), state.get("current_draft", "")
+        )
+    }
 
 def _audit_inputs(state: NovelState) -> dict:
     chapter = state.get("current_chapter", 1)
@@ -2512,18 +2616,19 @@ def _audit_inputs(state: NovelState) -> dict:
         f"篇幅提醒：{assessment['warnings'] or '无'}。"
     )
     contracts = state.get("chapter_contracts") or build_chapter_contracts(outlines)
+    pattern_config = normalize_pattern_config(state.get("pattern_config", {}))
     chapter_contract = contracts.get(str(chapter), {})
     finale_contract = state.get("finale_contract") or build_finale_contract(
-        contracts, state.get("pattern_manifest", {})
+        contracts, pattern_config.get("manifest", {})
     )
     
     return {
         "world_bible": state.get("world_bible", ""),
         "continuity_state": format_story_ledger(state),
         "pattern_auditor": pattern.get("auditor", ""),
-        "pattern_manifest": format_pattern_manifest(state.get("pattern_manifest", {})),
+        "pattern_contract": format_pattern_manifest(pattern_config.get("manifest", {})),
         "pattern_chapter_task": format_pattern_chapter_task(
-            state.get("pattern_plan", {}).get(str(chapter), {})
+            pattern_config.get("structure_plan", {}).get(str(chapter), {})
         ),
         "outline": outlines.get(str(chapter), ""),
         "chapter_contract": format_contract(chapter_contract),
@@ -2543,16 +2648,10 @@ def _audit_inputs(state: NovelState) -> dict:
 
 def _editor_inputs(state: NovelState) -> dict:
     pattern = resolve_story_pattern(state)
-    style_names = {
-        "hot_blood": "热血爽文",
-        "literary": "文艺细腻",
-        "cold": "冷峻纪实",
-        "humor": "轻松搞笑",
-        "18xx": "18XX",
-        "default": "默认风格",
-    }
+    style_key = state.get("writer_style", "default")
+    style_prompt = load_prompt(writer_style(style_key)["prompt_file"])
     return {
-        "writer_style": style_names.get(state.get("writer_style", "default"), "默认风格"),
+        "writer_style": writer_style_editor_context(style_key, style_prompt),
         "story_pattern": pattern.get("name", "无套路"),
         "draft": state.get("current_draft", ""),
     }
@@ -2612,8 +2711,22 @@ def _editor_internal(state: NovelState) -> dict:
     ])
     result = _safe_invoke(prompt | llm_editor_structured, _editor_inputs(state), "editor")
     if result is None:
-        return {"editor_report": EditorReport(文风评分=8, AI痕迹问题=[], 改进建议="无").model_dump()}
-    return {"editor_report": normalize_editor_report(result.model_dump())}
+        fallback = EditorReport(
+            文风评分=8,
+            AI痕迹问题=[],
+            AI痕迹警告=[],
+            改进建议="无",
+        ).model_dump()
+        return {
+            "editor_report": apply_deterministic_ai_trace_checks(
+                fallback, state.get("current_draft", "")
+            )
+        }
+    return {
+        "editor_report": apply_deterministic_ai_trace_checks(
+            result.model_dump(), state.get("current_draft", "")
+        )
+    }
 
 
 def _continuity_internal(state: NovelState) -> dict:

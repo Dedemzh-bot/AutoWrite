@@ -8,8 +8,8 @@
 【创作套路与审核要求】：
 {pattern_auditor}
 
-【已确认套路契约】：
-{pattern_manifest}
+【已确认主套路契约】：
+{pattern_contract}
 
 【本章强制套路任务】：
 {pattern_chapter_task}

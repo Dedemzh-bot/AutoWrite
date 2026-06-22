@@ -7,16 +7,13 @@ class NovelState(TypedDict):
     chapter_outlines: dict
     chapter_contracts: dict
     finale_contract: dict
-    keywords: list[str]
+    material_config: dict       # 素材筛选、槽位、锁定项与最终确认素材
+    pattern_config: dict        # 主套路、辅助套路、自定义要求、契约与结构计划
     
     # --- 篇幅配置 ---
     target_chapters: int      # 目标章节数
     words_per_chapter: int    # 每章目标字数
     writer_style: str         # 写手风格标识
-    story_pattern: str        # 创作套路标识
-    custom_pattern: str       # 用户自定义套路要求
-    pattern_manifest: dict    # 本次确认的人物、背景、虐点与结局契约
-    pattern_plan: dict        # 按章节映射的套路节拍任务
     
     # --- 运行进度与暂存 ---
     current_chapter: int

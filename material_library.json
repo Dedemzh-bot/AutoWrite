@@ -1,0 +1,9841 @@
+{
+  "schema_version": 2,
+  "groups": {
+    "world_stage": {
+      "name": "世界舞台",
+      "default_slot": "world",
+      "subcategories": [
+        {
+          "id": "modern_city",
+          "name": "现代都市",
+          "tags": [
+            "现实",
+            "都市"
+          ]
+        },
+        {
+          "id": "campus",
+          "name": "校园环境",
+          "tags": [
+            "现实",
+            "校园"
+          ]
+        },
+        {
+          "id": "workplace",
+          "name": "职场生态",
+          "tags": [
+            "现实",
+            "职场"
+          ]
+        },
+        {
+          "id": "wealthy_family",
+          "name": "豪门家族",
+          "tags": [
+            "现实",
+            "豪门"
+          ]
+        },
+        {
+          "id": "ancient_dynasty",
+          "name": "古代王朝",
+          "tags": [
+            "古代",
+            "历史"
+          ]
+        },
+        {
+          "id": "xianxia_world",
+          "name": "修仙世界",
+          "tags": [
+            "幻想",
+            "修仙"
+          ]
+        },
+        {
+          "id": "apocalypse",
+          "name": "末日废土",
+          "tags": [
+            "末日",
+            "生存"
+          ]
+        },
+        {
+          "id": "future_space",
+          "name": "未来星际",
+          "tags": [
+            "科幻",
+            "星际"
+          ]
+        }
+      ]
+    },
+    "protagonist": {
+      "name": "主角人设",
+      "default_slot": "character",
+      "subcategories": [
+        {
+          "id": "underdog",
+          "name": "低谷逆袭者",
+          "tags": [
+            "逆袭",
+            "成长"
+          ]
+        },
+        {
+          "id": "returning_power",
+          "name": "强者归来",
+          "tags": [
+            "回归",
+            "身份"
+          ]
+        },
+        {
+          "id": "hidden_identity",
+          "name": "隐藏身份",
+          "tags": [
+            "身份",
+            "掉马"
+          ]
+        },
+        {
+          "id": "reborn",
+          "name": "重生改命者",
+          "tags": [
+            "重生",
+            "复仇"
+          ]
+        },
+        {
+          "id": "rational_leader",
+          "name": "冷静掌局者",
+          "tags": [
+            "智谋",
+            "事业"
+          ]
+        },
+        {
+          "id": "contrast_persona",
+          "name": "反差型主角",
+          "tags": [
+            "反差",
+            "喜剧"
+          ]
+        }
+      ]
+    },
+    "supporting_role": {
+      "name": "配角关系",
+      "default_slot": "relationship",
+      "subcategories": [
+        {
+          "id": "mentor",
+          "name": "导师与前辈",
+          "tags": [
+            "导师",
+            "传承"
+          ]
+        },
+        {
+          "id": "rival",
+          "name": "竞争对手",
+          "tags": [
+            "竞争",
+            "对照"
+          ]
+        },
+        {
+          "id": "partner",
+          "name": "行动搭档",
+          "tags": [
+            "伙伴",
+            "团队"
+          ]
+        },
+        {
+          "id": "family",
+          "name": "家庭关系",
+          "tags": [
+            "家庭",
+            "亲情"
+          ]
+        },
+        {
+          "id": "love_interest",
+          "name": "感情关系方",
+          "tags": [
+            "感情",
+            "关系"
+          ]
+        },
+        {
+          "id": "antagonist",
+          "name": "核心反派",
+          "tags": [
+            "反派",
+            "博弈"
+          ]
+        }
+      ]
+    },
+    "cheat_device": {
+      "name": "金手指与能力",
+      "default_slot": "device",
+      "subcategories": [
+        {
+          "id": "system",
+          "name": "任务系统",
+          "tags": [
+            "系统",
+            "成长"
+          ]
+        },
+        {
+          "id": "space",
+          "name": "随身空间",
+          "tags": [
+            "空间",
+            "资源"
+          ]
+        },
+        {
+          "id": "bloodline",
+          "name": "血脉天赋",
+          "tags": [
+            "血脉",
+            "力量"
+          ]
+        },
+        {
+          "id": "craft",
+          "name": "专业技艺",
+          "tags": [
+            "技能",
+            "职业"
+          ]
+        },
+        {
+          "id": "artifact",
+          "name": "关键物品",
+          "tags": [
+            "物品",
+            "证据"
+          ]
+        },
+        {
+          "id": "memory",
+          "name": "记忆优势",
+          "tags": [
+            "记忆",
+            "信息差"
+          ]
+        },
+        {
+          "id": "contract",
+          "name": "契约能力",
+          "tags": [
+            "契约",
+            "规则"
+          ]
+        }
+      ]
+    },
+    "plot_event": {
+      "name": "剧情事件",
+      "default_slot": "event",
+      "subcategories": [
+        {
+          "id": "public_reversal",
+          "name": "公开反转",
+          "tags": [
+            "打脸",
+            "反转"
+          ]
+        },
+        {
+          "id": "auction",
+          "name": "拍卖与争夺",
+          "tags": [
+            "资源",
+            "竞价"
+          ]
+        },
+        {
+          "id": "trial",
+          "name": "考核与比赛",
+          "tags": [
+            "考核",
+            "竞技"
+          ]
+        },
+        {
+          "id": "rescue",
+          "name": "救援行动",
+          "tags": [
+            "救援",
+            "危机"
+          ]
+        },
+        {
+          "id": "identity_reveal",
+          "name": "身份掉马",
+          "tags": [
+            "身份",
+            "掉马"
+          ]
+        },
+        {
+          "id": "investigation",
+          "name": "调查取证",
+          "tags": [
+            "悬疑",
+            "证据"
+          ]
+        },
+        {
+          "id": "separation_return",
+          "name": "分离与重逢",
+          "tags": [
+            "关系",
+            "重逢"
+          ]
+        }
+      ]
+    },
+    "core_conflict": {
+      "name": "核心冲突",
+      "default_slot": "conflict",
+      "subcategories": [
+        {
+          "id": "resource",
+          "name": "资源争夺",
+          "tags": [
+            "资源",
+            "利益"
+          ]
+        },
+        {
+          "id": "identity",
+          "name": "身份与资格",
+          "tags": [
+            "身份",
+            "资格"
+          ]
+        },
+        {
+          "id": "relationship",
+          "name": "关系边界",
+          "tags": [
+            "感情",
+            "边界"
+          ]
+        },
+        {
+          "id": "institution",
+          "name": "个人与制度",
+          "tags": [
+            "制度",
+            "权力"
+          ]
+        },
+        {
+          "id": "survival",
+          "name": "生存选择",
+          "tags": [
+            "生存",
+            "伦理"
+          ]
+        },
+        {
+          "id": "truth",
+          "name": "真相与叙事",
+          "tags": [
+            "真相",
+            "舆论"
+          ]
+        },
+        {
+          "id": "power",
+          "name": "权力博弈",
+          "tags": [
+            "权谋",
+            "阵营"
+          ]
+        }
+      ]
+    },
+    "career_resource": {
+      "name": "职业与资源",
+      "default_slot": "resource",
+      "subcategories": [
+        {
+          "id": "medicine",
+          "name": "医疗专业",
+          "tags": [
+            "医疗",
+            "专业"
+          ]
+        },
+        {
+          "id": "law",
+          "name": "法律调查",
+          "tags": [
+            "法律",
+            "证据"
+          ]
+        },
+        {
+          "id": "finance",
+          "name": "商业金融",
+          "tags": [
+            "商业",
+            "金融"
+          ]
+        },
+        {
+          "id": "media",
+          "name": "媒体娱乐",
+          "tags": [
+            "娱乐圈",
+            "舆论"
+          ]
+        },
+        {
+          "id": "technology",
+          "name": "科技工程",
+          "tags": [
+            "科技",
+            "工程"
+          ]
+        },
+        {
+          "id": "military",
+          "name": "军事行动",
+          "tags": [
+            "军事",
+            "战略"
+          ]
+        }
+      ]
+    },
+    "atmosphere": {
+      "name": "场景与氛围",
+      "default_slot": "atmosphere",
+      "subcategories": [
+        {
+          "id": "rain_night",
+          "name": "雨夜压迫",
+          "tags": [
+            "雨夜",
+            "悬疑"
+          ]
+        },
+        {
+          "id": "public_stage",
+          "name": "公开场合",
+          "tags": [
+            "公开",
+            "群像"
+          ]
+        },
+        {
+          "id": "closed_space",
+          "name": "封闭空间",
+          "tags": [
+            "封闭",
+            "生存"
+          ]
+        },
+        {
+          "id": "warm_daily",
+          "name": "温暖日常",
+          "tags": [
+            "日常",
+            "治愈"
+          ]
+        },
+        {
+          "id": "grand_scene",
+          "name": "宏大场面",
+          "tags": [
+            "史诗",
+            "高潮"
+          ]
+        }
+      ]
+    }
+  },
+  "slot_order": [
+    "character",
+    "conflict",
+    "world",
+    "device",
+    "relationship",
+    "event",
+    "resource",
+    "atmosphere"
+  ],
+  "entries": [
+    {
+      "id": "M-WOR-MODERN_CITY-01",
+      "text": "一线城市旧城区，隐藏着利益共同体",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-02",
+      "text": "一线城市旧城区，正在经历产业洗牌",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-03",
+      "text": "一线城市旧城区，表面繁华但阶层割裂",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-04",
+      "text": "一线城市旧城区，一场公共事件改变秩序",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-05",
+      "text": "新兴科技城，隐藏着利益共同体",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-06",
+      "text": "新兴科技城，正在经历产业洗牌",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-07",
+      "text": "新兴科技城，表面繁华但阶层割裂",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-08",
+      "text": "新兴科技城，一场公共事件改变秩序",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-09",
+      "text": "沿海旅游城市，隐藏着利益共同体",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-10",
+      "text": "沿海旅游城市，正在经历产业洗牌",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-11",
+      "text": "沿海旅游城市，表面繁华但阶层割裂",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-MODERN_CITY-12",
+      "text": "沿海旅游城市，一场公共事件改变秩序",
+      "category": "world_stage",
+      "subcategory": "modern_city",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "都市"
+      ],
+      "drivers": [
+        "现实",
+        "都市"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-01",
+      "text": "封闭寄宿高中，排名制度制造对立",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-02",
+      "text": "封闭寄宿高中，旧案在新生季重启",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-03",
+      "text": "封闭寄宿高中，社团掌握隐秘资源",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-04",
+      "text": "封闭寄宿高中，校庆成为冲突爆点",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-05",
+      "text": "顶尖综合大学，排名制度制造对立",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-06",
+      "text": "顶尖综合大学，旧案在新生季重启",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-07",
+      "text": "顶尖综合大学，社团掌握隐秘资源",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-08",
+      "text": "顶尖综合大学，校庆成为冲突爆点",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-09",
+      "text": "职业技术学院，排名制度制造对立",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-10",
+      "text": "职业技术学院，旧案在新生季重启",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-11",
+      "text": "职业技术学院，社团掌握隐秘资源",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-CAMPUS-12",
+      "text": "职业技术学院，校庆成为冲突爆点",
+      "category": "world_stage",
+      "subcategory": "campus",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "校园"
+      ],
+      "drivers": [
+        "现实",
+        "校园"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-01",
+      "text": "高速扩张的创业公司，权责被故意混淆",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-02",
+      "text": "高速扩张的创业公司，关键项目濒临失败",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-03",
+      "text": "高速扩张的创业公司，匿名举报打破平衡",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-04",
+      "text": "高速扩张的创业公司，继任安排引发站队",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-05",
+      "text": "老牌家族企业，权责被故意混淆",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-06",
+      "text": "老牌家族企业，关键项目濒临失败",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-07",
+      "text": "老牌家族企业，匿名举报打破平衡",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-08",
+      "text": "老牌家族企业，继任安排引发站队",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-09",
+      "text": "竞争激烈的专业机构，权责被故意混淆",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-10",
+      "text": "竞争激烈的专业机构，关键项目濒临失败",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-11",
+      "text": "竞争激烈的专业机构，匿名举报打破平衡",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WORKPLACE-12",
+      "text": "竞争激烈的专业机构，继任安排引发站队",
+      "category": "world_stage",
+      "subcategory": "workplace",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "职场"
+      ],
+      "drivers": [
+        "现实",
+        "职场"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-01",
+      "text": "多房争产的旧豪门，继承协议暗藏条件",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-02",
+      "text": "多房争产的旧豪门，婚姻被当作资源交换",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-03",
+      "text": "多房争产的旧豪门，失踪成员突然归来",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-04",
+      "text": "多房争产的旧豪门，家族丑闻面临曝光",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-05",
+      "text": "新贵资本家族，继承协议暗藏条件",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-06",
+      "text": "新贵资本家族，婚姻被当作资源交换",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-07",
+      "text": "新贵资本家族，失踪成员突然归来",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-08",
+      "text": "新贵资本家族，家族丑闻面临曝光",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-09",
+      "text": "名望高于财富的世家，继承协议暗藏条件",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-10",
+      "text": "名望高于财富的世家，婚姻被当作资源交换",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-11",
+      "text": "名望高于财富的世家，失踪成员突然归来",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-WEALTHY_FAMILY-12",
+      "text": "名望高于财富的世家，家族丑闻面临曝光",
+      "category": "world_stage",
+      "subcategory": "wealthy_family",
+      "slot": "world",
+      "tags": [
+        "现实",
+        "豪门"
+      ],
+      "drivers": [
+        "现实",
+        "豪门"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-01",
+      "text": "王朝末年的都城，税制改革触动旧利益",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-02",
+      "text": "王朝末年的都城，皇位继承悬而未决",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-03",
+      "text": "王朝末年的都城，灾荒迫使地方自救",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-04",
+      "text": "王朝末年的都城，外敌与内斗同时升级",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-05",
+      "text": "边疆军镇，税制改革触动旧利益",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-06",
+      "text": "边疆军镇，皇位继承悬而未决",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-07",
+      "text": "边疆军镇，灾荒迫使地方自救",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-08",
+      "text": "边疆军镇，外敌与内斗同时升级",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-09",
+      "text": "富庶但党争激烈的江南，税制改革触动旧利益",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-10",
+      "text": "富庶但党争激烈的江南，皇位继承悬而未决",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-11",
+      "text": "富庶但党争激烈的江南，灾荒迫使地方自救",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-ANCIENT_DYNASTY-12",
+      "text": "富庶但党争激烈的江南，外敌与内斗同时升级",
+      "category": "world_stage",
+      "subcategory": "ancient_dynasty",
+      "slot": "world",
+      "tags": [
+        "古代",
+        "历史"
+      ],
+      "drivers": [
+        "古代",
+        "历史"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-01",
+      "text": "宗门林立的灵气大陆，灵脉正在衰竭",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-02",
+      "text": "宗门林立的灵气大陆，天道规则出现漏洞",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-03",
+      "text": "宗门林立的灵气大陆，古老禁区重新开放",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-04",
+      "text": "宗门林立的灵气大陆，正邪身份被重新定义",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-05",
+      "text": "飞升通道断绝的末法界，灵脉正在衰竭",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-06",
+      "text": "飞升通道断绝的末法界，天道规则出现漏洞",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-07",
+      "text": "飞升通道断绝的末法界，古老禁区重新开放",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-08",
+      "text": "飞升通道断绝的末法界，正邪身份被重新定义",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-09",
+      "text": "人妖共治的边境，灵脉正在衰竭",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-10",
+      "text": "人妖共治的边境，天道规则出现漏洞",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-11",
+      "text": "人妖共治的边境，古老禁区重新开放",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-XIANXIA_WORLD-12",
+      "text": "人妖共治的边境，正邪身份被重新定义",
+      "category": "world_stage",
+      "subcategory": "xianxia_world",
+      "slot": "world",
+      "tags": [
+        "幻想",
+        "修仙"
+      ],
+      "drivers": [
+        "幻想",
+        "修仙"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-01",
+      "text": "病毒爆发后的城市群，安全区实行等级配给",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-02",
+      "text": "病毒爆发后的城市群，感染机制发生二次变化",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-03",
+      "text": "病毒爆发后的城市群，通信恢复带来坏消息",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-04",
+      "text": "病毒爆发后的城市群，旧政府设施藏有真相",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-05",
+      "text": "极寒覆盖的避难区，安全区实行等级配给",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-06",
+      "text": "极寒覆盖的避难区，感染机制发生二次变化",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-07",
+      "text": "极寒覆盖的避难区，通信恢复带来坏消息",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-08",
+      "text": "极寒覆盖的避难区，旧政府设施藏有真相",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-09",
+      "text": "资源枯竭的荒漠聚落，安全区实行等级配给",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-10",
+      "text": "资源枯竭的荒漠聚落，感染机制发生二次变化",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-11",
+      "text": "资源枯竭的荒漠聚落，通信恢复带来坏消息",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-APOCALYPSE-12",
+      "text": "资源枯竭的荒漠聚落，旧政府设施藏有真相",
+      "category": "world_stage",
+      "subcategory": "apocalypse",
+      "slot": "world",
+      "tags": [
+        "末日",
+        "生存"
+      ],
+      "drivers": [
+        "末日",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-01",
+      "text": "跨星系殖民联盟，人工智能争取人格权",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-02",
+      "text": "跨星系殖民联盟，跃迁航道突然失效",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-03",
+      "text": "跨星系殖民联盟，基因等级制度遭到挑战",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-04",
+      "text": "跨星系殖民联盟，未知文明留下观察信号",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-05",
+      "text": "巨型空间站社会，人工智能争取人格权",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-06",
+      "text": "巨型空间站社会，跃迁航道突然失效",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-07",
+      "text": "巨型空间站社会，基因等级制度遭到挑战",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-08",
+      "text": "巨型空间站社会，未知文明留下观察信号",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-09",
+      "text": "边境机甲军团，人工智能争取人格权",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-10",
+      "text": "边境机甲军团，跃迁航道突然失效",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-11",
+      "text": "边境机甲军团，基因等级制度遭到挑战",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-WOR-FUTURE_SPACE-12",
+      "text": "边境机甲军团，未知文明留下观察信号",
+      "category": "world_stage",
+      "subcategory": "future_space",
+      "slot": "world",
+      "tags": [
+        "科幻",
+        "星际"
+      ],
+      "drivers": [
+        "科幻",
+        "星际"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-01",
+      "text": "被行业封杀的前天才，保留一项无人知晓的能力",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-02",
+      "text": "被行业封杀的前天才，掌握改变局势的旧证据",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-03",
+      "text": "被行业封杀的前天才，必须先隐藏真实目标",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-04",
+      "text": "被行业封杀的前天才，胜利会牺牲重要关系",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-05",
+      "text": "背负巨债的普通青年，保留一项无人知晓的能力",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-06",
+      "text": "背负巨债的普通青年，掌握改变局势的旧证据",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-07",
+      "text": "背负巨债的普通青年，必须先隐藏真实目标",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-08",
+      "text": "背负巨债的普通青年，胜利会牺牲重要关系",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-09",
+      "text": "被家族放弃的继承候选，保留一项无人知晓的能力",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-10",
+      "text": "被家族放弃的继承候选，掌握改变局势的旧证据",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-11",
+      "text": "被家族放弃的继承候选，必须先隐藏真实目标",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-UNDERDOG-12",
+      "text": "被家族放弃的继承候选，胜利会牺牲重要关系",
+      "category": "protagonist",
+      "subcategory": "underdog",
+      "slot": "character",
+      "tags": [
+        "逆袭",
+        "成长"
+      ],
+      "drivers": [
+        "逆袭",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-01",
+      "text": "退隐多年的顶级高手，回归只为查清旧案",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-02",
+      "text": "退隐多年的顶级高手，力量尚未完全恢复",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-03",
+      "text": "退隐多年的顶级高手，旧部已经分裂站队",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-04",
+      "text": "退隐多年的顶级高手，必须遵守一份危险承诺",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-05",
+      "text": "被宣告死亡的前负责人，回归只为查清旧案",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-06",
+      "text": "被宣告死亡的前负责人，力量尚未完全恢复",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-07",
+      "text": "被宣告死亡的前负责人，旧部已经分裂站队",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-08",
+      "text": "被宣告死亡的前负责人，必须遵守一份危险承诺",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-09",
+      "text": "远走他乡的家族弃子，回归只为查清旧案",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-10",
+      "text": "远走他乡的家族弃子，力量尚未完全恢复",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-11",
+      "text": "远走他乡的家族弃子，旧部已经分裂站队",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-RETURNING_POWER-12",
+      "text": "远走他乡的家族弃子，必须遵守一份危险承诺",
+      "category": "protagonist",
+      "subcategory": "returning_power",
+      "slot": "character",
+      "tags": [
+        "回归",
+        "身份"
+      ],
+      "drivers": [
+        "回归",
+        "身份"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-01",
+      "text": "伪装成新人的行业巨头，身份公开会连累亲友",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-02",
+      "text": "伪装成新人的行业巨头，对手掌握半真半假的线索",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-03",
+      "text": "伪装成新人的行业巨头，亲近者误判其动机",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-04",
+      "text": "伪装成新人的行业巨头，必须在公开场合被迫掉马",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-05",
+      "text": "隐姓埋名的权力继承人，身份公开会连累亲友",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-06",
+      "text": "隐姓埋名的权力继承人，对手掌握半真半假的线索",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-07",
+      "text": "隐姓埋名的权力继承人，亲近者误判其动机",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-08",
+      "text": "隐姓埋名的权力继承人，必须在公开场合被迫掉马",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-09",
+      "text": "以普通身份生活的传奇人物，身份公开会连累亲友",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-10",
+      "text": "以普通身份生活的传奇人物，对手掌握半真半假的线索",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-11",
+      "text": "以普通身份生活的传奇人物，亲近者误判其动机",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-HIDDEN_IDENTITY-12",
+      "text": "以普通身份生活的传奇人物，必须在公开场合被迫掉马",
+      "category": "protagonist",
+      "subcategory": "hidden_identity",
+      "slot": "character",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-01",
+      "text": "回到悲剧发生前的当事人，前世信息正在快速失效",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-02",
+      "text": "回到悲剧发生前的当事人，改变一件事会引发连锁反应",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-03",
+      "text": "回到悲剧发生前的当事人，真正幕后者与记忆不符",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-04",
+      "text": "回到悲剧发生前的当事人，复仇目标中有人并非恶人",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-05",
+      "text": "带着失败记忆重返少年期，前世信息正在快速失效",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-06",
+      "text": "带着失败记忆重返少年期，改变一件事会引发连锁反应",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-07",
+      "text": "带着失败记忆重返少年期，真正幕后者与记忆不符",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-08",
+      "text": "带着失败记忆重返少年期，复仇目标中有人并非恶人",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-09",
+      "text": "从终局醒来的边缘角色，前世信息正在快速失效",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-10",
+      "text": "从终局醒来的边缘角色，改变一件事会引发连锁反应",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-11",
+      "text": "从终局醒来的边缘角色，真正幕后者与记忆不符",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-REBORN-12",
+      "text": "从终局醒来的边缘角色，复仇目标中有人并非恶人",
+      "category": "protagonist",
+      "subcategory": "reborn",
+      "slot": "character",
+      "tags": [
+        "重生",
+        "复仇"
+      ],
+      "drivers": [
+        "重生",
+        "复仇"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-01",
+      "text": "擅长拆解利益链的谈判者，不擅长表达私人情感",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-02",
+      "text": "擅长拆解利益链的谈判者，曾因一次判断失误失去同伴",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-03",
+      "text": "擅长拆解利益链的谈判者，越接近真相越受制度限制",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-04",
+      "text": "擅长拆解利益链的谈判者，必须在效率与底线间选择",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-05",
+      "text": "习惯记录证据的调查者，不擅长表达私人情感",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-06",
+      "text": "习惯记录证据的调查者，曾因一次判断失误失去同伴",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-07",
+      "text": "习惯记录证据的调查者，越接近真相越受制度限制",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-08",
+      "text": "习惯记录证据的调查者，必须在效率与底线间选择",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-09",
+      "text": "能在混乱中组织团队的领导者，不擅长表达私人情感",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-10",
+      "text": "能在混乱中组织团队的领导者，曾因一次判断失误失去同伴",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-11",
+      "text": "能在混乱中组织团队的领导者，越接近真相越受制度限制",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-RATIONAL_LEADER-12",
+      "text": "能在混乱中组织团队的领导者，必须在效率与底线间选择",
+      "category": "protagonist",
+      "subcategory": "rational_leader",
+      "slot": "character",
+      "tags": [
+        "智谋",
+        "事业"
+      ],
+      "drivers": [
+        "智谋",
+        "事业"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-01",
+      "text": "外表柔弱的行动派，在关键领域极度专业",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-02",
+      "text": "外表柔弱的行动派，日常弱点频繁制造误会",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-03",
+      "text": "外表柔弱的行动派，真实野心与外界评价相反",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-04",
+      "text": "外表柔弱的行动派，只有对手最早看出本质",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-05",
+      "text": "看似散漫的精密策划者，在关键领域极度专业",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-06",
+      "text": "看似散漫的精密策划者，日常弱点频繁制造误会",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-07",
+      "text": "看似散漫的精密策划者，真实野心与外界评价相反",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-08",
+      "text": "看似散漫的精密策划者，只有对手最早看出本质",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-09",
+      "text": "表面冷淡的共情者，在关键领域极度专业",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-10",
+      "text": "表面冷淡的共情者，日常弱点频繁制造误会",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-11",
+      "text": "表面冷淡的共情者，真实野心与外界评价相反",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-PRO-CONTRAST_PERSONA-12",
+      "text": "表面冷淡的共情者，只有对手最早看出本质",
+      "category": "protagonist",
+      "subcategory": "contrast_persona",
+      "slot": "character",
+      "tags": [
+        "反差",
+        "喜剧"
+      ],
+      "drivers": [
+        "反差",
+        "喜剧"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-01",
+      "text": "严苛但守底线的导师，只教方法不替主角收场",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-02",
+      "text": "严苛但守底线的导师，曾与反派共享同一目标",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-03",
+      "text": "严苛但守底线的导师，身体或地位已无法久撑",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-04",
+      "text": "严苛但守底线的导师，留下的考验比答案更重要",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-05",
+      "text": "声名狼藉的前行业传奇，只教方法不替主角收场",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-06",
+      "text": "声名狼藉的前行业传奇，曾与反派共享同一目标",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-07",
+      "text": "声名狼藉的前行业传奇，身体或地位已无法久撑",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-08",
+      "text": "声名狼藉的前行业传奇，留下的考验比答案更重要",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-09",
+      "text": "掌握旧时代秘密的长者，只教方法不替主角收场",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-10",
+      "text": "掌握旧时代秘密的长者，曾与反派共享同一目标",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-11",
+      "text": "掌握旧时代秘密的长者，身体或地位已无法久撑",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-MENTOR-12",
+      "text": "掌握旧时代秘密的长者，留下的考验比答案更重要",
+      "category": "supporting_role",
+      "subcategory": "mentor",
+      "slot": "relationship",
+      "tags": [
+        "导师",
+        "传承"
+      ],
+      "drivers": [
+        "导师",
+        "传承"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-01",
+      "text": "与主角路线相反的天才，尊重实力但不接受手段",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-02",
+      "text": "与主角路线相反的天才，会在共同危机中短暂合作",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-03",
+      "text": "与主角路线相反的天才，背后另有必须获胜的原因",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-04",
+      "text": "与主角路线相反的天才，最终胜负会改变双方价值观",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-05",
+      "text": "资源充足的同龄对手，尊重实力但不接受手段",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-06",
+      "text": "资源充足的同龄对手，会在共同危机中短暂合作",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-07",
+      "text": "资源充足的同龄对手，背后另有必须获胜的原因",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-08",
+      "text": "资源充足的同龄对手，最终胜负会改变双方价值观",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-09",
+      "text": "从朋友变成对手的旧识，尊重实力但不接受手段",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-10",
+      "text": "从朋友变成对手的旧识，会在共同危机中短暂合作",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-11",
+      "text": "从朋友变成对手的旧识，背后另有必须获胜的原因",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-RIVAL-12",
+      "text": "从朋友变成对手的旧识，最终胜负会改变双方价值观",
+      "category": "supporting_role",
+      "subcategory": "rival",
+      "slot": "relationship",
+      "tags": [
+        "竞争",
+        "对照"
+      ],
+      "drivers": [
+        "竞争",
+        "对照"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-01",
+      "text": "执行力极强的搭档，隐瞒一段与主线有关的过去",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-02",
+      "text": "执行力极强的搭档，关键时刻会质疑主角决策",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-03",
+      "text": "执行力极强的搭档，个人目标与团队目标部分冲突",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-04",
+      "text": "执行力极强的搭档，承担一次不可替代的救场",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-05",
+      "text": "善于社交的情报伙伴，隐瞒一段与主线有关的过去",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-06",
+      "text": "善于社交的情报伙伴，关键时刻会质疑主角决策",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-07",
+      "text": "善于社交的情报伙伴，个人目标与团队目标部分冲突",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-08",
+      "text": "善于社交的情报伙伴，承担一次不可替代的救场",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-09",
+      "text": "技术能力突出的后勤成员，隐瞒一段与主线有关的过去",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-10",
+      "text": "技术能力突出的后勤成员，关键时刻会质疑主角决策",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-11",
+      "text": "技术能力突出的后勤成员，个人目标与团队目标部分冲突",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-PARTNER-12",
+      "text": "技术能力突出的后勤成员，承担一次不可替代的救场",
+      "category": "supporting_role",
+      "subcategory": "partner",
+      "slot": "relationship",
+      "tags": [
+        "伙伴",
+        "团队"
+      ],
+      "drivers": [
+        "伙伴",
+        "团队"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-01",
+      "text": "控制欲强的家长，爱与利益被捆绑在一起",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-02",
+      "text": "控制欲强的家长，旧日偏心造成现实后果",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-03",
+      "text": "控制欲强的家长，家庭秘密牵连主线证据",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-04",
+      "text": "控制欲强的家长，和解必须以边界重建为前提",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-05",
+      "text": "长期被忽略的手足，爱与利益被捆绑在一起",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-06",
+      "text": "长期被忽略的手足，旧日偏心造成现实后果",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-07",
+      "text": "长期被忽略的手足，家庭秘密牵连主线证据",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-08",
+      "text": "长期被忽略的手足，和解必须以边界重建为前提",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-09",
+      "text": "立场复杂的养亲，爱与利益被捆绑在一起",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-10",
+      "text": "立场复杂的养亲，旧日偏心造成现实后果",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-11",
+      "text": "立场复杂的养亲，家庭秘密牵连主线证据",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-FAMILY-12",
+      "text": "立场复杂的养亲，和解必须以边界重建为前提",
+      "category": "supporting_role",
+      "subcategory": "family",
+      "slot": "relationship",
+      "tags": [
+        "家庭",
+        "亲情"
+      ],
+      "drivers": [
+        "家庭",
+        "亲情"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-01",
+      "text": "与主角势均力敌的合作对象，感情推进依赖共同选择",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-02",
+      "text": "与主角势均力敌的合作对象，双方掌握的信息并不对等",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-03",
+      "text": "与主角势均力敌的合作对象，事业目标会制造现实分离",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-04",
+      "text": "与主角势均力敌的合作对象，结局取决于是否尊重边界",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-05",
+      "text": "立场敌对的旧爱，感情推进依赖共同选择",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-06",
+      "text": "立场敌对的旧爱，双方掌握的信息并不对等",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-07",
+      "text": "立场敌对的旧爱，事业目标会制造现实分离",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-08",
+      "text": "立场敌对的旧爱，结局取决于是否尊重边界",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-09",
+      "text": "长期陪伴却被忽略的人，感情推进依赖共同选择",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-10",
+      "text": "长期陪伴却被忽略的人，双方掌握的信息并不对等",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-11",
+      "text": "长期陪伴却被忽略的人，事业目标会制造现实分离",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-LOVE_INTEREST-12",
+      "text": "长期陪伴却被忽略的人，结局取决于是否尊重边界",
+      "category": "supporting_role",
+      "subcategory": "love_interest",
+      "slot": "relationship",
+      "tags": [
+        "感情",
+        "关系"
+      ],
+      "drivers": [
+        "感情",
+        "关系"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-01",
+      "text": "相信秩序高于个体的掌权者，拥有部分合理诉求",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-02",
+      "text": "相信秩序高于个体的掌权者，胜利依赖制度而非单纯武力",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-03",
+      "text": "相信秩序高于个体的掌权者，与主角共享一段关键经历",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-04",
+      "text": "相信秩序高于个体的掌权者，败局会留下新的社会问题",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-05",
+      "text": "把所有关系视为交易的操盘者，拥有部分合理诉求",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-06",
+      "text": "把所有关系视为交易的操盘者，胜利依赖制度而非单纯武力",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-07",
+      "text": "把所有关系视为交易的操盘者，与主角共享一段关键经历",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-08",
+      "text": "把所有关系视为交易的操盘者，败局会留下新的社会问题",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-09",
+      "text": "曾经失败后走向极端的理想主义者，拥有部分合理诉求",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-10",
+      "text": "曾经失败后走向极端的理想主义者，胜利依赖制度而非单纯武力",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-11",
+      "text": "曾经失败后走向极端的理想主义者，与主角共享一段关键经历",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-SUP-ANTAGONIST-12",
+      "text": "曾经失败后走向极端的理想主义者，败局会留下新的社会问题",
+      "category": "supporting_role",
+      "subcategory": "antagonist",
+      "slot": "relationship",
+      "tags": [
+        "反派",
+        "博弈"
+      ],
+      "drivers": [
+        "反派",
+        "博弈"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-01",
+      "text": "发布阶段任务的成长系统，奖励伴随明确代价",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-02",
+      "text": "发布阶段任务的成长系统，任务描述可能故意不完整",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-03",
+      "text": "发布阶段任务的成长系统，无法替代真实训练与资源",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-04",
+      "text": "发布阶段任务的成长系统，终极目标与宿主理解不同",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-05",
+      "text": "以声望结算奖励的职业系统，奖励伴随明确代价",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-06",
+      "text": "以声望结算奖励的职业系统，任务描述可能故意不完整",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-07",
+      "text": "以声望结算奖励的职业系统，无法替代真实训练与资源",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-08",
+      "text": "以声望结算奖励的职业系统，终极目标与宿主理解不同",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-09",
+      "text": "要求修复剧情偏差的规则系统，奖励伴随明确代价",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-10",
+      "text": "要求修复剧情偏差的规则系统，任务描述可能故意不完整",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-11",
+      "text": "要求修复剧情偏差的规则系统，无法替代真实训练与资源",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SYSTEM-12",
+      "text": "要求修复剧情偏差的规则系统，终极目标与宿主理解不同",
+      "category": "cheat_device",
+      "subcategory": "system",
+      "slot": "device",
+      "tags": [
+        "系统",
+        "成长"
+      ],
+      "drivers": [
+        "系统",
+        "成长"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-01",
+      "text": "可储存物资的有限空间，容量随完成目标扩张",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-02",
+      "text": "可储存物资的有限空间，时间流速存在危险差异",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-03",
+      "text": "可储存物资的有限空间，开启会留下可追踪痕迹",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-04",
+      "text": "可储存物资的有限空间，核心区域需要共同解锁",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-05",
+      "text": "能培育特殊作物的秘境，容量随完成目标扩张",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-06",
+      "text": "能培育特殊作物的秘境，时间流速存在危险差异",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-07",
+      "text": "能培育特殊作物的秘境，开启会留下可追踪痕迹",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-08",
+      "text": "能培育特殊作物的秘境，核心区域需要共同解锁",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-09",
+      "text": "连接废弃基地的私人入口，容量随完成目标扩张",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-10",
+      "text": "连接废弃基地的私人入口，时间流速存在危险差异",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-11",
+      "text": "连接废弃基地的私人入口，开启会留下可追踪痕迹",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-SPACE-12",
+      "text": "连接废弃基地的私人入口，核心区域需要共同解锁",
+      "category": "cheat_device",
+      "subcategory": "space",
+      "slot": "device",
+      "tags": [
+        "空间",
+        "资源"
+      ],
+      "drivers": [
+        "空间",
+        "资源"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-01",
+      "text": "被误判为废脉的稀有血统，使用过度会损伤记忆",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-02",
+      "text": "被误判为废脉的稀有血统，能力成长依赖道德选择",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-03",
+      "text": "被误判为废脉的稀有血统，同源者可能远程感知",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-04",
+      "text": "被误判为废脉的稀有血统，真正用途并非战斗",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-05",
+      "text": "能够感知规则漏洞的天赋，使用过度会损伤记忆",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-06",
+      "text": "能够感知规则漏洞的天赋，能力成长依赖道德选择",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-07",
+      "text": "能够感知规则漏洞的天赋，同源者可能远程感知",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-08",
+      "text": "能够感知规则漏洞的天赋，真正用途并非战斗",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-09",
+      "text": "与古代文明共鸣的基因，使用过度会损伤记忆",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-10",
+      "text": "与古代文明共鸣的基因，能力成长依赖道德选择",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-11",
+      "text": "与古代文明共鸣的基因，同源者可能远程感知",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-BLOODLINE-12",
+      "text": "与古代文明共鸣的基因，真正用途并非战斗",
+      "category": "cheat_device",
+      "subcategory": "bloodline",
+      "slot": "device",
+      "tags": [
+        "血脉",
+        "力量"
+      ],
+      "drivers": [
+        "血脉",
+        "力量"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-01",
+      "text": "近乎失传的修复技艺，需要长期准备才能发挥",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-02",
+      "text": "近乎失传的修复技艺，会暴露主角真实履历",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-03",
+      "text": "近乎失传的修复技艺，必须与团队资源结合",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-04",
+      "text": "近乎失传的修复技艺，一次误判会带来高额成本",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-05",
+      "text": "极强的金融建模能力，需要长期准备才能发挥",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-06",
+      "text": "极强的金融建模能力，会暴露主角真实履历",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-07",
+      "text": "极强的金融建模能力，必须与团队资源结合",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-08",
+      "text": "极强的金融建模能力，一次误判会带来高额成本",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-09",
+      "text": "能从细节还原现场的观察术，需要长期准备才能发挥",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-10",
+      "text": "能从细节还原现场的观察术，会暴露主角真实履历",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-11",
+      "text": "能从细节还原现场的观察术，必须与团队资源结合",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-CRAFT-12",
+      "text": "能从细节还原现场的观察术，一次误判会带来高额成本",
+      "category": "cheat_device",
+      "subcategory": "craft",
+      "slot": "device",
+      "tags": [
+        "技能",
+        "职业"
+      ],
+      "drivers": [
+        "技能",
+        "职业"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-01",
+      "text": "记录隐藏交易的旧设备，本身也可能是诱饵",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-02",
+      "text": "记录隐藏交易的旧设备，不同人物能读取不同信息",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-03",
+      "text": "记录隐藏交易的旧设备，使用后会改变所有权",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-04",
+      "text": "记录隐藏交易的旧设备，损坏部分恰好涉及真相",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-05",
+      "text": "只能开启一次的传承器物，本身也可能是诱饵",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-06",
+      "text": "只能开启一次的传承器物，不同人物能读取不同信息",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-07",
+      "text": "只能开启一次的传承器物，使用后会改变所有权",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-08",
+      "text": "只能开启一次的传承器物，损坏部分恰好涉及真相",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-09",
+      "text": "来源不明的身份凭证，本身也可能是诱饵",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-10",
+      "text": "来源不明的身份凭证，不同人物能读取不同信息",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-11",
+      "text": "来源不明的身份凭证，使用后会改变所有权",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-ARTIFACT-12",
+      "text": "来源不明的身份凭证，损坏部分恰好涉及真相",
+      "category": "cheat_device",
+      "subcategory": "artifact",
+      "slot": "device",
+      "tags": [
+        "物品",
+        "证据"
+      ],
+      "drivers": [
+        "物品",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-01",
+      "text": "保留前世关键节点的记忆，记忆含有被篡改的部分",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-02",
+      "text": "保留前世关键节点的记忆，越改变未来越失去优势",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-03",
+      "text": "保留前世关键节点的记忆，无法直接证明其真实性",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-04",
+      "text": "保留前世关键节点的记忆，关键空白由创伤造成",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-05",
+      "text": "拥有他人部分人生片段，记忆含有被篡改的部分",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-06",
+      "text": "拥有他人部分人生片段，越改变未来越失去优势",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-07",
+      "text": "拥有他人部分人生片段，无法直接证明其真实性",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-08",
+      "text": "拥有他人部分人生片段，关键空白由创伤造成",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-09",
+      "text": "能回忆被集体遗忘的事件，记忆含有被篡改的部分",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-10",
+      "text": "能回忆被集体遗忘的事件，越改变未来越失去优势",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-11",
+      "text": "能回忆被集体遗忘的事件，无法直接证明其真实性",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-MEMORY-12",
+      "text": "能回忆被集体遗忘的事件，关键空白由创伤造成",
+      "category": "cheat_device",
+      "subcategory": "memory",
+      "slot": "device",
+      "tags": [
+        "记忆",
+        "信息差"
+      ],
+      "drivers": [
+        "记忆",
+        "信息差"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-01",
+      "text": "能交换能力与代价的契约，条款必须双方真实理解",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-02",
+      "text": "能交换能力与代价的契约，违约惩罚会波及无辜者",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-03",
+      "text": "能交换能力与代价的契约，存在可被利用的定义漏洞",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-04",
+      "text": "能交换能力与代价的契约，解除需要放弃最大收益",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-05",
+      "text": "约束双方不得说谎的协议，条款必须双方真实理解",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-06",
+      "text": "约束双方不得说谎的协议，违约惩罚会波及无辜者",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-07",
+      "text": "约束双方不得说谎的协议，存在可被利用的定义漏洞",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-08",
+      "text": "约束双方不得说谎的协议，解除需要放弃最大收益",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-09",
+      "text": "将承诺转化为现实后果的印记，条款必须双方真实理解",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-10",
+      "text": "将承诺转化为现实后果的印记，违约惩罚会波及无辜者",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-11",
+      "text": "将承诺转化为现实后果的印记，存在可被利用的定义漏洞",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-CHE-CONTRACT-12",
+      "text": "将承诺转化为现实后果的印记，解除需要放弃最大收益",
+      "category": "cheat_device",
+      "subcategory": "contract",
+      "slot": "device",
+      "tags": [
+        "契约",
+        "规则"
+      ],
+      "drivers": [
+        "契约",
+        "规则"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-01",
+      "text": "行业评审现场翻盘，反转依据提前埋藏",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-02",
+      "text": "行业评审现场翻盘，胜利后局势继续升级",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-03",
+      "text": "行业评审现场翻盘，旁观者立场发生分裂",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-04",
+      "text": "行业评审现场翻盘，对手仍保留反击筹码",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-05",
+      "text": "家族会议证据公开，反转依据提前埋藏",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-06",
+      "text": "家族会议证据公开，胜利后局势继续升级",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-07",
+      "text": "家族会议证据公开，旁观者立场发生分裂",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-08",
+      "text": "家族会议证据公开，对手仍保留反击筹码",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-09",
+      "text": "直播镜头下身份揭晓，反转依据提前埋藏",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-10",
+      "text": "直播镜头下身份揭晓，胜利后局势继续升级",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-11",
+      "text": "直播镜头下身份揭晓，旁观者立场发生分裂",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-PUBLIC_REVERSAL-12",
+      "text": "直播镜头下身份揭晓，对手仍保留反击筹码",
+      "category": "plot_event",
+      "subcategory": "public_reversal",
+      "slot": "event",
+      "tags": [
+        "打脸",
+        "反转"
+      ],
+      "drivers": [
+        "打脸",
+        "反转"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-01",
+      "text": "地下拍卖出现关键物品，标的真实价值被误判",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-02",
+      "text": "地下拍卖出现关键物品，竞价者代表不同势力",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-03",
+      "text": "地下拍卖出现关键物品，成交只是争夺的开始",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-04",
+      "text": "地下拍卖出现关键物品，主角必须放弃另一项资源",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-05",
+      "text": "公开招标争夺核心项目，标的真实价值被误判",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-06",
+      "text": "公开招标争夺核心项目，竞价者代表不同势力",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-07",
+      "text": "公开招标争夺核心项目，成交只是争夺的开始",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-08",
+      "text": "公开招标争夺核心项目，主角必须放弃另一项资源",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-09",
+      "text": "遗产竞拍牵出旧案，标的真实价值被误判",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-10",
+      "text": "遗产竞拍牵出旧案，竞价者代表不同势力",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-11",
+      "text": "遗产竞拍牵出旧案，成交只是争夺的开始",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-AUCTION-12",
+      "text": "遗产竞拍牵出旧案，主角必须放弃另一项资源",
+      "category": "plot_event",
+      "subcategory": "auction",
+      "slot": "event",
+      "tags": [
+        "资源",
+        "竞价"
+      ],
+      "drivers": [
+        "资源",
+        "竞价"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-01",
+      "text": "决定晋升的封闭考核，规则中藏有利益倾向",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-02",
+      "text": "决定晋升的封闭考核，竞争者被迫临时合作",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-03",
+      "text": "决定晋升的封闭考核，成绩会触发更高层关注",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-04",
+      "text": "决定晋升的封闭考核，失败并非淘汰而是调岗",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-05",
+      "text": "跨阵营团队竞赛，规则中藏有利益倾向",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-06",
+      "text": "跨阵营团队竞赛，竞争者被迫临时合作",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-07",
+      "text": "跨阵营团队竞赛，成绩会触发更高层关注",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-08",
+      "text": "跨阵营团队竞赛，失败并非淘汰而是调岗",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-09",
+      "text": "公开展示成果的行业大赛，规则中藏有利益倾向",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-10",
+      "text": "公开展示成果的行业大赛，竞争者被迫临时合作",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-11",
+      "text": "公开展示成果的行业大赛，成绩会触发更高层关注",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-TRIAL-12",
+      "text": "公开展示成果的行业大赛，失败并非淘汰而是调岗",
+      "category": "plot_event",
+      "subcategory": "trial",
+      "slot": "event",
+      "tags": [
+        "考核",
+        "竞技"
+      ],
+      "drivers": [
+        "考核",
+        "竞技"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-01",
+      "text": "灾难现场限时救援，救援目标隐瞒真实身份",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-02",
+      "text": "灾难现场限时救援，现场证据与官方说法冲突",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-03",
+      "text": "灾难现场限时救援，资源只够完成一个方案",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-04",
+      "text": "灾难现场限时救援，成功会暴露主角底牌",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-05",
+      "text": "失踪人员追踪行动，救援目标隐瞒真实身份",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-06",
+      "text": "失踪人员追踪行动，现场证据与官方说法冲突",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-07",
+      "text": "失踪人员追踪行动，资源只够完成一个方案",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-08",
+      "text": "失踪人员追踪行动，成功会暴露主角底牌",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-09",
+      "text": "封闭空间突发事故，救援目标隐瞒真实身份",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-10",
+      "text": "封闭空间突发事故，现场证据与官方说法冲突",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-11",
+      "text": "封闭空间突发事故，资源只够完成一个方案",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-RESCUE-12",
+      "text": "封闭空间突发事故，成功会暴露主角底牌",
+      "category": "plot_event",
+      "subcategory": "rescue",
+      "slot": "event",
+      "tags": [
+        "救援",
+        "危机"
+      ],
+      "drivers": [
+        "救援",
+        "危机"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-01",
+      "text": "对手公开质疑主角资历，掉马解决旧冲突又制造新敌人",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-02",
+      "text": "对手公开质疑主角资历，亲近者更在意长期隐瞒",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-03",
+      "text": "对手公开质疑主角资历，身份只揭开一层",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-04",
+      "text": "对手公开质疑主角资历，公开信息被对手刻意扭曲",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-05",
+      "text": "旧部在众人面前认出主角，掉马解决旧冲突又制造新敌人",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-06",
+      "text": "旧部在众人面前认出主角，亲近者更在意长期隐瞒",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-07",
+      "text": "旧部在众人面前认出主角，身份只揭开一层",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-08",
+      "text": "旧部在众人面前认出主角，公开信息被对手刻意扭曲",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-09",
+      "text": "关键权限只能由真实身份开启，掉马解决旧冲突又制造新敌人",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-10",
+      "text": "关键权限只能由真实身份开启，亲近者更在意长期隐瞒",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-11",
+      "text": "关键权限只能由真实身份开启，身份只揭开一层",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-IDENTITY_REVEAL-12",
+      "text": "关键权限只能由真实身份开启，公开信息被对手刻意扭曲",
+      "category": "plot_event",
+      "subcategory": "identity_reveal",
+      "slot": "event",
+      "tags": [
+        "身份",
+        "掉马"
+      ],
+      "drivers": [
+        "身份",
+        "掉马"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-01",
+      "text": "追查异常资金流，证据链缺少关键一环",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-02",
+      "text": "追查异常资金流，证人各自只说部分真话",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-03",
+      "text": "追查异常资金流，合法取证比发现真相更难",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-04",
+      "text": "追查异常资金流，调查者本身成为嫌疑人",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-05",
+      "text": "复盘多年前的失踪案，证据链缺少关键一环",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-06",
+      "text": "复盘多年前的失踪案，证人各自只说部分真话",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-07",
+      "text": "复盘多年前的失踪案，合法取证比发现真相更难",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-08",
+      "text": "复盘多年前的失踪案，调查者本身成为嫌疑人",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-09",
+      "text": "调查被删除的实验记录，证据链缺少关键一环",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-10",
+      "text": "调查被删除的实验记录，证人各自只说部分真话",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-11",
+      "text": "调查被删除的实验记录，合法取证比发现真相更难",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-INVESTIGATION-12",
+      "text": "调查被删除的实验记录，调查者本身成为嫌疑人",
+      "category": "plot_event",
+      "subcategory": "investigation",
+      "slot": "event",
+      "tags": [
+        "悬疑",
+        "证据"
+      ],
+      "drivers": [
+        "悬疑",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-01",
+      "text": "多年后在竞争项目中重逢，双方掌握的过去版本不同",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-02",
+      "text": "多年后在竞争项目中重逢，重逢并不自动恢复关系",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-03",
+      "text": "多年后在竞争项目中重逢，共同目标结束后仍需选择",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-04",
+      "text": "多年后在竞争项目中重逢，第三方从分离中获得利益",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-05",
+      "text": "危机迫使决裂双方再合作，双方掌握的过去版本不同",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-06",
+      "text": "危机迫使决裂双方再合作，重逢并不自动恢复关系",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-07",
+      "text": "危机迫使决裂双方再合作，共同目标结束后仍需选择",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-08",
+      "text": "危机迫使决裂双方再合作，第三方从分离中获得利益",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-09",
+      "text": "失踪者以新身份归来，双方掌握的过去版本不同",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-10",
+      "text": "失踪者以新身份归来，重逢并不自动恢复关系",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-11",
+      "text": "失踪者以新身份归来，共同目标结束后仍需选择",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-PLO-SEPARATION_RETURN-12",
+      "text": "失踪者以新身份归来，第三方从分离中获得利益",
+      "category": "plot_event",
+      "subcategory": "separation_return",
+      "slot": "event",
+      "tags": [
+        "关系",
+        "重逢"
+      ],
+      "drivers": [
+        "关系",
+        "重逢"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-01",
+      "text": "稀缺治疗名额之争，规则表面公平实则偏置",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-02",
+      "text": "稀缺治疗名额之争，主角不能只靠出价获胜",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-03",
+      "text": "稀缺治疗名额之争，资源背后还有责任义务",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-04",
+      "text": "稀缺治疗名额之争，胜者会成为更大目标",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-05",
+      "text": "关键技术所有权争议，规则表面公平实则偏置",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-06",
+      "text": "关键技术所有权争议，主角不能只靠出价获胜",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-07",
+      "text": "关键技术所有权争议，资源背后还有责任义务",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-08",
+      "text": "关键技术所有权争议，胜者会成为更大目标",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-09",
+      "text": "生存物资分配冲突，规则表面公平实则偏置",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-10",
+      "text": "生存物资分配冲突，主角不能只靠出价获胜",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-11",
+      "text": "生存物资分配冲突，资源背后还有责任义务",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-RESOURCE-12",
+      "text": "生存物资分配冲突，胜者会成为更大目标",
+      "category": "core_conflict",
+      "subcategory": "resource",
+      "slot": "conflict",
+      "tags": [
+        "资源",
+        "利益"
+      ],
+      "drivers": [
+        "资源",
+        "利益"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-01",
+      "text": "继承资格遭到质疑，证据存在程序瑕疵",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-02",
+      "text": "继承资格遭到质疑，身份确认会伤害现有关系",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-03",
+      "text": "继承资格遭到质疑，不同制度给出相反结论",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-04",
+      "text": "继承资格遭到质疑，反派利用舆论先行定罪",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-05",
+      "text": "专业资质被恶意撤销，证据存在程序瑕疵",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-06",
+      "text": "专业资质被恶意撤销，身份确认会伤害现有关系",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-07",
+      "text": "专业资质被恶意撤销，不同制度给出相反结论",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-08",
+      "text": "专业资质被恶意撤销，反派利用舆论先行定罪",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-09",
+      "text": "真实血缘与法律身份冲突，证据存在程序瑕疵",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-10",
+      "text": "真实血缘与法律身份冲突，身份确认会伤害现有关系",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-11",
+      "text": "真实血缘与法律身份冲突，不同制度给出相反结论",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-IDENTITY-12",
+      "text": "真实血缘与法律身份冲突，反派利用舆论先行定罪",
+      "category": "core_conflict",
+      "subcategory": "identity",
+      "slot": "conflict",
+      "tags": [
+        "身份",
+        "资格"
+      ],
+      "drivers": [
+        "身份",
+        "资格"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-01",
+      "text": "长期付出被视为理所当然，修复必须先承认实际伤害",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-02",
+      "text": "长期付出被视为理所当然，离开会造成现实损失",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-03",
+      "text": "长期付出被视为理所当然，第三方并非唯一原因",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-04",
+      "text": "长期付出被视为理所当然，选择独立不等于没有感情",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-05",
+      "text": "亲密关系被权力控制，修复必须先承认实际伤害",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-06",
+      "text": "亲密关系被权力控制，离开会造成现实损失",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-07",
+      "text": "亲密关系被权力控制，第三方并非唯一原因",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-08",
+      "text": "亲密关系被权力控制，选择独立不等于没有感情",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-09",
+      "text": "旧承诺与新生活冲突，修复必须先承认实际伤害",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-10",
+      "text": "旧承诺与新生活冲突，离开会造成现实损失",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-11",
+      "text": "旧承诺与新生活冲突，第三方并非唯一原因",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-RELATIONSHIP-12",
+      "text": "旧承诺与新生活冲突，选择独立不等于没有感情",
+      "category": "core_conflict",
+      "subcategory": "relationship",
+      "slot": "conflict",
+      "tags": [
+        "感情",
+        "边界"
+      ],
+      "drivers": [
+        "感情",
+        "边界"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-01",
+      "text": "揭露问题会破坏组织声誉，制度中也有善意执行者",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-02",
+      "text": "揭露问题会破坏组织声誉，个人胜利不能自动改变规则",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-03",
+      "text": "揭露问题会破坏组织声誉，证据必须经得起公开审查",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-04",
+      "text": "揭露问题会破坏组织声誉，妥协会换来阶段性空间",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-05",
+      "text": "合法程序保护了错误结果，制度中也有善意执行者",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-06",
+      "text": "合法程序保护了错误结果，个人胜利不能自动改变规则",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-07",
+      "text": "合法程序保护了错误结果，证据必须经得起公开审查",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-08",
+      "text": "合法程序保护了错误结果，妥协会换来阶段性空间",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-09",
+      "text": "改革方案触动多数人利益，制度中也有善意执行者",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-10",
+      "text": "改革方案触动多数人利益，个人胜利不能自动改变规则",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-11",
+      "text": "改革方案触动多数人利益，证据必须经得起公开审查",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-INSTITUTION-12",
+      "text": "改革方案触动多数人利益，妥协会换来阶段性空间",
+      "category": "core_conflict",
+      "subcategory": "institution",
+      "slot": "conflict",
+      "tags": [
+        "制度",
+        "权力"
+      ],
+      "drivers": [
+        "制度",
+        "权力"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-01",
+      "text": "撤离名额不足，信息随时间不断变化",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-02",
+      "text": "撤离名额不足，不选择同样产生后果",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-03",
+      "text": "撤离名额不足，团队价值观出现分裂",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-04",
+      "text": "撤离名额不足，正确方案也需要有人承担代价",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-05",
+      "text": "感染者是否隔离，信息随时间不断变化",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-06",
+      "text": "感染者是否隔离，不选择同样产生后果",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-07",
+      "text": "感染者是否隔离，团队价值观出现分裂",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-08",
+      "text": "感染者是否隔离，正确方案也需要有人承担代价",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-09",
+      "text": "救援路线只能保住一方，信息随时间不断变化",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-10",
+      "text": "救援路线只能保住一方，不选择同样产生后果",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-11",
+      "text": "救援路线只能保住一方，团队价值观出现分裂",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-SURVIVAL-12",
+      "text": "救援路线只能保住一方，正确方案也需要有人承担代价",
+      "category": "core_conflict",
+      "subcategory": "survival",
+      "slot": "conflict",
+      "tags": [
+        "生存",
+        "伦理"
+      ],
+      "drivers": [
+        "生存",
+        "伦理"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-01",
+      "text": "官方版本与私人证据冲突，真相公开可能伤害无辜者",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-02",
+      "text": "官方版本与私人证据冲突，传播者有自己的利益",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-03",
+      "text": "官方版本与私人证据冲突，关键证据容易被断章取义",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-04",
+      "text": "官方版本与私人证据冲突，主角必须选择公开顺序",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-05",
+      "text": "公众需要的英雄并不存在，真相公开可能伤害无辜者",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-06",
+      "text": "公众需要的英雄并不存在，传播者有自己的利益",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-07",
+      "text": "公众需要的英雄并不存在，关键证据容易被断章取义",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-08",
+      "text": "公众需要的英雄并不存在，主角必须选择公开顺序",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-09",
+      "text": "受害者证词彼此矛盾，真相公开可能伤害无辜者",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-10",
+      "text": "受害者证词彼此矛盾，传播者有自己的利益",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-11",
+      "text": "受害者证词彼此矛盾，关键证据容易被断章取义",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-TRUTH-12",
+      "text": "受害者证词彼此矛盾，主角必须选择公开顺序",
+      "category": "core_conflict",
+      "subcategory": "truth",
+      "slot": "conflict",
+      "tags": [
+        "真相",
+        "舆论"
+      ],
+      "drivers": [
+        "真相",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-01",
+      "text": "继任者争夺控制权，每次站队都会失去一部分筹码",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-02",
+      "text": "继任者争夺控制权，中立者掌握关键合法性",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-03",
+      "text": "继任者争夺控制权，表面敌人可能是临时盟友",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-04",
+      "text": "继任者争夺控制权，胜利后必须兑现政治承诺",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-05",
+      "text": "地方与中央利益对撞，每次站队都会失去一部分筹码",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-06",
+      "text": "地方与中央利益对撞，中立者掌握关键合法性",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-07",
+      "text": "地方与中央利益对撞，表面敌人可能是临时盟友",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-08",
+      "text": "地方与中央利益对撞，胜利后必须兑现政治承诺",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-09",
+      "text": "联盟内部路线分裂，每次站队都会失去一部分筹码",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-10",
+      "text": "联盟内部路线分裂，中立者掌握关键合法性",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-11",
+      "text": "联盟内部路线分裂，表面敌人可能是临时盟友",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-COR-POWER-12",
+      "text": "联盟内部路线分裂，胜利后必须兑现政治承诺",
+      "category": "core_conflict",
+      "subcategory": "power",
+      "slot": "conflict",
+      "tags": [
+        "权谋",
+        "阵营"
+      ],
+      "drivers": [
+        "权谋",
+        "阵营"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-01",
+      "text": "急诊团队的分诊经验，专业判断与行政命令冲突",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-02",
+      "text": "急诊团队的分诊经验，样本数量不足以定论",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-03",
+      "text": "急诊团队的分诊经验，治疗选择伴随伦理争议",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-04",
+      "text": "急诊团队的分诊经验，患者家属掌握关键线索",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-05",
+      "text": "罕见病研究资料，专业判断与行政命令冲突",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-06",
+      "text": "罕见病研究资料，样本数量不足以定论",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-07",
+      "text": "罕见病研究资料，治疗选择伴随伦理争议",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-08",
+      "text": "罕见病研究资料，患者家属掌握关键线索",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-09",
+      "text": "基层医疗网络，专业判断与行政命令冲突",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-10",
+      "text": "基层医疗网络，样本数量不足以定论",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-11",
+      "text": "基层医疗网络，治疗选择伴随伦理争议",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDICINE-12",
+      "text": "基层医疗网络，患者家属掌握关键线索",
+      "category": "career_resource",
+      "subcategory": "medicine",
+      "slot": "resource",
+      "tags": [
+        "医疗",
+        "专业"
+      ],
+      "drivers": [
+        "医疗",
+        "专业"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-01",
+      "text": "复杂股权诉讼，事实成立但证据不合法",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-02",
+      "text": "复杂股权诉讼，程序期限制造紧迫感",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-03",
+      "text": "复杂股权诉讼，证人保护影响公开策略",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-04",
+      "text": "复杂股权诉讼，和解方案隐藏长期代价",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-05",
+      "text": "刑事案件证据审查，事实成立但证据不合法",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-06",
+      "text": "刑事案件证据审查，程序期限制造紧迫感",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-07",
+      "text": "刑事案件证据审查，证人保护影响公开策略",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-08",
+      "text": "刑事案件证据审查，和解方案隐藏长期代价",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-09",
+      "text": "跨区域执法协作，事实成立但证据不合法",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-10",
+      "text": "跨区域执法协作，程序期限制造紧迫感",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-11",
+      "text": "跨区域执法协作，证人保护影响公开策略",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-LAW-12",
+      "text": "跨区域执法协作，和解方案隐藏长期代价",
+      "category": "career_resource",
+      "subcategory": "law",
+      "slot": "resource",
+      "tags": [
+        "法律",
+        "证据"
+      ],
+      "drivers": [
+        "法律",
+        "证据"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-01",
+      "text": "并购中的异常账目，数字背后是人为设计",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-02",
+      "text": "并购中的异常账目，现金流比估值更紧迫",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-03",
+      "text": "并购中的异常账目，监管调查突然介入",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-04",
+      "text": "并购中的异常账目，关键合同存在双重解释",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-05",
+      "text": "供应链资金断裂，数字背后是人为设计",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-06",
+      "text": "供应链资金断裂，现金流比估值更紧迫",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-07",
+      "text": "供应链资金断裂，监管调查突然介入",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-08",
+      "text": "供应链资金断裂，关键合同存在双重解释",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-09",
+      "text": "家族信托控制权，数字背后是人为设计",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-10",
+      "text": "家族信托控制权，现金流比估值更紧迫",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-11",
+      "text": "家族信托控制权，监管调查突然介入",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-FINANCE-12",
+      "text": "家族信托控制权，关键合同存在双重解释",
+      "category": "career_resource",
+      "subcategory": "finance",
+      "slot": "resource",
+      "tags": [
+        "商业",
+        "金融"
+      ],
+      "drivers": [
+        "商业",
+        "金融"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-01",
+      "text": "危机公关团队，热搜由多方共同推动",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-02",
+      "text": "危机公关团队，作品质量与资本安排冲突",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-03",
+      "text": "危机公关团队，偷拍视频经过恶意剪辑",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-04",
+      "text": "危机公关团队，粉丝立场影响商业决策",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-05",
+      "text": "影视项目制作链，热搜由多方共同推动",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-06",
+      "text": "影视项目制作链，作品质量与资本安排冲突",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-07",
+      "text": "影视项目制作链，偷拍视频经过恶意剪辑",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-08",
+      "text": "影视项目制作链，粉丝立场影响商业决策",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-09",
+      "text": "直播平台流量机制，热搜由多方共同推动",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-10",
+      "text": "直播平台流量机制，作品质量与资本安排冲突",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-11",
+      "text": "直播平台流量机制，偷拍视频经过恶意剪辑",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-MEDIA-12",
+      "text": "直播平台流量机制，粉丝立场影响商业决策",
+      "category": "career_resource",
+      "subcategory": "media",
+      "slot": "resource",
+      "tags": [
+        "娱乐圈",
+        "舆论"
+      ],
+      "drivers": [
+        "娱乐圈",
+        "舆论"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-01",
+      "text": "人工智能安全团队，技术缺陷无法靠口号修复",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-02",
+      "text": "人工智能安全团队，测试数据被选择性披露",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-03",
+      "text": "人工智能安全团队，工程期限与安全标准冲突",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-04",
+      "text": "人工智能安全团队，核心人员突然离职",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-05",
+      "text": "大型基础设施项目，技术缺陷无法靠口号修复",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-06",
+      "text": "大型基础设施项目，测试数据被选择性披露",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-07",
+      "text": "大型基础设施项目，工程期限与安全标准冲突",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-08",
+      "text": "大型基础设施项目，核心人员突然离职",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-09",
+      "text": "前沿生物实验室，技术缺陷无法靠口号修复",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-10",
+      "text": "前沿生物实验室，测试数据被选择性披露",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-11",
+      "text": "前沿生物实验室，工程期限与安全标准冲突",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-TECHNOLOGY-12",
+      "text": "前沿生物实验室，核心人员突然离职",
+      "category": "career_resource",
+      "subcategory": "technology",
+      "slot": "resource",
+      "tags": [
+        "科技",
+        "工程"
+      ],
+      "drivers": [
+        "科技",
+        "工程"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-01",
+      "text": "边境侦察小队，情报存在时间差",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-02",
+      "text": "边境侦察小队，命令与现场情况冲突",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-03",
+      "text": "边境侦察小队，补给决定战术上限",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-04",
+      "text": "边境侦察小队，胜利必须控制平民代价",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-05",
+      "text": "舰队后勤系统，情报存在时间差",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-06",
+      "text": "舰队后勤系统，命令与现场情况冲突",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-07",
+      "text": "舰队后勤系统，补给决定战术上限",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-08",
+      "text": "舰队后勤系统，胜利必须控制平民代价",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-09",
+      "text": "城防指挥体系，情报存在时间差",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-10",
+      "text": "城防指挥体系，命令与现场情况冲突",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-11",
+      "text": "城防指挥体系，补给决定战术上限",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-CAR-MILITARY-12",
+      "text": "城防指挥体系，胜利必须控制平民代价",
+      "category": "career_resource",
+      "subcategory": "military",
+      "slot": "resource",
+      "tags": [
+        "军事",
+        "战略"
+      ],
+      "drivers": [
+        "军事",
+        "战略"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-01",
+      "text": "停电后的老城区，声音比视线更可靠",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-02",
+      "text": "停电后的老城区，通信断续制造误判",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-03",
+      "text": "停电后的老城区，水迹留下关键路线",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-04",
+      "text": "停电后的老城区，黎明前必须做出决定",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-05",
+      "text": "暴雨封锁的山路，声音比视线更可靠",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-06",
+      "text": "暴雨封锁的山路，通信断续制造误判",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-07",
+      "text": "暴雨封锁的山路，水迹留下关键路线",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-08",
+      "text": "暴雨封锁的山路，黎明前必须做出决定",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-09",
+      "text": "漏水的废弃档案馆，声音比视线更可靠",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-10",
+      "text": "漏水的废弃档案馆，通信断续制造误判",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-11",
+      "text": "漏水的废弃档案馆，水迹留下关键路线",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-RAIN_NIGHT-12",
+      "text": "漏水的废弃档案馆，黎明前必须做出决定",
+      "category": "atmosphere",
+      "subcategory": "rain_night",
+      "slot": "atmosphere",
+      "tags": [
+        "雨夜",
+        "悬疑"
+      ],
+      "drivers": [
+        "雨夜",
+        "悬疑"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-01",
+      "text": "灯光刺眼的发布会，每个人都在表演立场",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-02",
+      "text": "灯光刺眼的发布会，一句话会改变舆论方向",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-03",
+      "text": "灯光刺眼的发布会，后台行动与台前发言同步",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-04",
+      "text": "灯光刺眼的发布会，沉默被解释为默认",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-05",
+      "text": "座无虚席的审判庭，每个人都在表演立场",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-06",
+      "text": "座无虚席的审判庭，一句话会改变舆论方向",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-07",
+      "text": "座无虚席的审判庭，后台行动与台前发言同步",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-08",
+      "text": "座无虚席的审判庭，沉默被解释为默认",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-09",
+      "text": "全网直播的颁奖礼，每个人都在表演立场",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-10",
+      "text": "全网直播的颁奖礼，一句话会改变舆论方向",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-11",
+      "text": "全网直播的颁奖礼，后台行动与台前发言同步",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-PUBLIC_STAGE-12",
+      "text": "全网直播的颁奖礼，沉默被解释为默认",
+      "category": "atmosphere",
+      "subcategory": "public_stage",
+      "slot": "atmosphere",
+      "tags": [
+        "公开",
+        "群像"
+      ],
+      "drivers": [
+        "公开",
+        "群像"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-01",
+      "text": "停运的地铁车厢，出口规则不断变化",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-02",
+      "text": "停运的地铁车厢，物资数量可以被核对",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-03",
+      "text": "停运的地铁车厢，成员身份存在疑点",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-04",
+      "text": "停运的地铁车厢，时间压力迫使公开秘密",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-05",
+      "text": "隔离中的高层酒店，出口规则不断变化",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-06",
+      "text": "隔离中的高层酒店，物资数量可以被核对",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-07",
+      "text": "隔离中的高层酒店，成员身份存在疑点",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-08",
+      "text": "隔离中的高层酒店，时间压力迫使公开秘密",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-09",
+      "text": "失去动力的飞船，出口规则不断变化",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-10",
+      "text": "失去动力的飞船，物资数量可以被核对",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-11",
+      "text": "失去动力的飞船，成员身份存在疑点",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-CLOSED_SPACE-12",
+      "text": "失去动力的飞船，时间压力迫使公开秘密",
+      "category": "atmosphere",
+      "subcategory": "closed_space",
+      "slot": "atmosphere",
+      "tags": [
+        "封闭",
+        "生存"
+      ],
+      "drivers": [
+        "封闭",
+        "生存"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-01",
+      "text": "清晨营业的小餐馆，细小照顾体现关系变化",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-02",
+      "text": "清晨营业的小餐馆，日常物件承接旧记忆",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-03",
+      "text": "清晨营业的小餐馆，平静中埋入下一次选择",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-04",
+      "text": "清晨营业的小餐馆，温暖建立在明确边界上",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-05",
+      "text": "共同修缮的旧房子，细小照顾体现关系变化",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-06",
+      "text": "共同修缮的旧房子，日常物件承接旧记忆",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-07",
+      "text": "共同修缮的旧房子，平静中埋入下一次选择",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-08",
+      "text": "共同修缮的旧房子，温暖建立在明确边界上",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-09",
+      "text": "社区节日前的准备，细小照顾体现关系变化",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-10",
+      "text": "社区节日前的准备，日常物件承接旧记忆",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-11",
+      "text": "社区节日前的准备，平静中埋入下一次选择",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-WARM_DAILY-12",
+      "text": "社区节日前的准备，温暖建立在明确边界上",
+      "category": "atmosphere",
+      "subcategory": "warm_daily",
+      "slot": "atmosphere",
+      "tags": [
+        "日常",
+        "治愈"
+      ],
+      "drivers": [
+        "日常",
+        "治愈"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-01",
+      "text": "万人见证的决战，个人选择决定全局走向",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-02",
+      "text": "万人见证的决战，胜利画面同时呈现代价",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-03",
+      "text": "万人见证的决战，多个伏笔在同一时刻回收",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-04",
+      "text": "万人见证的决战，新秩序在废墟上建立",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-05",
+      "text": "城市级撤离行动，个人选择决定全局走向",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-06",
+      "text": "城市级撤离行动，胜利画面同时呈现代价",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-07",
+      "text": "城市级撤离行动，多个伏笔在同一时刻回收",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-08",
+      "text": "城市级撤离行动，新秩序在废墟上建立",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-09",
+      "text": "跨星系舰队会师，个人选择决定全局走向",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-10",
+      "text": "跨星系舰队会师，胜利画面同时呈现代价",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-11",
+      "text": "跨星系舰队会师，多个伏笔在同一时刻回收",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    },
+    {
+      "id": "M-ATM-GRAND_SCENE-12",
+      "text": "跨星系舰队会师，新秩序在废墟上建立",
+      "category": "atmosphere",
+      "subcategory": "grand_scene",
+      "slot": "atmosphere",
+      "tags": [
+        "史诗",
+        "高潮"
+      ],
+      "drivers": [
+        "史诗",
+        "高潮"
+      ]
+    }
+  ]
+}

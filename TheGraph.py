@@ -1,21 +1,47 @@
+import argparse
+import datetime
+import json
 import logging
 import os
+import re
 import sys
+import traceback
+import uuid
+from pathlib import Path
+
+from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+load_dotenv(PROJECT_ROOT / ".env", override=False)
+
 from State import NovelState
 from Nodes import (
     architect_node, writer_node, reviewer_node, summarizer_node,
-    load_keywords, pick_keywords, load_story_patterns,
+    load_story_patterns,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, should_retry_short_draft,
     route_after_review_decision,
-    is_strong_pattern, compatible_styles_for_pattern, roll_pattern_manifest,
-    format_pattern_manifest, filter_material_categories_for_pattern,
-    validate_material_categories_for_pattern,
+    is_strong_pattern, roll_pattern_manifest, format_pattern_manifest,
 )
+from LibraryV2 import (
+    default_material_config,
+    default_pattern_config,
+    material_library_metadata,
+    normalize_material_config,
+    normalize_pattern_config,
+    pattern_library_metadata,
+    sample_materials,
+    validate_material_config,
+    validate_pattern_config,
+)
+from WriterStyles import WRITER_STYLE_KEYS, writer_style_options
 
 logger = logging.getLogger("AutoWrite")
+
+STYLE_OPTIONS = writer_style_options()
+STYLE_KEYS = WRITER_STYLE_KEYS
 
 # 1. 初始化图
 workflow = StateGraph(NovelState)
@@ -81,10 +107,392 @@ app = workflow.compile(
     interrupt_after=["architect"] 
 )
 
+
+def _now_iso() -> str:
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+
+def _write_json(path: str | os.PathLike, payload: dict) -> Path:
+    target = Path(path).expanduser().resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_suffix(target.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    temporary.replace(target)
+    return target
+
+
+def build_capabilities() -> dict:
+    pattern_items = list(pattern_library_metadata().values())
+    material_library = material_library_metadata()
+
+    return {
+        "schema_version": 2,
+        "generated_at": _now_iso(),
+        "writer_styles": STYLE_OPTIONS,
+        "story_patterns": pattern_items,
+        "material_library": material_library,
+        "job_schema": {
+            "schema_version": 2,
+            "required": [
+                "job_id",
+                "idea",
+                "target_chapters",
+                "words_per_chapter",
+                "writer_style",
+                "material_config",
+                "pattern_config",
+            ],
+            "optional": ["pattern_seed", "material_seed"],
+        },
+    }
+
+
+def _capabilities_markdown(capabilities: dict) -> str:
+    lines = [
+        "# AutoWrite CLI 能力表",
+        "",
+        f"生成时间：{capabilities['generated_at']}",
+        "",
+        "## 写手风格",
+        "",
+        "| 键 | 名称 |",
+        "| --- | --- |",
+    ]
+    for item in capabilities["writer_styles"]:
+        lines.append(f"| `{item['key']}` | {item['name']} |")
+
+    lines.extend([
+        "",
+        "## 创作套路",
+        "",
+        "| 键 | 名称 | 强套路 | 兼容写手 | 结局键 |",
+        "| --- | --- | --- | --- | --- |",
+    ])
+    for item in capabilities["story_patterns"]:
+        compatible = ", ".join(item["compatible_styles"]) or "全部"
+        endings = ", ".join(item["ending_options"]) or "-"
+        lines.append(
+            f"| `{item['id']}` | {item['name']} | "
+            f"{'是' if item['strong'] else '否'} | {compatible} | {endings} |"
+        )
+
+    lines.extend([
+        "",
+        "## 素材库",
+        "",
+        "| 大类 | 子类数 | 素材数 |",
+        "| --- | --- | --- |",
+    ])
+    for key, item in capabilities["material_library"]["groups"].items():
+        lines.append(
+            f"| `{key}` {item['name']} | {len(item['subcategories'])} | {item['count']} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def export_capabilities(path: str | os.PathLike) -> tuple[Path, Path]:
+    capabilities = build_capabilities()
+    json_path = _write_json(path, capabilities)
+    markdown_path = json_path.with_suffix(".md")
+    markdown_path.write_text(
+        _capabilities_markdown(capabilities),
+        encoding="utf-8",
+    )
+    return json_path, markdown_path
+
+
+def _require_positive_int(value, field: str, issues: list[str]) -> int:
+    if isinstance(value, bool):
+        issues.append(f"{field} 必须是正整数")
+        return 0
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        issues.append(f"{field} 必须是正整数")
+        return 0
+    if normalized <= 0:
+        issues.append(f"{field} 必须大于 0")
+    return normalized
+
+
+def validate_job(job: dict) -> tuple[dict, list[str]]:
+    issues = []
+    if not isinstance(job, dict):
+        return {}, ["任务文件根节点必须是 JSON 对象"]
+
+    if job.get("schema_version") != 2:
+        issues.append("schema_version 必须为 2")
+
+    normalized = {
+        "schema_version": 2,
+        "job_id": str(job.get("job_id", "")).strip(),
+        "idea": str(job.get("idea", "")).strip(),
+        "target_chapters": _require_positive_int(
+            job.get("target_chapters"), "target_chapters", issues
+        ),
+        "words_per_chapter": _require_positive_int(
+            job.get("words_per_chapter"), "words_per_chapter", issues
+        ),
+        "writer_style": str(job.get("writer_style", "")).strip(),
+        "material_config": normalize_material_config(job.get("material_config")),
+        "pattern_config": normalize_pattern_config(job.get("pattern_config")),
+        "pattern_seed": job.get("pattern_seed"),
+        "material_seed": job.get("material_seed"),
+    }
+    if not normalized["job_id"]:
+        issues.append("job_id 不能为空")
+    if not normalized["idea"]:
+        issues.append("idea 不能为空")
+    if normalized["writer_style"] not in STYLE_KEYS:
+        issues.append(
+            "writer_style 无效，可选值为：" + ", ".join(sorted(STYLE_KEYS))
+        )
+
+    issues.extend(
+        validate_pattern_config(
+            normalized["pattern_config"], normalized["writer_style"]
+        )
+    )
+    issues.extend(
+        validate_material_config(
+            normalized["material_config"],
+            normalized["pattern_config"],
+            require_items=False,
+        )
+    )
+
+    for seed_field in ("pattern_seed", "material_seed"):
+        if normalized[seed_field] in ("", None):
+            normalized[seed_field] = None
+            continue
+        try:
+            normalized[seed_field] = int(normalized[seed_field])
+        except (TypeError, ValueError):
+            issues.append(f"{seed_field} 必须是整数")
+            normalized[seed_field] = None
+    return normalized, list(dict.fromkeys(issues))
+
+
+def _initial_state_from_job(
+    job: dict,
+    run_id: str,
+    material_config: dict,
+    pattern_config: dict,
+) -> dict:
+    return {
+        "user_idea": job["idea"],
+        "run_id": run_id,
+        "material_config": material_config,
+        "pattern_config": pattern_config,
+        "target_chapters": job["target_chapters"],
+        "words_per_chapter": job["words_per_chapter"],
+        "writer_style": job["writer_style"],
+        "continuity_state": "",
+        "story_ledger": {},
+        "ledger_delta": {},
+        "continuity_report": {},
+        "scene_plan": {},
+        "draft_candidates": [],
+        "current_chapter": 1,
+        "iteration_count": 0,
+    }
+
+
+def _find_run_output(folder: str, run_id: str, suffix: str) -> str:
+    output_dir = Path.cwd() / folder
+    candidates = sorted(
+        output_dir.glob(f"*_{run_id}{suffix}"),
+        key=lambda item: item.stat().st_mtime,
+        reverse=True,
+    )
+    return str(candidates[0].resolve()) if candidates else ""
+
+
+def _safe_run_identifier(value: str) -> str:
+    safe = re.sub(r"[^0-9A-Za-z._-]+", "-", str(value or "").strip())
+    return safe.strip(".-_")[:80] or "job"
+
+
+def run_job_file(
+    job_path: str | os.PathLike,
+    result_path: str | os.PathLike | None,
+    auto_approve: bool,
+) -> int:
+    source_path = Path(job_path).expanduser().resolve()
+    target_path = (
+        Path(result_path).expanduser().resolve()
+        if result_path
+        else source_path.with_name("result.json")
+    )
+    started_at = _now_iso()
+    result = {
+        "schema_version": 1,
+        "status": "failed",
+        "job_file": str(source_path),
+        "started_at": started_at,
+    }
+    try:
+        raw_job = json.loads(source_path.read_text(encoding="utf-8-sig"))
+        job, issues = validate_job(raw_job)
+        result["job_id"] = job.get("job_id", raw_job.get("job_id", ""))
+        if issues:
+            raise ValueError("；".join(issues))
+
+        run_id = (
+            f"cli-{_safe_run_identifier(job['job_id'])}-"
+            f"{uuid.uuid4().hex[:8]}"
+        )
+        pattern_config = normalize_pattern_config(job["pattern_config"])
+        primary_pattern = pattern_config["primary"]
+        if is_strong_pattern(primary_pattern):
+            ending_options = load_story_patterns()[primary_pattern].get(
+                "ending_options", {}
+            )
+            requested_ending = pattern_config.get("manifest", {}).get("ending")
+            ending = (
+                requested_ending
+                if requested_ending in ending_options
+                else next(iter(ending_options), "default")
+            )
+            pattern_config["manifest"] = roll_pattern_manifest(
+                primary_pattern,
+                seed=job["pattern_seed"],
+                ending=ending,
+            )
+        material_config = sample_materials(
+            job["material_config"],
+            pattern_config,
+            seed=job["material_seed"],
+        )
+        config = {"configurable": {"thread_id": run_id}}
+        initial_state = _initial_state_from_job(
+            job,
+            run_id,
+            material_config,
+            pattern_config,
+        )
+        result.update({
+            "run_id": run_id,
+            "configuration": job,
+            "material_config": material_config,
+            "pattern_config": pattern_config,
+        })
+
+        print(f"--- CLI任务 {job['job_id']}：生成大纲 ---")
+        for output in app.stream(initial_state, config=config):
+            for node_name in output:
+                print(f"✅ 节点 [{node_name}] 执行完毕")
+
+        state_snapshot = app.get_state(config)
+        state_values = dict(state_snapshot.values or {})
+        result["novel_title"] = state_values.get("novel_title", "")
+        result["outline_file"] = _find_run_output(
+            "Outline", run_id, ".json"
+        )
+
+        approved = auto_approve
+        if not auto_approve:
+            answer = input("大纲已生成，输入 Y 批准继续：").strip().upper()
+            approved = answer == "Y"
+        if not approved:
+            raise RuntimeError("大纲未获批准，任务终止")
+
+        print("--- 大纲已批准：开始全自动写作 ---")
+        for output in app.stream(None, config=config):
+            for node_name, node_state in output.items():
+                if node_name == "writer":
+                    print(
+                        f"✍️ 写手产出第 {node_state.get('current_chapter')} 章"
+                    )
+                elif node_name == "summarizer":
+                    print(
+                        f"🗂️ 已保存第 {node_state.get('saved_chapter')} 章"
+                    )
+
+        final_snapshot = app.get_state(config)
+        final_values = dict(final_snapshot.values or {})
+        result.update({
+            "status": "succeeded",
+            "novel_title": final_values.get(
+                "novel_title", result.get("novel_title", "")
+            ),
+            "saved_chapter": final_values.get("saved_chapter", 0),
+            "outline_file": result.get("outline_file")
+            or _find_run_output("Outline", run_id, ".json"),
+            "novel_file": _find_run_output("Novel", run_id, ".txt"),
+        })
+        if not result["novel_file"]:
+            raise RuntimeError("流水线结束但未找到小说输出文件")
+    except Exception as error:
+        result.update({
+            "status": "failed",
+            "error_type": type(error).__name__,
+            "error": str(error),
+            "traceback": traceback.format_exc(),
+        })
+        logger.error("❌ CLI任务失败：%s", error)
+    finally:
+        result["finished_at"] = _now_iso()
+        written_path = _write_json(target_path, result)
+        print(f"RESULT_PATH={written_path}")
+    return 0 if result["status"] == "succeeded" else 1
+
+
+def parse_cli_args():
+    parser = argparse.ArgumentParser(
+        description="AutoWrite 小说流水线命令行入口"
+    )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--describe-capabilities",
+        metavar="PATH",
+        help="导出 JSON 能力表，并在同目录生成同名 Markdown 文件",
+    )
+    mode.add_argument(
+        "--job-file",
+        metavar="PATH",
+        help="读取 JSON 小说任务",
+    )
+    parser.add_argument(
+        "--result-file",
+        metavar="PATH",
+        help="写入 JSON 运行结果；默认与任务文件同目录",
+    )
+    parser.add_argument(
+        "--auto-approve",
+        action="store_true",
+        help="自动批准架构师大纲",
+    )
+    return parser.parse_args()
+
+
 # ==========================================
 # 8. 启动测试执行 (带交互式输入版)
 # ==========================================
 if __name__ == "__main__":
+    cli_args = parse_cli_args()
+    if cli_args.describe_capabilities:
+        json_path, markdown_path = export_capabilities(
+            cli_args.describe_capabilities
+        )
+        print(f"CAPABILITIES_JSON={json_path}")
+        print(f"CAPABILITIES_MD={markdown_path}")
+        sys.exit(0)
+    if cli_args.job_file:
+        sys.exit(
+            run_job_file(
+                cli_args.job_file,
+                cli_args.result_file,
+                cli_args.auto_approve,
+            )
+        )
+    if cli_args.result_file:
+        raise SystemExit("--result-file 必须与 --job-file 一起使用")
+
     print("🚀 小说工业流水线 v4.0 (词库 + 篇幅自适应) 启动...\n")
     
     # ======== 步骤1: 输入灵感 ========
@@ -94,49 +502,8 @@ if __name__ == "__main__":
         my_idea = "一个能在梦里修仙的现代程序员"
     print()
     
-    # ======== 步骤2: 词库题材选择 ========
-    keywords = []
-    selected_cats = []
-    keyword_db = load_keywords()
-    if keyword_db:
-        print("-" * 50)
-        print("📚 随机附加词库 — 请选择题材类型 (混抽逗号分隔，回车跳过):")
-        cats = list(keyword_db.keys())
-        for i, cat in enumerate(cats):
-            desc = keyword_db[cat].get("description", "")
-            end_char = "\n" if (i + 1) % 4 == 0 else "  "
-            print(f"  [{i + 1}] {cat}({desc})", end=end_char)
-        if len(cats) % 4 != 0:
-            print()
-        
-        choice = input("\n👉 输入编号: ").strip()
-        if choice:
-            selected_cats = []
-            for part in choice.replace("，", ",").split(","):
-                try:
-                    idx = int(part.strip()) - 1
-                    if 0 <= idx < len(cats):
-                        selected_cats.append(cats[idx])
-                except ValueError:
-                    pass
-            
-            if selected_cats:
-                print(f"   已选: {', '.join(selected_cats)}")
-                
-                while True:
-                    keywords = pick_keywords(selected_cats, 2)
-                    if not keywords:
-                        print("   ⚠️ 该分类下无词条，跳过。")
-                        break
-                    print(f"   🎲 命中: [{keywords[0]}] [{keywords[1] if len(keywords) > 1 else '—'}]")
-                    confirm = input("   确认(Y) / 重抽(R) / 跳过(N): ").strip().upper()
-                    if confirm == 'Y':
-                        break
-                    elif confirm == 'N':
-                        keywords = []
-                        break
-                    # R → loop again
-    print()
+    # 素材需要服从主辅套路，因此在套路确认后统一抽取。
+    material_config = default_material_config()
     
     # ======== 步骤3: 篇幅选择 ========
     print("-" * 50)
@@ -156,17 +523,27 @@ if __name__ == "__main__":
     
     # ======== 步骤4: 写手风格 ========
     print("-" * 50)
-    print("✍️ 写手风格: [1] 默认  [2] 热血爽文  [3] 文艺细腻  [4] 冷峻纪实  [5] 轻松搞笑")
+    print("✍️ 写手风格:")
+    for index, item in enumerate(STYLE_OPTIONS, start=1):
+        print(f"   [{index}] {item['name']}")
     style_input = input("   选择风格 (默认1): ").strip()
-    style_map_cli = {"2": "hot_blood", "3": "literary", "4": "cold", "5": "humor"}
-    writer_style = style_map_cli.get(style_input, "default")
-    style_names = {"default": "默认", "hot_blood": "热血爽文", "literary": "文艺细腻", "cold": "冷峻纪实", "humor": "轻松搞笑", "18xx": "18XX"}
-    print(f"   ✅ 写手风格: {style_names[writer_style]}")
+    try:
+        writer_style = (
+            STYLE_OPTIONS[int(style_input) - 1]["key"]
+            if style_input
+            else STYLE_OPTIONS[0]["key"]
+        )
+    except (ValueError, IndexError):
+        writer_style = STYLE_OPTIONS[0]["key"]
+    style_name = next(
+        item["name"] for item in STYLE_OPTIONS if item["key"] == writer_style
+    )
+    print(f"   ✅ 写手风格: {style_name}")
     print()
 
     # ======== 步骤5: 创作套路 ========
     patterns = load_story_patterns()
-    pattern_keys = [key for key in patterns if key != "custom"]
+    pattern_keys = list(patterns)
     print("-" * 50)
     print("🎭 创作套路: " + "  ".join(
         f"[{index + 1}] {patterns[key].get('name', key)}"
@@ -182,21 +559,30 @@ if __name__ == "__main__":
             story_pattern = pattern_keys[int(pattern_input) - 1] if pattern_input else "none"
         except (ValueError, IndexError):
             story_pattern = "none"
-    print(f"   ✅ 创作套路: {patterns.get(story_pattern, patterns['none']).get('name', '无套路')}")
+    print(f"   ✅ 主套路: {patterns.get(story_pattern, patterns['none']).get('name', '无套路')}")
+    secondary_candidates = [
+        key for key, value in patterns.items()
+        if key not in {"none", "custom", story_pattern}
+        and not value.get("strong")
+    ]
+    secondary_input = input(
+        "   辅助套路键（最多2个，逗号分隔，回车跳过；可从能力表查看）: "
+    ).strip()
+    secondary_patterns = [
+        item.strip()
+        for item in secondary_input.replace("，", ",").split(",")
+        if item.strip() in secondary_candidates
+    ][:2]
+    pattern_config = {
+        "schema_version": 2,
+        "primary": story_pattern,
+        "secondary": secondary_patterns,
+        "custom_instruction": custom_pattern,
+        "manifest": {},
+        "structure_plan": {},
+    }
     pattern_manifest = {}
-    pattern_plan = {}
-    material_issues = validate_material_categories_for_pattern(story_pattern, selected_cats)
-    if material_issues:
-        print("   ⚠️ 已移除与当前套路冲突的随机素材：")
-        for issue in material_issues:
-            print(f"      - {issue}")
-        selected_cats = filter_material_categories_for_pattern(story_pattern, selected_cats)
-        keywords = pick_keywords(selected_cats, 2, story_pattern) if selected_cats else []
     if is_strong_pattern(story_pattern):
-        compatible_styles = compatible_styles_for_pattern(story_pattern)
-        if writer_style not in compatible_styles:
-            writer_style = "default"
-            print("   ⚠️ 当前风格与强套路冲突，已切换为默认风格")
         ending_options = patterns.get(story_pattern, {}).get("ending_options", {})
         ending_keys = list(ending_options) or ["no_reunion"]
         print("   结局方向: " + "  ".join(
@@ -209,22 +595,28 @@ if __name__ == "__main__":
         except (ValueError, IndexError):
             ending = ending_keys[0]
         pattern_manifest = roll_pattern_manifest(story_pattern, ending=ending)
+        pattern_config["manifest"] = pattern_manifest
         print("   🎲 已生成强套路契约：")
         print(format_pattern_manifest(pattern_manifest))
+    pattern_issues = validate_pattern_config(pattern_config, writer_style)
+    if pattern_issues:
+        raise SystemExit("套路配置无效：" + "；".join(pattern_issues))
+
+    print("   📚 正在按人物、冲突、舞台、剧情装置抽取4项素材...")
+    material_config = sample_materials(material_config, pattern_config)
+    for item in material_config["items"]:
+        print(f"      [{item['slot']}] {item['text']}")
     print()
     
     config = {"configurable": {"thread_id": "novel_project_001"}}
     
     initial_state = {
         "user_idea": my_idea,
-        "keywords": keywords,
+        "material_config": material_config,
+        "pattern_config": pattern_config,
         "target_chapters": target_chapters,
         "words_per_chapter": words_per_chapter,
         "writer_style": writer_style,
-        "story_pattern": story_pattern,
-        "custom_pattern": custom_pattern,
-        "pattern_manifest": pattern_manifest,
-        "pattern_plan": pattern_plan,
         "continuity_state": "",
         "story_ledger": {},
         "ledger_delta": {},

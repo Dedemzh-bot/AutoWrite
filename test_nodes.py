@@ -2,6 +2,8 @@ import os
 import sys
 import tempfile
 import unittest
+import json
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -75,6 +77,102 @@ class TestPydanticModels(unittest.TestCase):
             改进建议="减少形容词堆砌，增加动作描写"
         )
         self.assertEqual(report.文风评分, 7)
+
+
+class TestArchitectFallback(unittest.TestCase):
+    @staticmethod
+    def payload():
+        return {
+            "novel_title": "回声井",
+            "world_bible": "稳定世界观",
+            "chapter_outlines": {"1": "第一章细纲"},
+            "estimated_words": 12000,
+        }
+
+    @staticmethod
+    def message(content="", tool_calls=None, additional_kwargs=None):
+        message = MagicMock()
+        message.content = content
+        message.tool_calls = tool_calls or []
+        message.additional_kwargs = additional_kwargs or {}
+        message.response_metadata = {"finish_reason": "stop"}
+        return message
+
+    def test_recovers_function_call_arguments_when_parsed_is_empty(self):
+        from Nodes import invoke_architect_with_fallback
+
+        response = {
+            "raw": self.message(
+                tool_calls=[{"name": "ArchitectOutput", "args": self.payload()}]
+            ),
+            "parsed": None,
+            "parsing_error": ValueError("empty wrapper"),
+        }
+        with patch(
+            "Nodes._invoke_architect_function_calling",
+            return_value=response,
+        ), patch("Nodes._invoke_architect_json_object") as json_strategy:
+            result = invoke_architect_with_fallback(MagicMock(), {})
+
+        self.assertEqual(result.novel_title, "回声井")
+        json_strategy.assert_not_called()
+
+    def test_empty_function_result_falls_back_to_json_object(self):
+        from Nodes import invoke_architect_with_fallback
+
+        json_response = self.message(
+            "```json\n" + json.dumps(self.payload(), ensure_ascii=False) + "\n```"
+        )
+        with patch(
+            "Nodes._invoke_architect_function_calling",
+            return_value={"raw": self.message(), "parsed": None},
+        ), patch(
+            "Nodes._invoke_architect_json_object",
+            return_value=json_response,
+        ), patch("Nodes._invoke_architect_plain_text") as plain_strategy:
+            result = invoke_architect_with_fallback(MagicMock(), {})
+
+        self.assertEqual(result.estimated_words, 12000)
+        plain_strategy.assert_not_called()
+
+    def test_malformed_json_falls_back_to_plain_text_extraction(self):
+        from Nodes import invoke_architect_with_fallback
+
+        plain = "结果如下：\n" + json.dumps(self.payload(), ensure_ascii=False)
+        with patch(
+            "Nodes._invoke_architect_function_calling",
+            side_effect=RuntimeError("transport failed"),
+        ), patch(
+            "Nodes._invoke_architect_json_object",
+            return_value=self.message("{bad json"),
+        ), patch(
+            "Nodes._invoke_architect_plain_text",
+            return_value=self.message(plain),
+        ):
+            result = invoke_architect_with_fallback(MagicMock(), {})
+
+        self.assertEqual(result.chapter_outlines["1"], "第一章细纲")
+
+    def test_all_strategies_report_separate_failures(self):
+        from Nodes import invoke_architect_with_fallback
+
+        with patch(
+            "Nodes._invoke_architect_function_calling",
+            return_value={"raw": self.message(), "parsed": None},
+        ), patch(
+            "Nodes._invoke_architect_json_object",
+            return_value=self.message("[]"),
+        ), patch(
+            "Nodes._invoke_architect_plain_text",
+            return_value=self.message("not json"),
+        ):
+            with self.assertRaises(RuntimeError) as raised:
+                invoke_architect_with_fallback(MagicMock(), {})
+
+        detail = str(raised.exception)
+        self.assertIn("function_calling", detail)
+        self.assertIn("json_object", detail)
+        self.assertIn("plain_text_json_extract", detail)
 
 
 class TestNovelState(unittest.TestCase):
@@ -437,8 +535,14 @@ class TestStoryPatternsAndReviewPolicy(unittest.TestCase):
         from Nodes import resolve_story_pattern
 
         pattern = resolve_story_pattern({
-            "story_pattern": "custom",
-            "custom_pattern": "每三章揭示一次假规则",
+            "pattern_config": {
+                "schema_version": 2,
+                "primary": "custom",
+                "secondary": [],
+                "custom_instruction": "每三章揭示一次假规则",
+                "manifest": {},
+                "structure_plan": {},
+            },
         })
 
         self.assertIn("每三章揭示一次假规则", pattern["architect"])
@@ -448,10 +552,16 @@ class TestStoryPatternsAndReviewPolicy(unittest.TestCase):
     def test_unknown_pattern_falls_back_to_none(self):
         from Nodes import resolve_story_pattern
 
-        pattern = resolve_story_pattern({"story_pattern": "missing"})
+        pattern = resolve_story_pattern({
+            "pattern_config": {
+                "schema_version": 2,
+                "primary": "missing",
+                "secondary": [],
+            },
+        })
 
         self.assertEqual(pattern["key"], "none")
-        self.assertEqual(pattern["name"], "无套路")
+        self.assertEqual(pattern["name"], "无固定主套路")
 
     def test_soft_warnings_do_not_trigger_audit_failure(self):
         from Nodes import normalize_audit_report
@@ -552,7 +662,13 @@ class TestStoryPatternsAndReviewPolicy(unittest.TestCase):
                 }],
             },
             "current_draft": "正文",
-            "story_pattern": "rule_horror",
+            "pattern_config": {
+                "schema_version": 2,
+                "primary": "rule_horror",
+                "secondary": [],
+                "manifest": {},
+                "structure_plan": {},
+            },
         })
 
         self.assertIn("F-C0-01", inputs["continuity_state"])
@@ -714,6 +830,12 @@ class TestStoryPatternsAndReviewPolicy(unittest.TestCase):
             "writer_system_cold.md",
             "writer_system_humor.md",
             "writer_system_18xx.md",
+            "writer_system_suspense.md",
+            "writer_system_emotional_tension.md",
+            "writer_system_sweet_romcom.md",
+            "writer_system_ancient_elegant.md",
+            "writer_system_realist_ensemble.md",
+            "writer_system_business.md",
         ]:
             variables = [
                 field_name
@@ -748,33 +870,51 @@ class TestFemaleAngstAwakeningPattern(unittest.TestCase):
         self.assertTrue(is_strong_pattern("female_angst_awakening"))
         self.assertEqual(
             compatible_styles_for_pattern("female_angst_awakening"),
-            ["default", "literary", "cold"],
+            [
+                "default",
+                "literary",
+                "cold",
+                "emotional_tension",
+                "realist_ensemble",
+                "ancient_elegant",
+            ],
         )
-        pattern = resolve_story_pattern({"story_pattern": "female_angst_awakening"})
+        pattern = resolve_story_pattern({
+            "pattern_config": {
+                "schema_version": 2,
+                "primary": "female_angst_awakening",
+                "secondary": [],
+                "manifest": {},
+                "structure_plan": {},
+            },
+        })
         self.assertIn("强制写作技巧", pattern["writer"])
         self.assertIn("套路审核规则", pattern["auditor"])
 
     def test_strong_pattern_allows_world_stages_but_blocks_conflicting_drivers(self):
-        from Nodes import (
-            filter_material_categories_for_pattern,
-            validate_material_categories_for_pattern,
+        from LibraryV2 import (
+            load_material_library,
+            material_pattern_conflict_reason,
         )
 
-        self.assertEqual(
-            validate_material_categories_for_pattern(
-                "female_angst_awakening", ["科幻", "修仙", "末日", "历史"]
-            ),
-            [],
+        config = {
+            "schema_version": 2,
+            "primary": "female_angst_awakening",
+            "secondary": [],
+        }
+        entries = load_material_library()["entries"]
+        world_item = next(
+            item for item in entries if item["category"] == "world_stage"
         )
-        issues = validate_material_categories_for_pattern(
-            "female_angst_awakening", ["男频", "恐怖"]
+        cheat_item = next(
+            item for item in entries if item["category"] == "cheat_device"
         )
-        self.assertEqual(len(issues), 2)
         self.assertEqual(
-            filter_material_categories_for_pattern(
-                "female_angst_awakening", ["科幻", "男频", "女频", "恐怖"]
-            ),
-            ["科幻", "女频"],
+            material_pattern_conflict_reason(world_item, config), ""
+        )
+        self.assertIn(
+            "禁止素材大类",
+            material_pattern_conflict_reason(cheat_item, config),
         )
 
     def test_manifest_is_reproducible_and_limits_reproductive_harm(self):
@@ -793,22 +933,231 @@ class TestFemaleAngstAwakeningPattern(unittest.TestCase):
         self.assertEqual(validate_pattern_manifest(first), [])
 
     def test_new_strong_patterns_generate_valid_manifests_and_plans(self):
-        from Nodes import build_pattern_plan, is_strong_pattern, roll_pattern_manifest, validate_pattern_manifest
+        from Nodes import (
+            build_pattern_plan,
+            load_story_patterns,
+            roll_pattern_manifest,
+            validate_pattern_manifest,
+        )
 
-        for key in [
-            "strong_rule_horror",
-            "strong_historical_power",
-            "strong_male_power_progression",
-            "male_angst_awakening",
-        ]:
+        strong_keys = [
+            key
+            for key, item in load_story_patterns().items()
+            if item.get("strong")
+        ]
+        self.assertEqual(len(strong_keys), 13)
+        for key in strong_keys:
             with self.subTest(key=key):
-                self.assertTrue(is_strong_pattern(key))
                 manifest = roll_pattern_manifest(key, seed=42)
                 self.assertEqual(validate_pattern_manifest(manifest), [])
                 plan = build_pattern_plan(manifest, 6, 1500)
                 self.assertEqual(len(plan), 6)
                 self.assertEqual(len([task for task in plan.values() if task["is_paywall_turn"]]), 1)
                 self.assertTrue(all(task["protagonist_state"] for task in plan.values()))
+
+
+class TestContentLibrariesV2(unittest.TestCase):
+    def test_library_sizes_and_strong_pattern_schema(self):
+        from LibraryV2 import (
+            load_material_library,
+            load_pattern_library,
+            validate_material_library,
+            validate_pattern_library,
+        )
+
+        materials = load_material_library()
+        patterns = load_pattern_library()
+        self.assertEqual(validate_material_library(materials), [])
+        self.assertEqual(validate_pattern_library(patterns), [])
+        self.assertGreaterEqual(len(materials["entries"]), 500)
+        self.assertGreaterEqual(
+            sum(
+                not item.get("strong") and key not in {"none", "custom"}
+                for key, item in patterns["patterns"].items()
+            ),
+            60,
+        )
+        self.assertEqual(
+            sum(item.get("strong") for item in patterns["patterns"].values()),
+            13,
+        )
+
+    def test_group_quota_sampling_and_single_item_reroll(self):
+        from LibraryV2 import (
+            default_material_config,
+            default_pattern_config,
+            resample_material_item,
+            sample_materials,
+        )
+
+        config = sample_materials(
+            default_material_config(),
+            default_pattern_config(),
+            seed=11,
+        )
+        self.assertEqual(
+            [item["category"] for item in config["items"]],
+            ["world_stage", "protagonist", "cheat_device", "core_conflict"],
+        )
+        before = {
+            item["selection_key"]: item["id"] for item in config["items"]
+        }
+        rerolled = resample_material_item(
+            config,
+            default_pattern_config(),
+            "core_conflict:1",
+            seed=12,
+        )
+        after = {
+            item["selection_key"]: item["id"] for item in rerolled["items"]
+        }
+        self.assertEqual(before["world_stage:1"], after["world_stage:1"])
+        self.assertEqual(before["protagonist:1"], after["protagonist:1"])
+        self.assertEqual(before["cheat_device:1"], after["cheat_device:1"])
+        self.assertNotEqual(
+            before["core_conflict:1"], after["core_conflict:1"]
+        )
+
+    def test_same_group_items_have_independent_selection_keys(self):
+        from LibraryV2 import (
+            default_material_config,
+            default_pattern_config,
+            resample_material_item,
+            sample_materials,
+        )
+
+        raw = default_material_config()
+        raw["group_counts"]["cheat_device"] = 2
+        config = sample_materials(raw, default_pattern_config(), seed=21)
+        cheats = [
+            item for item in config["items"]
+            if item["category"] == "cheat_device"
+        ]
+        self.assertEqual(
+            [item["selection_key"] for item in cheats],
+            ["cheat_device:1", "cheat_device:2"],
+        )
+        before = {item["selection_key"]: item for item in config["items"]}
+        rerolled = resample_material_item(
+            config,
+            default_pattern_config(),
+            "cheat_device:2",
+            seed=22,
+        )
+        after = {item["selection_key"]: item for item in rerolled["items"]}
+        self.assertEqual(
+            before["cheat_device:1"]["id"],
+            after["cheat_device:1"]["id"],
+        )
+        self.assertNotEqual(
+            before["cheat_device:2"]["id"],
+            after["cheat_device:2"]["id"],
+        )
+
+    def test_group_limits_reject_double_world_but_allow_double_cheat(self):
+        from LibraryV2 import (
+            default_material_config,
+            default_pattern_config,
+            sample_materials,
+            validate_material_config,
+        )
+
+        invalid = default_material_config()
+        invalid["group_counts"]["world_stage"] = 2
+        invalid["group_counts"]["protagonist"] = 0
+        issues = validate_material_config(
+            invalid,
+            default_pattern_config(),
+            require_items=False,
+        )
+        self.assertTrue(any("世界舞台最多选择1项" in issue for issue in issues))
+
+        valid = default_material_config()
+        valid["group_counts"]["cheat_device"] = 2
+        sampled = sample_materials(
+            valid,
+            default_pattern_config(),
+            seed=23,
+        )
+        self.assertEqual(
+            sum(
+                item["category"] == "cheat_device"
+                for item in sampled["items"]
+            ),
+            2,
+        )
+
+    def test_writer_style_registry_is_shared_and_has_twelve_styles(self):
+        from WriterStyles import WRITER_STYLES
+
+        self.assertEqual(len(WRITER_STYLES), 12)
+        self.assertEqual(len({item["key"] for item in WRITER_STYLES}), 12)
+        for item in WRITER_STYLES:
+            prompt = Path("Role", item["prompt_file"])
+            self.assertTrue(prompt.exists(), item["key"])
+            self.assertTrue(item["editor_focus"], item["key"])
+
+    def test_primary_secondary_and_material_hard_conflicts(self):
+        from LibraryV2 import (
+            load_material_library,
+            material_pattern_conflict_reason,
+            validate_pattern_config,
+        )
+
+        issues = validate_pattern_config({
+            "schema_version": 2,
+            "primary": "strong_rule_horror",
+            "secondary": ["marriage_first"],
+        })
+        self.assertTrue(any("硬冲突" in issue for issue in issues))
+
+        cheat = next(
+            item
+            for item in load_material_library()["entries"]
+            if item["category"] == "cheat_device"
+        )
+        reason = material_pattern_conflict_reason(
+            cheat,
+            {
+                "schema_version": 2,
+                "primary": "female_angst_awakening",
+                "secondary": [],
+            },
+        )
+        self.assertIn("禁止素材大类", reason)
+
+    def test_outline_migration_preview_and_apply(self):
+        from migrate_outlines import migrate_directory
+
+        with tempfile.TemporaryDirectory() as directory:
+            outline_dir = Path(directory) / "Outline"
+            outline_dir.mkdir()
+            old_path = outline_dir / "old.json"
+            old_path.write_text(json.dumps({
+                "title": "旧大纲",
+                "world_bible": "设定",
+                "chapter_outlines": {"1": "细纲"},
+                "story_pattern": "rule_horror",
+                "custom_pattern": "",
+                "pattern_manifest": {},
+                "pattern_plan": {},
+                "keywords": ["旧关键词"],
+            }, ensure_ascii=False), encoding="utf-8")
+
+            preview = migrate_directory(outline_dir, apply=False)
+            self.assertEqual(len(preview["converted"]), 1)
+            self.assertNotIn("schema_version", json.loads(old_path.read_text(encoding="utf-8")))
+
+            applied = migrate_directory(outline_dir, apply=True)
+            self.assertEqual(applied["failed"], [])
+            migrated = json.loads(old_path.read_text(encoding="utf-8"))
+            self.assertEqual(migrated["schema_version"], 2)
+            self.assertEqual(migrated["pattern_config"]["primary"], "rule_horror")
+            self.assertEqual(
+                migrated["material_config"]["legacy_import"],
+                ["旧关键词"],
+            )
+            self.assertTrue(Path(applied["backup_directory"]).exists())
 
     def test_paywall_target_uses_total_word_ratio_for_different_lengths(self):
         from Nodes import build_pattern_plan, roll_pattern_manifest
@@ -874,10 +1223,10 @@ class TestFemaleAngstAwakeningPattern(unittest.TestCase):
 
 
 class TestWebDefaults(unittest.TestCase):
-    def test_default_estimate_is_fifteen_thousand(self):
+    def test_default_estimate_is_twelve_thousand(self):
         from web_app import HTML_PAGE
 
-        self.assertIn('id="estWords">预估: 约 15,000 字', HTML_PAGE)
+        self.assertIn('id="estWords">预估: 约 12,000 字', HTML_PAGE)
         self.assertIn("updateEstimate();", HTML_PAGE)
 
     def test_web_has_pattern_controls(self):
@@ -891,12 +1240,22 @@ class TestWebDefaults(unittest.TestCase):
         self.assertIn("strong_rule_horror", HTML_PAGE)
         self.assertIn("male_angst_awakening", HTML_PAGE)
         self.assertIn("roll_pattern_manifest", HTML_PAGE)
+
+    def test_web_has_grouped_material_quota_and_reroll_controls(self):
+        from web_app import HTML_PAGE
+
+        self.assertIn("material-groups", HTML_PAGE)
+        self.assertIn("changeGroupCount", HTML_PAGE)
+        self.assertIn("locked_item_keys", HTML_PAGE)
+        self.assertIn("randomize_types", HTML_PAGE)
+        self.assertIn("换类型重抽", HTML_PAGE)
+        self.assertIn("命中", HTML_PAGE)
         self.assertIn('id="patternEnding"', HTML_PAGE)
         self.assertIn('id="washPatternEnding"', HTML_PAGE)
         self.assertIn("请先确认强套路契约", HTML_PAGE)
-        self.assertIn("随机素材库", HTML_PAGE)
-        self.assertIn("isCategoryBlocked", HTML_PAGE)
-        self.assertIn("updateMaterialHint", HTML_PAGE)
+        self.assertIn("结构化素材库", HTML_PAGE)
+        self.assertIn("renderSecondaryPatterns", HTML_PAGE)
+        self.assertIn("resample_material", HTML_PAGE)
 
 
 class TestWebPortSelection(unittest.TestCase):

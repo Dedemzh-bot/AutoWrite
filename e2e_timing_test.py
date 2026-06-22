@@ -10,6 +10,12 @@ from datetime import datetime
 from langgraph.graph import END, StateGraph
 
 import Nodes
+from LibraryV2 import (
+    default_material_config,
+    normalize_pattern_config,
+    sample_materials,
+    validate_pattern_config,
+)
 from State import NovelState
 
 
@@ -20,13 +26,15 @@ SEPARATOR_RE = re.compile(r"(?m)^\s*[=\-_*~—]{3,}\s*$")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run an end-to-end novel generation timing test.")
-    parser.add_argument("--chapters", type=int, default=10)
+    parser.add_argument("--chapters", type=int, default=8)
     parser.add_argument("--words", type=int, default=1500)
     parser.add_argument("--style", default="default")
     parser.add_argument("--pattern", default="none")
+    parser.add_argument("--secondary", action="append", default=[])
     parser.add_argument("--custom-pattern", default="")
     parser.add_argument("--pattern-seed", type=int)
-    parser.add_argument("--ending", choices=["no_reunion", "costly_reunion"], default="no_reunion")
+    parser.add_argument("--material-seed", type=int)
+    parser.add_argument("--ending", default="")
     return parser.parse_args()
 
 
@@ -46,7 +54,9 @@ def build_timed_graph(timings: list[dict], run_info: dict):
                 result = func(state)
                 if name == "architect":
                     run_info["novel_title"] = result.get("novel_title", "")
-                    run_info["pattern_plan"] = result.get("pattern_plan", {})
+                    run_info["pattern_plan"] = result.get(
+                        "pattern_config", {}
+                    ).get("structure_plan", {})
                     outlines = result.get("chapter_outlines", {})
                     run_info["outline_chapters"] = len(outlines)
                     run_info["outline_inspection"] = {
@@ -218,36 +228,50 @@ def summarize_review_quality(timings: list[dict]) -> dict:
 def main():
     args = parse_args()
     timings = []
-    pattern_manifest = (
-        Nodes.roll_pattern_manifest(args.pattern, seed=args.pattern_seed, ending=args.ending)
-        if Nodes.is_strong_pattern(args.pattern)
-        else {}
-    )
+    pattern_config = normalize_pattern_config({
+        "schema_version": 2,
+        "primary": args.pattern,
+        "secondary": args.secondary[:2],
+        "custom_instruction": args.custom_pattern,
+        "manifest": {},
+        "structure_plan": {},
+    })
     if Nodes.is_strong_pattern(args.pattern):
-        compatible_styles = Nodes.compatible_styles_for_pattern(args.pattern)
-        if args.style not in compatible_styles:
-            raise SystemExit(f"强套路不兼容写手风格 {args.style}；可用风格：{compatible_styles}")
+        endings = Nodes.load_story_patterns()[args.pattern].get(
+            "ending_options", {}
+        )
+        ending = args.ending if args.ending in endings else next(iter(endings), "")
+        pattern_config["manifest"] = Nodes.roll_pattern_manifest(
+            args.pattern,
+            seed=args.pattern_seed,
+            ending=ending,
+        )
+    pattern_issues = validate_pattern_config(pattern_config, args.style)
+    if pattern_issues:
+        raise SystemExit("套路配置无效：" + "；".join(pattern_issues))
+    material_config = sample_materials(
+        default_material_config(),
+        pattern_config,
+        seed=args.material_seed,
+    )
     run_info = {
         "run_id": f"e2e-{uuid.uuid4().hex[:8]}",
         "idea": IDEA,
         "requested_chapters": args.chapters,
         "max_chars_per_chapter": args.words,
         "writer_style": args.style,
-        "story_pattern": args.pattern,
-        "pattern_manifest": pattern_manifest,
+        "pattern_config": pattern_config,
+        "material_config": material_config,
         "started_at": datetime.now().isoformat(timespec="seconds"),
     }
     graph = build_timed_graph(timings, run_info)
     initial_state = {
         "user_idea": IDEA,
-        "keywords": [],
+        "material_config": material_config,
+        "pattern_config": pattern_config,
         "target_chapters": args.chapters,
         "words_per_chapter": args.words,
         "writer_style": args.style,
-        "story_pattern": args.pattern,
-        "custom_pattern": args.custom_pattern,
-        "pattern_manifest": pattern_manifest,
-        "pattern_plan": {},
         "continuity_state": "",
         "story_ledger": {},
         "ledger_delta": {},
