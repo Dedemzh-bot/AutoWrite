@@ -1,4 +1,5 @@
 .env
+opencode.json
 __pycache__/
 *.pyc
 我的修仙大作.txt
