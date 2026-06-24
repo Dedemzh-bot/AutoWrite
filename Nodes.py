@@ -126,6 +126,12 @@ MODEL_TIMEOUT_SECONDS = float(os.getenv("MODEL_TIMEOUT_SECONDS", "180"))
 MODEL_MAX_RETRIES = int(os.getenv("MODEL_MAX_RETRIES", "5"))
 APP_INVOKE_ATTEMPTS = int(os.getenv("APP_INVOKE_ATTEMPTS", "3"))
 STRONG_PATTERN_KEY = "female_angst_awakening"
+_STRUCTURED_STRATEGY_ORDER = os.getenv(
+    "STRUCTURED_STRATEGY_ORDER",
+    "json_object,plain_text_json_extract,function_calling",
+)
+_PROBED_PRIORITY = None
+_PERMANENT_FAILURES: set[str] = set()
 
 CHAPTER_FORMAT_PROMPT = """正文输出必须严格使用以下唯一格式：
 第X章 章节名字
@@ -2130,6 +2136,120 @@ def _architect_output_from_candidate(value: Any) -> ArchitectOutput:
     return ArchitectOutput.model_validate(_extract_first_json_object(content))
 
 
+def _structured_output_from_candidate(value: Any, schema: type[BaseModel]) -> BaseModel:
+    if isinstance(value, schema):
+        return value
+    if isinstance(value, dict):
+        parsed = value.get("parsed")
+        if parsed is not None:
+            return _structured_output_from_candidate(parsed, schema)
+        if "raw" not in value:
+            return schema.model_validate(value)
+    for payload in _architect_tool_payloads(value):
+        if isinstance(payload, dict):
+            return schema.model_validate(payload)
+        if isinstance(payload, str) and payload.strip():
+            return schema.model_validate(_extract_first_json_object(payload))
+    return schema.model_validate(
+        _extract_first_json_object(_architect_content(value))
+    )
+
+
+def _is_permanent_error(error: Exception) -> bool:
+    text = str(error).lower()
+    return any(
+        keyword in text
+        for keyword in (
+            "does not support",
+            "invalid_request_error",
+            "not supported",
+            "thinking mode",
+        )
+    )
+
+
+def _build_strategies(raw_model, structured_model):
+    all_strategies = {
+        "json_object": ("json_object", raw_model.bind(response_format={"type": "json_object"})),
+        "plain_text_json_extract": ("plain_text_json_extract", raw_model),
+        "function_calling": ("function_calling", structured_model),
+    }
+    ordered = []
+    for name in _STRUCTURED_STRATEGY_ORDER.split(","):
+        name = name.strip()
+        if name in all_strategies and name not in _PERMANENT_FAILURES:
+            ordered.append(all_strategies[name])
+    if not ordered:
+        for name, entry in all_strategies.items():
+            if name not in _PERMANENT_FAILURES:
+                ordered.append(entry)
+    if _PROBED_PRIORITY:
+        ordered.sort(key=lambda item: 0 if item[0] == _PROBED_PRIORITY else 1)
+    return ordered
+
+
+def invoke_structured_with_fallback(
+    prompt,
+    inputs: dict,
+    raw_model,
+    structured_model,
+    schema: type[BaseModel],
+    node_name: str,
+) -> BaseModel:
+    global _PROBED_PRIORITY
+    strategies = _build_strategies(raw_model, structured_model)
+    failures = []
+    for strategy_name, model in strategies:
+        response = None
+        try:
+            response = invoke_with_retry(
+                prompt | model,
+                inputs,
+                f"{node_name}/{strategy_name}",
+                max_attempts=APP_INVOKE_ATTEMPTS,
+            )
+            result = _structured_output_from_candidate(response, schema)
+            logger.info("   ✅ %s 输出策略成功：%s", node_name, strategy_name)
+            if _PROBED_PRIORITY is None:
+                _PROBED_PRIORITY = strategy_name
+                logger.info("   🔍 自探测完成，优先策略：%s", strategy_name)
+            return result
+        except Exception as error:
+            diagnostics = _architect_response_diagnostics(response)
+            detail = f"{type(error).__name__}: {error}"
+            failures.append(f"{strategy_name}（{diagnostics}）：{detail}")
+            logger.warning(
+                "   ⚠️ %s 输出策略 %s 失败：%s；%s",
+                node_name,
+                strategy_name,
+                detail,
+                diagnostics,
+            )
+            if _is_permanent_error(error):
+                _PERMANENT_FAILURES.add(strategy_name)
+                logger.warning("   🚫 %s 已被永久排除（API 不支持）", strategy_name)
+    raise RuntimeError(
+        f"{node_name}三种输出策略全部失败：\n- " + "\n- ".join(failures)
+    )
+
+
+def _safe_structured_invoke(
+    prompt,
+    inputs: dict,
+    raw_model,
+    structured_model,
+    schema: type[BaseModel],
+    node_name: str,
+):
+    try:
+        return invoke_structured_with_fallback(
+            prompt, inputs, raw_model, structured_model, schema, node_name
+        )
+    except RuntimeError as error:
+        logger.error("   ❌ %s", error)
+    return None
+
+
 def _architect_response_diagnostics(value: Any) -> str:
     raw = _architect_raw_message(value)
     content_length = len(_architect_content(value))
@@ -2164,12 +2284,29 @@ def _invoke_architect_plain_text(prompt, inputs: dict) -> Any:
     return (prompt | llm_architect).invoke(inputs)
 
 
+def _build_architect_strategies():
+    all_strategies = {
+        "json_object": ("json_object", _invoke_architect_json_object),
+        "plain_text_json_extract": ("plain_text_json_extract", _invoke_architect_plain_text),
+        "function_calling": ("function_calling", _invoke_architect_function_calling),
+    }
+    ordered = []
+    for name in _STRUCTURED_STRATEGY_ORDER.split(","):
+        name = name.strip()
+        if name in all_strategies and name not in _PERMANENT_FAILURES:
+            ordered.append(all_strategies[name])
+    if not ordered:
+        for name, entry in all_strategies.items():
+            if name not in _PERMANENT_FAILURES:
+                ordered.append(entry)
+    if _PROBED_PRIORITY:
+        ordered.sort(key=lambda item: 0 if item[0] == _PROBED_PRIORITY else 1)
+    return ordered
+
+
 def invoke_architect_with_fallback(prompt, inputs: dict) -> ArchitectOutput:
-    strategies = (
-        ("function_calling", _invoke_architect_function_calling),
-        ("json_object", _invoke_architect_json_object),
-        ("plain_text_json_extract", _invoke_architect_plain_text),
-    )
+    global _PROBED_PRIORITY
+    strategies = _build_architect_strategies()
     failures = []
     for strategy_name, invoke_strategy in strategies:
         response = None
@@ -2177,6 +2314,9 @@ def invoke_architect_with_fallback(prompt, inputs: dict) -> ArchitectOutput:
             response = invoke_strategy(prompt, inputs)
             result = _architect_output_from_candidate(response)
             logger.info("   ✅ 架构师输出策略成功：%s", strategy_name)
+            if _PROBED_PRIORITY is None:
+                _PROBED_PRIORITY = strategy_name
+                logger.info("   🔍 自探测完成，优先策略：%s", strategy_name)
             return result
         except Exception as error:
             diagnostics = _architect_response_diagnostics(response)
@@ -2188,6 +2328,9 @@ def invoke_architect_with_fallback(prompt, inputs: dict) -> ArchitectOutput:
                 detail,
                 diagnostics,
             )
+            if _is_permanent_error(error):
+                _PERMANENT_FAILURES.add(strategy_name)
+                logger.warning("   🚫 %s 已被永久排除（API 不支持）", strategy_name)
     raise RuntimeError(
         "架构师三种输出策略全部失败：\n- " + "\n- ".join(failures)
     )
@@ -2582,7 +2725,14 @@ def editor_node(state: NovelState):
         ("user", load_prompt("editor_user.md"))
     ])
     
-    result = _safe_invoke(prompt | llm_editor_structured, _editor_inputs(state), "editor")
+    result = _safe_structured_invoke(
+        prompt,
+        _editor_inputs(state),
+        llm_editor,
+        llm_editor_structured,
+        EditorReport,
+        "editor",
+    )
     
     if result is None:
         logger.warning("👓 责编评估失败，默认放行(评分8)")
@@ -2709,7 +2859,14 @@ def _editor_internal(state: NovelState) -> dict:
         ("system", EDITOR_JSON_PROMPT),
         ("user", load_prompt("editor_user.md"))
     ])
-    result = _safe_invoke(prompt | llm_editor_structured, _editor_inputs(state), "editor")
+    result = _safe_structured_invoke(
+        prompt,
+        _editor_inputs(state),
+        llm_editor,
+        llm_editor_structured,
+        EditorReport,
+        "editor",
+    )
     if result is None:
         fallback = EditorReport(
             文风评分=8,
@@ -2734,9 +2891,12 @@ def _continuity_internal(state: NovelState) -> dict:
         ("system", load_prompt("summarizer_system.md")),
         ("user", load_prompt("summarizer_user.md")),
     ])
-    result = _safe_invoke(
-        prompt | llm_continuity_structured,
+    result = _safe_structured_invoke(
+        prompt,
         _continuity_inputs(state),
+        llm_summarizer,
+        llm_continuity_structured,
+        ContinuityReview,
         f"第{state.get('current_chapter', 1)}章连续性台账",
     )
     if result is None:

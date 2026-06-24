@@ -842,6 +842,9 @@ def pattern_library_metadata() -> dict:
             "compatible_styles": list(item.get("compatible_styles", [])),
             "ending_options": dict(item.get("ending_options", {})),
             "hard_conflicts": list(item.get("hard_conflicts", [])),
+            "forbidden_pattern_tags": list(
+                item.get("forbidden_pattern_tags", [])
+            ),
             "forbidden_material_categories": list(
                 item.get("forbidden_material_categories", [])
             ),

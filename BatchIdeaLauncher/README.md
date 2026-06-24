@@ -38,10 +38,13 @@ python launcher.py retry --batch-id batch-20260622-120000 --failed-only
 选型 Agent 不再使用旧版 `keyword_categories` 和单一 `story_pattern`。每篇任务
 会生成：
 
-- `material_config`：素材大类/子类筛选、2—6 个均衡槽位及最终抽取结果。
+- `material_config`：素材大类/子类筛选、各大类配额及最终抽取结果。
 - `pattern_config.primary`：唯一主套路，负责全书结构和硬审稿。
-- `pattern_config.secondary`：最多两个普通辅助套路，只补充局部桥段。
+- `pattern_config.secondary`：普通辅助套路，只补充局部桥段；数量上限读取能力表。
 - `pattern_config.manifest`：强主套路的角色、冲突模块和结局契约。
 
-主辅套路、素材大类、子类和标签均通过同一份能力表进行硬冲突校验。被禁止的
-组合不会进入 AutoWrite CLI。
+写手、套路、素材数量范围和每类上限均从本体实时导出的能力表读取，不在启动器
+中固定维护。每篇正式写作前，启动器还会调用本体的 `--validate-job-file`：由
+本体使用当前 `LibraryV2` 规则复核主辅套路、写手兼容并实际试抽素材。预检失败
+时，错误会交给选型 Agent 修复一次；第二次仍失败才会将该篇标记为失败。因此
+本体继续扩充内容库或调整约束时，启动器无需同步复制整套校验代码。

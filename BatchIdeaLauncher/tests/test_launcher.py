@@ -21,6 +21,8 @@ from BatchIdeaLauncher.core import (
 def sample_capabilities():
     return {
         "schema_version": 2,
+        "pattern_library": {"schema_version": 2, "max_secondary": 2},
+        "cli_contract": {"supports_job_preflight": True},
         "writer_styles": [
             {"key": "default", "name": "默认"},
             {"key": "hot_blood", "name": "热血爽文"},
@@ -82,6 +84,23 @@ def sample_capabilities():
         ],
         "material_library": {
             "schema_version": 2,
+            "count_range": [2, 8],
+            "default_group_counts": {
+                "world_stage": 1,
+                "protagonist": 1,
+                "supporting_role": 0,
+                "cheat_device": 1,
+                "plot_event": 0,
+                "core_conflict": 1,
+                "career_resource": 0,
+                "atmosphere": 0,
+            },
+            "group_limits": {
+                "world_stage": 1, "protagonist": 1,
+                "supporting_role": 2, "cheat_device": 2,
+                "plot_event": 2, "core_conflict": 2,
+                "career_resource": 2, "atmosphere": 2,
+            },
             "groups": {
                 "world_stage": {
                     "name": "世界舞台",
@@ -144,6 +163,7 @@ CAPABILITIES = {capabilities!r}
 parser = argparse.ArgumentParser()
 parser.add_argument("--describe-capabilities")
 parser.add_argument("--job-file")
+parser.add_argument("--validate-job-file")
 parser.add_argument("--result-file")
 parser.add_argument("--auto-approve", action="store_true")
 args = parser.parse_args()
@@ -155,8 +175,28 @@ if args.describe_capabilities:
     target.with_suffix(".md").write_text("# fake", encoding="utf-8")
     raise SystemExit(0)
 
-job = json.loads(Path(args.job_file).read_text(encoding="utf-8"))
 cwd = Path.cwd()
+if args.validate_job_file:
+    job = json.loads(Path(args.validate_job_file).read_text(encoding="utf-8"))
+    marker = cwd / ".preflight-rejected-once"
+    if "preflight-repair" in job["idea"] and not marker.exists():
+        marker.write_text("1", encoding="utf-8")
+        Path(args.result_file).write_text(
+            json.dumps({{"status": "failed", "error": "preflight rejected"}}),
+            encoding="utf-8",
+        )
+        raise SystemExit(1)
+    Path(args.result_file).write_text(
+        json.dumps({{
+            "status": "validated",
+            "material_config": job["material_config"],
+            "pattern_config": job["pattern_config"],
+        }}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    raise SystemExit(0)
+
+job = json.loads(Path(args.job_file).read_text(encoding="utf-8"))
 with (cwd.parent / "order.log").open("a", encoding="utf-8") as stream:
     stream.write(job["job_id"] + "\\n")
 
@@ -254,6 +294,15 @@ class RepairingSelector(StaticSelector):
                     "secondary": ["missing"],
                 },
             }
+        return super().choose(idea, constraints, capabilities, repair)
+
+
+class PreflightRepairSelector(StaticSelector):
+    def __init__(self):
+        self.calls = []
+
+    def choose(self, idea, constraints, capabilities, repair=None):
+        self.calls.append(repair)
         return super().choose(idea, constraints, capabilities, repair)
 
 
@@ -477,6 +526,37 @@ class LauncherTests(unittest.TestCase):
         self.assertIsNone(selector.calls[0])
         self.assertTrue(selector.calls[1]["validation_errors"])
 
+    def test_body_preflight_failure_is_repaired_before_writing(self):
+        config_path = self.temp / "config.json"
+        write_config(config_path)
+        config = load_batch_config(config_path)
+        ideas_path = self.temp / "ideas.txt"
+        ideas_path.write_text("preflight-repair\n", encoding="utf-8")
+        fake_cli_path = self.temp / "fake_autowrite.py"
+        write_fake_cli(fake_cli_path, self.capabilities)
+        autowrite = AutoWriteCLI(
+            entry=fake_cli_path,
+            python_command=sys.executable,
+        )
+        batch_dir = initialize_batch(
+            ideas_path,
+            config,
+            autowrite,
+            runs_dir=self.temp / "runs",
+            batch_id="preflight-repair-test",
+        )
+        selector = PreflightRepairSelector()
+        summary = BatchRunner(
+            batch_dir, autowrite, selector=selector
+        ).process()
+        self.assertEqual(summary["counts"]["succeeded"], 1)
+        self.assertEqual(len(selector.calls), 2)
+        self.assertIsNone(selector.calls[0])
+        self.assertIn("preflight rejected", str(selector.calls[1]))
+        job_dir = batch_dir / "idea-001"
+        self.assertEqual(read_json(job_dir / "preflight.json")["status"], "validated")
+        self.assertTrue((job_dir / "Novel" / "idea-001.txt").exists())
+
     def test_real_cli_exports_twelve_styles_and_launcher_has_no_web_stack(self):
         project_root = Path(__file__).resolve().parents[2]
         destination = self.temp / "capabilities.json"
@@ -499,6 +579,17 @@ class LauncherTests(unittest.TestCase):
         self.assertTrue(destination.with_suffix(".md").exists())
         exported = read_json(destination)
         self.assertEqual(len(exported["writer_styles"]), 12)
+        self.assertTrue(
+            exported["cli_contract"]["supports_job_preflight"]
+        )
+        self.assertTrue(all(
+            "forbidden_pattern_tags" in item
+            for item in exported["story_patterns"]
+        ))
+        self.assertEqual(exported["pattern_library"]["max_secondary"], 2)
+        self.assertEqual(
+            exported["material_library"]["count_range"], [2, 8]
+        )
         self.assertGreaterEqual(
             {item["key"] for item in exported["writer_styles"]},
             {
@@ -572,7 +663,7 @@ class LauncherTests(unittest.TestCase):
             [
                 sys.executable,
                 str(project_root / "TheGraph.py"),
-                "--job-file",
+                "--validate-job-file",
                 str(job_path),
                 "--result-file",
                 str(result_path),

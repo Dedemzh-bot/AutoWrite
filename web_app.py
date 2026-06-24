@@ -280,25 +280,11 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         <button class="btn" style="background:#30363d;color:#c9d1d9" onclick="editRefineResult()">✏️ 手动修改</button>
       </div>
     </div>
-    <div class="section" id="kwSection">
-      <label>📚 结构化素材库</label>
-      <div id="materialHint" style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.5">按八个大类分别设置0/1/2项配额；世界舞台、主角人设最多1项，其余最多2项。与主辅套路硬冲突的分类会被禁用。</div>
-      <div class="scope-row" style="margin-bottom:6px">
-        <input id="materialSearch" placeholder="搜索分类" style="width:150px" oninput="renderCategories()">
-        总数 <strong id="materialTotal" style="color:#58a6ff">4</strong>
-        <button class="btn btn-warning" style="width:auto;padding:6px 12px" onclick="drawMaterials('create',false)">重抽素材</button>
-        <button class="btn" style="width:auto;padding:6px 12px;background:#30363d;color:#c9d1d9" onclick="drawMaterials('create',true)">换类型重抽</button>
-      </div>
-      <div class="material-groups" id="catGrid"></div>
-      <div id="materialCards" style="margin-top:8px;display:grid;gap:6px"></div>
-    </div>
     <div class="section">
-      <label>📏 篇幅设置</label>
-      <div class="scope-row">
-        章节数 <input id="chapters" type="number" value="8" min="1" max="200" style="width:60px"> 章
-        &nbsp;每章 <input id="wordsPerCh" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
-      </div>
-      <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 12,000 字</div>
+      <label>✍️ 写手风格</label>
+      <select id="writerStyle" onchange="onWriterStyleChange('create')" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
+        <option value="default">默认自然</option>
+      </select>
     </div>
     <div class="section">
       <label>🎭 创作套路</label>
@@ -352,11 +338,25 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
         </div>
       </div>
     </div>
+    <div class="section" id="kwSection">
+      <label>📚 结构化素材库</label>
+      <div id="materialHint" style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.5">按八个大类分别设置0/1/2项配额；世界舞台、主角人设最多1项，其余最多2项。与主辅套路硬冲突的分类会被禁用。</div>
+      <div class="scope-row" style="margin-bottom:6px">
+        <input id="materialSearch" placeholder="搜索分类" style="width:150px" oninput="renderCategories()">
+        总数 <strong id="materialTotal" style="color:#58a6ff">4</strong>
+        <button class="btn btn-warning" style="width:auto;padding:6px 12px" onclick="drawMaterials('create',false)">重抽素材</button>
+        <button class="btn" style="width:auto;padding:6px 12px;background:#30363d;color:#c9d1d9" onclick="drawMaterials('create',true)">换类型重抽</button>
+      </div>
+      <div class="material-groups" id="catGrid"></div>
+      <div id="materialCards" style="margin-top:8px;display:grid;gap:6px"></div>
+    </div>
     <div class="section">
-      <label>✍️ 写手风格</label>
-      <select id="writerStyle" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
-        <option value="default">默认自然</option>
-      </select>
+      <label>📏 篇幅设置</label>
+      <div class="scope-row">
+        章节数 <input id="chapters" type="number" value="8" min="1" max="200" style="width:60px"> 章
+        &nbsp;每章 <input id="wordsPerCh" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
+      </div>
+      <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 12,000 字</div>
     </div>
     <button class="btn btn-primary" id="btnStart" onclick="startPipeline()">▶ 启动流水线</button>
     <div class="approval-bar hidden" id="approvalBar">
@@ -366,6 +366,12 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     <p id="progressStatus" style="font-size:11px;color:#8b949e;margin-top:8px"></p>
   </div><!-- /createPanel -->
   <div id="washPanel" class="hidden">
+    <div class="section">
+      <label>✍️ 写手风格</label>
+      <select id="washWriterStyle" onchange="onWriterStyleChange('wash')" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
+        <option value="default">默认自然</option>
+      </select>
+    </div>
     <div class="section">
       <label>🎭 创作套路</label>
       <div class="pattern-tabs">
@@ -429,12 +435,6 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       </div>
       <div class="material-groups" id="washCatGrid"></div>
       <div id="washMaterialCards" style="margin-top:8px;display:grid;gap:6px"></div>
-    </div>
-    <div class="section">
-      <label>✍️ 写手风格</label>
-      <select id="washWriterStyle" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:4px;font-size:12px">
-        <option value="default">默认自然</option>
-      </select>
     </div>
     <div class="section">
       <label>📏 篇幅 (0=保持原大纲)</label>
@@ -904,7 +904,7 @@ function handleMsg(msg){
       }else{
         washPatternManifest=null;washPatternConfirmed=false;
         document.getElementById('washPatternManifestSection').classList.add('hidden');
-        setCompatibleStyles('wash',[]);
+        setCompatibleStyles('wash',(patternMeta[loadedPattern.primary]||{}).compatible_styles||[]);
       }
       break;
     case 'rewash_title':
@@ -1098,16 +1098,34 @@ function patternIds(mode){
 
 function setCompatibleStyles(mode,styles){
   let select=document.getElementById(patternIds(mode).style);
-  for(let option of select.options)option.disabled=styles.length>0&&!styles.includes(option.value);
-  if(select.selectedOptions[0]&&select.selectedOptions[0].disabled)select.value='default';
+  let selected=select.value||'default';
+  let incompatible=styles.length>0&&!styles.includes(selected);
+  for(let option of select.options){
+    option.disabled=styles.length>0&&!styles.includes(option.value)&&option.value!==selected;
+  }
+  select.style.borderColor=incompatible?'#f85149':'#30363d';
+  select.title=incompatible?`当前风格与所选套路不兼容，可用风格：${styles.join('、')}`:'';
+  if(incompatible)log(`⚠️ 当前写手风格与所选套路不兼容，请改选：${styles.join('、')}`,'warn');
+  return !incompatible;
 }
 
+function onWriterStyleChange(mode){
+  let ids=patternIds(mode);
+  let pattern=document.getElementById(ids.select).value||'none';
+  let manifest=mode==='wash'?washPatternManifest:createPatternManifest;
+  let styles=(manifest&&manifest.pattern_key===pattern?manifest.compatible_styles:null)||(patternMeta[pattern]||{}).compatible_styles||[];
+  let compatible=setCompatibleStyles(mode,styles);
+  let strong=isStrongPatternKey(pattern);
+  let confirmed=mode==='wash'?washPatternConfirmed:createPatternConfirmed;
+  document.getElementById(ids.button).disabled=!compatible||(strong&&!confirmed)||(mode==='wash'&&!selectedOutlineFile);
+}
 function onPatternChange(mode){
   let ids=patternIds(mode);
   let pattern=document.getElementById(ids.select).value||'none';
   renderPatternControls(mode);
   toggleCustomPattern(ids.select,mode==='wash'?'washCustomPatternWrap':'customPatternWrap');
   let strong=isStrongPatternKey(pattern);
+  let styleCompatible=setCompatibleStyles(mode,(patternMeta[pattern]||{}).compatible_styles||[]);
   document.getElementById(ids.section).classList.toggle('hidden',!strong);
   if(strong)updateEndingOptions(mode,pattern,document.getElementById(ids.ending).value);
   if(mode==='create'){
@@ -1124,10 +1142,9 @@ function onPatternChange(mode){
   }
   renderSecondaryPatterns(mode);
   if(!strong){
-    setCompatibleStyles(mode,[]);
     if(mode==='wash'){washPatternManifest=null;washPatternConfirmed=false}
     else{createPatternManifest=null;createPatternConfirmed=false}
-    document.getElementById(ids.button).disabled=mode==='wash'?!selectedOutlineFile:false;
+    document.getElementById(ids.button).disabled=!styleCompatible||(mode==='wash'&&!selectedOutlineFile);
     return;
   }
   if(mode==='create')renderCategories();
@@ -1162,8 +1179,8 @@ function applyPatternManifest(mode,manifest,confirmed){
   if(manifest.ending)document.getElementById(ids.ending).value=manifest.ending;
   document.getElementById(ids.summary).textContent=manifestSummary(manifest)+(confirmed?'\n\n✅ 契约已确认':'\n\n⏸️ 请确认、重抽或手动修改');
   document.getElementById(ids.editor).classList.add('hidden');
-  setCompatibleStyles(mode,manifest.compatible_styles||[]);
-  document.getElementById(ids.button).disabled=confirmed?(mode==='wash'?!selectedOutlineFile:false):true;
+  let styleCompatible=setCompatibleStyles(mode,manifest.compatible_styles||[]);
+  document.getElementById(ids.button).disabled=!styleCompatible||!confirmed||(mode==='wash'&&!selectedOutlineFile);
 }
 
 function changePatternEnding(mode){

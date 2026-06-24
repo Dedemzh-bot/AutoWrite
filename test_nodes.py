@@ -175,6 +175,67 @@ class TestArchitectFallback(unittest.TestCase):
         self.assertIn("plain_text_json_extract", detail)
 
 
+class TestStructuredOutputFallback(unittest.TestCase):
+    @staticmethod
+    def message(content):
+        message = MagicMock()
+        message.content = content
+        message.tool_calls = []
+        message.additional_kwargs = {}
+        message.response_metadata = {"finish_reason": "stop"}
+        return message
+
+    def test_editor_empty_function_call_falls_back_to_json_object(self):
+        from Nodes import EditorReport, invoke_structured_with_fallback
+
+        payload = {
+            "文风评分": 8,
+            "AI痕迹问题": [],
+            "AI痕迹警告": [],
+            "改进建议": "无",
+        }
+        with patch(
+            "Nodes.invoke_with_retry",
+            side_effect=[None, self.message(json.dumps(payload, ensure_ascii=False))],
+        ) as invoke:
+            result = invoke_structured_with_fallback(
+                MagicMock(), {}, MagicMock(), MagicMock(), EditorReport, "editor"
+            )
+
+        self.assertEqual(result.文风评分, 8)
+        self.assertEqual(invoke.call_count, 2)
+
+    def test_continuity_falls_back_to_plain_text_json_extraction(self):
+        from Nodes import ContinuityReview, invoke_structured_with_fallback
+
+        payload = {
+            "new_immutable_facts": [],
+            "state_updates": [],
+            "new_foreshadowing": [],
+            "resolved_foreshadowing_ids": [],
+            "chapter_ending": "故事结束",
+            "next_handoff": "",
+            "conflicts": [],
+            "warnings": [],
+            "status": "pass",
+        }
+        with patch(
+            "Nodes.invoke_with_retry",
+            side_effect=[
+                None,
+                self.message("not json"),
+                self.message("结果：" + json.dumps(payload, ensure_ascii=False)),
+            ],
+        ) as invoke:
+            result = invoke_structured_with_fallback(
+                MagicMock(), {}, MagicMock(), MagicMock(),
+                ContinuityReview, "第8章连续性台账"
+            )
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(result.chapter_ending, "故事结束")
+        self.assertEqual(invoke.call_count, 3)
+
 class TestNovelState(unittest.TestCase):
     def test_state_fields_exist(self):
         from State import NovelState
@@ -1257,6 +1318,20 @@ class TestWebDefaults(unittest.TestCase):
         self.assertIn("renderSecondaryPatterns", HTML_PAGE)
         self.assertIn("resample_material", HTML_PAGE)
 
+
+    def test_writer_style_pattern_material_order_is_stable(self):
+        from web_app import HTML_PAGE
+
+        create_start = HTML_PAGE.index('<div id="createPanel">')
+        wash_start = HTML_PAGE.index('<div id="washPanel"')
+        create_html = HTML_PAGE[create_start:wash_start]
+        wash_html = HTML_PAGE[wash_start:HTML_PAGE.index('  </div><!-- /panel -->')]
+
+        self.assertLess(create_html.index('id="writerStyle"'), create_html.index('id="storyPattern"'))
+        self.assertLess(create_html.index('id="storyPattern"'), create_html.index('id="kwSection"'))
+        self.assertLess(wash_html.index('id="washWriterStyle"'), wash_html.index('id="washStoryPattern"'))
+        self.assertLess(wash_html.index('id="washStoryPattern"'), wash_html.index('id="washMaterialCards"'))
+        self.assertNotIn("select.value='default'", HTML_PAGE)
 
 class TestWebPortSelection(unittest.TestCase):
     def test_available_preferred_port_is_not_treated_as_existing_server(self):

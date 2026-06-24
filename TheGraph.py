@@ -127,13 +127,21 @@ def _write_json(path: str | os.PathLike, payload: dict) -> Path:
 def build_capabilities() -> dict:
     pattern_items = list(pattern_library_metadata().values())
     material_library = material_library_metadata()
+    pattern_defaults = default_pattern_config()
 
     return {
         "schema_version": 2,
         "generated_at": _now_iso(),
         "writer_styles": STYLE_OPTIONS,
         "story_patterns": pattern_items,
+        "pattern_library": {
+            "schema_version": pattern_defaults["schema_version"],
+            "max_secondary": 2,
+        },
         "material_library": material_library,
+        "cli_contract": {
+            "supports_job_preflight": True,
+        },
         "job_schema": {
             "schema_version": 2,
             "required": [
@@ -317,6 +325,76 @@ def _safe_run_identifier(value: str) -> str:
     return safe.strip(".-_")[:80] or "job"
 
 
+def prepare_job(raw_job: dict) -> tuple[dict, dict, dict]:
+    job, issues = validate_job(raw_job)
+    if issues:
+        raise ValueError("; ".join(issues))
+
+    pattern_config = normalize_pattern_config(job["pattern_config"])
+    primary_pattern = pattern_config["primary"]
+    if is_strong_pattern(primary_pattern):
+        ending_options = load_story_patterns()[primary_pattern].get(
+            "ending_options", {}
+        )
+        requested_ending = pattern_config.get("manifest", {}).get("ending")
+        ending = (
+            requested_ending
+            if requested_ending in ending_options
+            else next(iter(ending_options), "default")
+        )
+        pattern_config["manifest"] = roll_pattern_manifest(
+            primary_pattern,
+            seed=job["pattern_seed"],
+            ending=ending,
+        )
+    material_config = sample_materials(
+        job["material_config"],
+        pattern_config,
+        seed=job["material_seed"],
+    )
+    return job, material_config, pattern_config
+
+
+def validate_job_file(
+    job_path: str | os.PathLike,
+    result_path: str | os.PathLike | None,
+) -> int:
+    source_path = Path(job_path).expanduser().resolve()
+    target_path = (
+        Path(result_path).expanduser().resolve()
+        if result_path
+        else source_path.with_name("preflight.json")
+    )
+    result = {
+        "schema_version": 2,
+        "status": "failed",
+        "job_file": str(source_path),
+        "started_at": _now_iso(),
+    }
+    try:
+        raw_job = json.loads(source_path.read_text(encoding="utf-8-sig"))
+        job, material_config, pattern_config = prepare_job(raw_job)
+        result.update({
+            "status": "validated",
+            "job_id": job["job_id"],
+            "configuration": job,
+            "material_config": material_config,
+            "pattern_config": pattern_config,
+        })
+    except Exception as error:
+        result.update({
+            "status": "failed",
+            "error_type": type(error).__name__,
+            "error": str(error),
+            "traceback": traceback.format_exc(),
+        })
+    finally:
+        result["finished_at"] = _now_iso()
+        written_path = _write_json(target_path, result)
+        print(f"PREFLIGHT_PATH={written_path}")
+    return 0 if result["status"] == "validated" else 1
+
+
 def run_job_file(
     job_path: str | os.PathLike,
     result_path: str | os.PathLike | None,
@@ -330,43 +408,18 @@ def run_job_file(
     )
     started_at = _now_iso()
     result = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "failed",
         "job_file": str(source_path),
         "started_at": started_at,
     }
     try:
         raw_job = json.loads(source_path.read_text(encoding="utf-8-sig"))
-        job, issues = validate_job(raw_job)
-        result["job_id"] = job.get("job_id", raw_job.get("job_id", ""))
-        if issues:
-            raise ValueError("；".join(issues))
-
+        job, material_config, pattern_config = prepare_job(raw_job)
+        result["job_id"] = job["job_id"]
         run_id = (
             f"cli-{_safe_run_identifier(job['job_id'])}-"
             f"{uuid.uuid4().hex[:8]}"
-        )
-        pattern_config = normalize_pattern_config(job["pattern_config"])
-        primary_pattern = pattern_config["primary"]
-        if is_strong_pattern(primary_pattern):
-            ending_options = load_story_patterns()[primary_pattern].get(
-                "ending_options", {}
-            )
-            requested_ending = pattern_config.get("manifest", {}).get("ending")
-            ending = (
-                requested_ending
-                if requested_ending in ending_options
-                else next(iter(ending_options), "default")
-            )
-            pattern_config["manifest"] = roll_pattern_manifest(
-                primary_pattern,
-                seed=job["pattern_seed"],
-                ending=ending,
-            )
-        material_config = sample_materials(
-            job["material_config"],
-            pattern_config,
-            seed=job["material_seed"],
         )
         config = {"configurable": {"thread_id": run_id}}
         initial_state = _initial_state_from_job(
@@ -457,6 +510,11 @@ def parse_cli_args():
         metavar="PATH",
         help="读取 JSON 小说任务",
     )
+    mode.add_argument(
+        "--validate-job-file",
+        metavar="PATH",
+        help="只校验并试抽 JSON 小说任务，不调用写作模型",
+    )
     parser.add_argument(
         "--result-file",
         metavar="PATH",
@@ -490,8 +548,18 @@ if __name__ == "__main__":
                 cli_args.auto_approve,
             )
         )
+    if cli_args.validate_job_file:
+        sys.exit(
+            validate_job_file(
+                cli_args.validate_job_file,
+                cli_args.result_file,
+            )
+        )
     if cli_args.result_file:
-        raise SystemExit("--result-file 必须与 --job-file 一起使用")
+        raise SystemExit(
+            "--result-file 必须与 --job-file 或 "
+            "--validate-job-file 一起使用"
+        )
 
     print("🚀 小说工业流水线 v4.0 (词库 + 篇幅自适应) 启动...\n")
     

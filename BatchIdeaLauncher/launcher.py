@@ -105,7 +105,15 @@ def command_run(args) -> int:
         runs_dir=args.runs_dir.resolve(),
         batch_id=args.batch_id,
     )
-    print(f"批次已创建：{batch_dir.name}")
+    manifest = read_json(batch_dir / "batch.json")
+    job_count = len(manifest.get("jobs", []))
+    print(f"\n批次: {batch_dir.name}  —  {job_count} 个任务")
+    print("=" * 60)
+    for i, job in enumerate(manifest["jobs"], start=1):
+        idea = job.get("idea", "")
+        summary = idea[:50] + "..." if len(idea) > 50 else idea
+        print(f"  [{i}] {job['job_id']}: {summary}")
+    print("=" * 60)
     summary = BatchRunner(
         batch_dir, autowrite, selector=selector
     ).process()

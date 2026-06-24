@@ -190,24 +190,33 @@ def normalize_idea_item(raw: Any, index: int) -> dict:
     }
 
 
+def _read_text_with_fallback(path: Path) -> str:
+    for encoding in ("utf-8-sig", "gbk"):
+        try:
+            return path.read_text(encoding=encoding)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    raise LauncherError(f"无法识别文件编码: {path}")
+
+
 def load_ideas(path: Path) -> list[dict]:
     suffix = path.suffix.lower()
     raw_items: list[Any] = []
     if suffix == ".txt":
         raw_items = [
             line.strip()
-            for line in path.read_text(encoding="utf-8-sig").splitlines()
+            for line in _read_text_with_fallback(path).splitlines()
             if line.strip()
         ]
     elif suffix == ".csv":
-        with path.open("r", encoding="utf-8-sig", newline="") as file:
-            reader = csv.DictReader(file)
-            if not reader.fieldnames or "idea" not in reader.fieldnames:
-                raise LauncherError("CSV 必须包含 idea 列")
-            raw_items = list(reader)
+        text = _read_text_with_fallback(path)
+        reader = csv.DictReader(text.splitlines())
+        if not reader.fieldnames or "idea" not in reader.fieldnames:
+            raise LauncherError("CSV 必须包含 idea 列")
+        raw_items = list(reader)
     elif suffix in {".jsonl", ".ndjson"}:
         for line_number, line in enumerate(
-            path.read_text(encoding="utf-8-sig").splitlines(), start=1
+            _read_text_with_fallback(path).splitlines(), start=1
         ):
             if not line.strip():
                 continue
@@ -310,6 +319,50 @@ class AutoWriteCLI:
             raise LauncherError("AutoWrite CLI 未生成能力表")
         return read_json(destination)
 
+    def validate_job(self, job_dir: Path) -> dict:
+        job_path = (job_dir / "job.json").resolve()
+        result_path = (job_dir / "preflight.json").resolve()
+        stdout_path = job_dir / "preflight.stdout.log"
+        stderr_path = job_dir / "preflight.stderr.log"
+        command = [
+            *self.python_prefix,
+            str(self.entry),
+            "--validate-job-file",
+            str(job_path),
+            "--result-file",
+            str(result_path),
+        ]
+        completed = subprocess.run(
+            command,
+            cwd=str(PROJECT_ROOT),
+            env=self.environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+            check=False,
+        )
+        stdout_path.write_text(completed.stdout or "", encoding="utf-8")
+        stderr_path.write_text(completed.stderr or "", encoding="utf-8")
+        result = (
+            read_json(result_path)
+            if result_path.exists()
+            else {
+                "schema_version": 2,
+                "status": "failed",
+                "error": "AutoWrite CLI did not create preflight.json",
+            }
+        )
+        result["process_returncode"] = completed.returncode
+        if completed.returncode != 0 and result.get("status") == "validated":
+            result["status"] = "failed"
+            result["error"] = (
+                f"AutoWrite CLI preflight returned {completed.returncode}"
+            )
+            atomic_write_json(result_path, result)
+        return result
+
     def run_job(self, job_dir: Path, timeout_seconds: int) -> dict:
         job_path = (job_dir / "job.json").resolve()
         result_path = (job_dir / "result.json").resolve()
@@ -327,7 +380,7 @@ class AutoWriteCLI:
         try:
             completed = subprocess.run(
                 command,
-                cwd=str(job_dir),
+                cwd=str(PROJECT_ROOT),
                 env=self.environment,
                 capture_output=True,
                 text=True,
@@ -402,6 +455,63 @@ def _compact_capabilities(capabilities: dict) -> dict:
         "writer_styles": capabilities.get("writer_styles", []),
         "story_patterns": capabilities.get("story_patterns", []),
         "material_library": capabilities.get("material_library", {}),
+    }
+
+
+def _as_string_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list):
+        return []
+    return list(dict.fromkeys(
+        str(item).strip() for item in value if str(item).strip()
+    ))
+
+
+def _material_constraints(capabilities: dict) -> dict:
+    metadata = capabilities.get("material_library", {})
+    groups = metadata.get("groups", {})
+    legacy_limits = {
+        "world_stage": 1,
+        "protagonist": 1,
+        "supporting_role": 2,
+        "cheat_device": 2,
+        "plot_event": 2,
+        "core_conflict": 2,
+        "career_resource": 2,
+        "atmosphere": 2,
+    }
+    limits = dict(metadata.get("group_limits") or {})
+    if not limits:
+        limits = {
+            group_id: int(group.get("max_count", 0))
+            for group_id, group in groups.items()
+            if int(group.get("max_count", 0)) > 0
+        }
+    if not limits:
+        limits = legacy_limits
+    defaults = dict(metadata.get("default_group_counts") or {})
+    for group_id in limits:
+        defaults.setdefault(group_id, 0)
+    count_range = metadata.get("count_range", [2, 8])
+    if not isinstance(count_range, list) or len(count_range) != 2:
+        count_range = [2, 8]
+    return {
+        "schema_version": int(metadata.get("schema_version", 2)),
+        "limits": {key: int(value) for key, value in limits.items()},
+        "defaults": {key: int(value) for key, value in defaults.items()},
+        "min_count": int(count_range[0]),
+        "max_count": int(count_range[1]),
+    }
+
+
+def _pattern_constraints(capabilities: dict) -> dict:
+    metadata = capabilities.get("pattern_library", {})
+    return {
+        "schema_version": int(metadata.get("schema_version", 2)),
+        "max_secondary": int(metadata.get("max_secondary", 2)),
     }
 
 
@@ -486,13 +596,21 @@ class OpenAISelector:
         capabilities: dict,
         repair: dict | None = None,
     ) -> dict:
+        material_rules = _material_constraints(capabilities)
+        pattern_rules = _pattern_constraints(capabilities)
+        group_schema = {
+            group_id: f"0 to {limit}"
+            for group_id, limit in material_rules["limits"].items()
+        }
         system = (
             "你是小说生产任务的配置 Agent。你只能从提供的能力表中选择，"
             "并且必须遵守主辅套路、兼容写手、结局和素材冲突规则。"
             "章节数和每章字数必须落在允许范围内，偏好值只是参考。"
-            "选择1个主套路、最多2个非强辅助套路。"
-            "素材筛选可选择子类；世界舞台和主角最多1项，其余大类最多2项，"
-            "素材总数必须为2到8。"
+            f"选择1个主套路、最多{pattern_rules['max_secondary']}个非强辅助套路。"
+            "素材筛选可选择能力表中的大类、子类与标签；每类数量服从"
+            "material_library.group_limits。"
+            f"素材总数必须为{material_rules['min_count']}到"
+            f"{material_rules['max_count']}。"
             "如果主套路选择 custom，必须给出可执行的 custom_instruction；"
             "强套路必须在 manifest.ending 中选择 ending_options 的一个键。"
             "只输出一个 JSON 对象，不要 Markdown。"
@@ -506,30 +624,21 @@ class OpenAISelector:
                 "words_per_chapter": "整数",
                 "writer_style": "写手风格键",
                 "material_config": {
-                    "schema_version": 2,
+                    "schema_version": material_rules["schema_version"],
                     "filters": {
                         "categories": ["素材大类键"],
                         "subcategories": ["素材子类键"],
                         "tags": [],
                     },
-                    "group_counts": {
-                        "world_stage": "0到1",
-                        "protagonist": "0到1",
-                        "supporting_role": "0到2",
-                        "cheat_device": "0到2",
-                        "plot_event": "0到2",
-                        "core_conflict": "0到2",
-                        "career_resource": "0到2",
-                        "atmosphere": "0到2",
-                    },
+                    "group_counts": group_schema,
                     "items": [],
                     "locked_item_keys": [],
                     "auto_selected_subcategories": [],
                 },
                 "pattern_config": {
-                    "schema_version": 2,
+                    "schema_version": pattern_rules["schema_version"],
                     "primary": "主套路ID",
-                    "secondary": ["最多2个常规套路ID"],
+                    "secondary": ["常规套路ID，数量服从 max_secondary"],
                     "custom_instruction": "仅custom时填写",
                     "manifest": {"ending": "仅强套路填写结局键"},
                     "structure_plan": {},
@@ -611,6 +720,7 @@ def validate_selection(
         item.get("id") or item.get("key"): item
         for item in capabilities.get("story_patterns", [])
     }
+    pattern_rules = _pattern_constraints(capabilities)
     raw_pattern = (
         normalized["pattern_config"]
         if isinstance(normalized["pattern_config"], dict)
@@ -633,7 +743,7 @@ def validate_selection(
         else {}
     )
     normalized["pattern_config"] = {
-        "schema_version": 2,
+        "schema_version": pattern_rules["schema_version"],
         "primary": primary_id,
         "secondary": secondary,
         "custom_instruction": custom_instruction,
@@ -643,8 +753,10 @@ def validate_selection(
     primary = pattern_map.get(primary_id)
     if not primary:
         issues.append(f"未知主套路：{primary_id}")
-    if len(secondary) > 2:
-        issues.append("辅助套路最多选择2个")
+    if len(secondary) > pattern_rules["max_secondary"]:
+        issues.append(
+            f"辅助套路最多选择{pattern_rules['max_secondary']}个"
+        )
     for secondary_id in secondary:
         item = pattern_map.get(secondary_id)
         if not item:
@@ -659,6 +771,17 @@ def validate_selection(
             or primary_id in item.get("hard_conflicts", [])
         ):
             issues.append(f"主辅套路硬冲突：{primary_id} / {secondary_id}")
+        if primary:
+            primary_tags = set(primary.get("tags", []))
+            secondary_tags = set(item.get("tags", []))
+            if primary_tags.intersection(
+                item.get("forbidden_pattern_tags", [])
+            ) or secondary_tags.intersection(
+                primary.get("forbidden_pattern_tags", [])
+            ):
+                issues.append(
+                    f"主辅套路标签冲突：{primary_id} / {secondary_id}"
+                )
     if primary_id == "custom" and not custom_instruction:
         issues.append("custom 主套路必须提供 custom_instruction")
     if primary:
@@ -682,41 +805,12 @@ def validate_selection(
         if isinstance(raw_material.get("filters"), dict)
         else {}
     )
-    categories = list(dict.fromkeys(
-        str(item).strip()
-        for item in filters.get("categories", [])
-        if str(item).strip()
-    ))
-    subcategories = list(dict.fromkeys(
-        str(item).strip()
-        for item in filters.get("subcategories", [])
-        if str(item).strip()
-    ))
-    tags = list(dict.fromkeys(
-        str(item).strip()
-        for item in filters.get("tags", [])
-        if str(item).strip()
-    ))
-    limits = {
-        "world_stage": 1,
-        "protagonist": 1,
-        "supporting_role": 2,
-        "cheat_device": 2,
-        "plot_event": 2,
-        "core_conflict": 2,
-        "career_resource": 2,
-        "atmosphere": 2,
-    }
-    defaults = {
-        "world_stage": 1,
-        "protagonist": 1,
-        "supporting_role": 0,
-        "cheat_device": 1,
-        "plot_event": 0,
-        "core_conflict": 1,
-        "career_resource": 0,
-        "atmosphere": 0,
-    }
+    categories = _as_string_list(filters.get("categories"))
+    subcategories = _as_string_list(filters.get("subcategories"))
+    tags = _as_string_list(filters.get("tags"))
+    material_rules = _material_constraints(capabilities)
+    limits = material_rules["limits"]
+    defaults = material_rules["defaults"]
     raw_counts = (
         raw_material.get("group_counts")
         if isinstance(raw_material.get("group_counts"), dict)
@@ -736,8 +830,12 @@ def validate_selection(
             issues.append(f"素材大类 {group_id} 数量必须在0到{limit}之间")
         group_counts[group_id] = value
     material_count = sum(group_counts.values())
-    if not 2 <= material_count <= 8:
-        issues.append("素材总数必须在2到8之间")
+    if not (
+        material_rules["min_count"]
+        <= material_count
+        <= material_rules["max_count"]
+    ):
+        issues.append("素材总数不符合本体能力表范围")
 
     material_meta = capabilities.get("material_library", {})
     group_map = material_meta.get("groups", {})
@@ -782,7 +880,7 @@ def validate_selection(
                 )
 
     normalized["material_config"] = {
-        "schema_version": 2,
+        "schema_version": material_rules["schema_version"],
         "filters": {
             "categories": categories,
             "subcategories": subcategories,
@@ -957,6 +1055,14 @@ class BatchRunner:
     def refresh_capabilities(self) -> dict:
         capabilities_path = self.batch_dir / "capabilities.json"
         capabilities = self.autowrite.export_capabilities(capabilities_path)
+        if capabilities.get("schema_version") != 2:
+            raise LauncherError("BatchIdeaLauncher requires AutoWrite schema v2")
+        if not capabilities.get("cli_contract", {}).get(
+            "supports_job_preflight"
+        ):
+            raise LauncherError(
+                "AutoWrite CLI does not support --validate-job-file"
+            )
         self.capabilities = capabilities
         return capabilities
 
@@ -1034,11 +1140,19 @@ class BatchRunner:
     ) -> dict:
         self.refresh_capabilities()
         statuses = statuses or {"pending", "failed", "selecting", "running"}
-        for record in self.manifest["jobs"]:
+        total = len(self.manifest["jobs"])
+        for idx, record in enumerate(self.manifest["jobs"], start=1):
             if record.get("status") == "succeeded":
                 continue
             if record.get("status", "pending") not in statuses:
                 continue
+            job_id = record["job_id"]
+            idea = record.get("idea", "")
+            idea_summary = idea[:60] + "..." if len(idea) > 60 else idea
+            print(f"\n{'='*60}")
+            print(f"[{now_iso()}] [{idx}/{total}] 正在处理: {job_id}")
+            print(f"  灵感: {idea_summary}")
+            print(f"{'='*60}")
             job_dir = self.batch_dir / record["job_id"]
             job_dir.mkdir(parents=True, exist_ok=True)
             for name in ("stdout.log", "stderr.log"):
@@ -1052,8 +1166,10 @@ class BatchRunner:
                     else None
                 )
                 if selection is None:
+                    print(f"  [{now_iso()}] 🔍 正在AI选型配置...")
                     self._set_status(record, "selecting")
                     selection = self._select(record)
+                    print(f"  [{now_iso()}] ✅ 选型完成 — 风格: {selection.get('writer_style','?')}  套路: {selection.get('pattern_config',{}).get('primary','?')}  {selection.get('target_chapters','?')}章×{selection.get('words_per_chapter','?')}字")
                     atomic_write_json(job_dir / "selection.json", selection)
                 record["selection"] = selection
                 job_payload = make_job_payload(
@@ -1062,8 +1178,51 @@ class BatchRunner:
                     selection,
                 )
                 atomic_write_json(job_dir / "job.json", job_payload)
+                print(f"  [{now_iso()}] 🔬 预检中...")
+                preflight = self.autowrite.validate_job(job_dir)
+                if preflight.get("status") != "validated":
+                    print(f"  [{now_iso()}] ⚠️ 预检失败，重新选型...")
+                    selector = self._selector_instance()
+                    repaired = selector.choose(
+                        record["idea"],
+                        record["constraints"],
+                        self.capabilities,
+                        repair={
+                            "invalid_output": selection,
+                            "validation_errors": [
+                                preflight.get(
+                                    "error", "AutoWrite CLI 预检失败"
+                                )
+                            ],
+                            "instruction": (
+                                "本体使用最新内容库校验并试抽素材失败；"
+                                "请重新选择完整配置。"
+                            ),
+                        },
+                    )
+                    selection, repair_issues = validate_selection(
+                        repaired, record["constraints"], self.capabilities
+                    )
+                    if repair_issues:
+                        raise SelectionError("；".join(repair_issues))
+                    selection["selected_at"] = now_iso()
+                    record["selection"] = selection
+                    atomic_write_json(job_dir / "selection.json", selection)
+                    job_payload = make_job_payload(
+                        self.manifest["batch_id"], record, selection
+                    )
+                    atomic_write_json(job_dir / "job.json", job_payload)
+                    preflight = self.autowrite.validate_job(job_dir)
+                if preflight.get("status") != "validated":
+                    raise SelectionError(
+                        preflight.get("error", "AutoWrite CLI preflight failed")
+                    )
+                print(f"  [{now_iso()}] ✅ 预检通过")
                 record["attempts"] = int(record.get("attempts", 0)) + 1
                 self._set_status(record, "running")
+                target_ch = selection.get("target_chapters", "?")
+                target_w = selection.get("words_per_chapter", "?")
+                print(f"  [{now_iso()}] ▶ 开始写作... ({target_ch}章×{target_w}字，请耐心等待)")
                 result = self.autowrite.run_job(
                     job_dir,
                     self.manifest["config"]["job_timeout_seconds"],
@@ -1080,7 +1239,9 @@ class BatchRunner:
                     "pattern_config": result.get("pattern_config", {}),
                 }
                 self._set_status(record, "succeeded")
+                print(f"  [{now_iso()}] 🎉 完成！{record['outputs'].get('saved_chapter', '?')}章已生成")
             except Exception as error:
+                print(f"  [{now_iso()}] ❌ 失败: {error}")
                 result_path = job_dir / "result.json"
                 if (
                     record.get("status") != "running"
