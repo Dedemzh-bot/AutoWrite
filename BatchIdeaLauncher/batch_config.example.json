@@ -8,8 +8,8 @@
     "max_words_per_chapter": 2000
   },
   "job_timeout_seconds": 14400,
+  "max_concurrent_jobs": 2,
   "selector": {
-    "model": "",
     "temperature": 0.2,
     "max_retries": 2,
     "request_timeout_seconds": 180

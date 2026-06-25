@@ -15,8 +15,6 @@ from datetime import datetime
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -29,7 +27,6 @@ from Nodes import (
     list_outline_files, load_outline_json, generate_wash_title,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, normalize_chapter_outlines,
-    MODEL_MAX_RETRIES, MODEL_TIMEOUT_SECONDS, invoke_with_retry,
     outline_validation_issues, should_retry_short_draft,
     route_after_review_decision, build_chapter_contracts, build_finale_contract,
     is_strong_pattern, roll_pattern_manifest,
@@ -50,6 +47,7 @@ from LibraryV2 import (
     validate_pattern_config,
 )
 from WriterStyles import writer_style_options
+from IdeaRefiner import call_refine as _call_refine
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger("AutoWrite")
@@ -120,40 +118,7 @@ workflow.add_conditional_edges("summarizer", route_after_summary, {
 memory = MemorySaver()
 graph_app = workflow.compile(checkpointer=memory)
 
-# ── 灵感精炼 LLM ──
-llm_refine = ChatOpenAI(
-    model="deepseek-v4-flash",
-    temperature=0.5,
-    timeout=MODEL_TIMEOUT_SECONDS,
-    max_retries=MODEL_MAX_RETRIES,
-    max_tokens=4096,
-    extra_body={
-        "thinking": {"type": "disabled"},
-    },
-)
-
-REFINE_SYSTEM = """你是一位资深小说编辑，帮作者把粗略的点子精炼为完整的故事设定。
-
-你的工作方式是：
-1. 先看作者的点子，找出最需要明确的关键信息（主角身份、核心冲突、世界观基调、金手指类型）
-2. 一次只问一个问题，问题要具体，引导作者给出有用信息
-3. 累计问 2 轮后，输出精炼后的完整设定
-
-输出格式：
-- 如果是提问，直接输出问题，不要前缀标记
-- 如果是精炼结果，输出格式为 "【精炼设定】\n<完整的300字设定描述>"
-- 精炼设定必须整合所有已获取的信息，用一段通顺的文字呈现"""
-
 app = FastAPI(title="AutoWrite Web")
-
-def _call_refine(history: list[dict]) -> str:
-    messages = [("system", REFINE_SYSTEM)]
-    for h in history:
-        role = "user" if h["role"] == "user" else "assistant"
-        messages.append((role, h["content"]))
-    prompt = ChatPromptTemplate.from_messages(messages)
-    result = invoke_with_retry(prompt | llm_refine, {}, "灵感精炼")
-    return result.content.strip() if result and result.content else ""
 
 
 # ═══════════════════════════════════════════════════

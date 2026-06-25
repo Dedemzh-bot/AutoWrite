@@ -20,6 +20,7 @@ try:
         initialize_batch,
         load_batch_config,
         read_json,
+        validate_max_concurrent_jobs,
     )
 except ImportError:
     from core import (
@@ -34,6 +35,7 @@ except ImportError:
         initialize_batch,
         load_batch_config,
         read_json,
+        validate_max_concurrent_jobs,
     )
 
 
@@ -60,6 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--ideas", type=Path, required=True)
     run.add_argument("--config", type=Path, required=True)
     run.add_argument("--batch-id")
+    run.add_argument("--workers", type=int)
 
     status = subparsers.add_parser("status", help="查看批次状态")
     status.add_argument("--batch-id", required=True)
@@ -71,6 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="只重试 failed；否则也恢复 pending/selecting/running",
     )
+    retry.add_argument("--workers", type=int)
     return parser
 
 
@@ -96,6 +100,8 @@ def command_catalog(args) -> int:
 
 def command_run(args) -> int:
     config = load_batch_config(args.config.resolve())
+    if args.workers is not None:
+        config["max_concurrent_jobs"] = validate_max_concurrent_jobs(args.workers)
     selector = OpenAISelector(config["selector"])
     autowrite = _autowrite()
     batch_dir = initialize_batch(
@@ -137,7 +143,15 @@ def command_retry(args) -> int:
         "selecting",
         "running",
     }
-    summary = runner.process(statuses=statuses, reuse_selection=True)
+    summary = runner.process(
+        statuses=statuses,
+        reuse_selection=True,
+        max_workers=(
+            validate_max_concurrent_jobs(args.workers)
+            if args.workers is not None
+            else None
+        ),
+    )
     print(format_status(read_json(batch_dir / "batch.json")))
     print(f"汇总报告：{batch_dir / 'summary.csv'}")
     return 1 if summary["counts"].get("failed", 0) else 0

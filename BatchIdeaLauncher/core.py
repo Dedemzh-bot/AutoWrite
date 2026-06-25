@@ -9,9 +9,11 @@ import re
 import shlex
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable
@@ -31,8 +33,8 @@ DEFAULT_CONFIG = {
         "max_words_per_chapter": 2500,
     },
     "job_timeout_seconds": 14400,
+    "max_concurrent_jobs": 2,
     "selector": {
-        "model": "",
         "temperature": 0.2,
         "max_retries": 2,
         "request_timeout_seconds": 180,
@@ -47,6 +49,13 @@ LENGTH_FIELDS = (
     "min_words_per_chapter",
     "max_words_per_chapter",
 )
+
+LOCKED_WRITER_STYLE_RULES = {
+    "strong_entertainment_reveal": {
+        "blocked_styles": {"emotion", "emotional_tension"},
+        "replacement": "sweet_romcom",
+    },
+}
 
 
 class LauncherError(RuntimeError):
@@ -121,6 +130,13 @@ def validate_length_constraints(length: dict) -> dict:
     return normalized
 
 
+def validate_max_concurrent_jobs(value: Any) -> int:
+    workers = _as_int(value, "max_concurrent_jobs")
+    if workers <= 0:
+        raise LauncherError("max_concurrent_jobs must be greater than 0")
+    return workers
+
+
 def load_batch_config(path: Path) -> dict:
     override = read_json(path) if path else {}
     config = deep_merge(DEFAULT_CONFIG, override)
@@ -131,6 +147,9 @@ def load_batch_config(path: Path) -> dict:
     if config["job_timeout_seconds"] <= 0:
         raise LauncherError("job_timeout_seconds 必须大于 0")
 
+    config["max_concurrent_jobs"] = validate_max_concurrent_jobs(
+        config.get("max_concurrent_jobs")
+    )
     selector = config["selector"]
     try:
         selector["temperature"] = float(selector.get("temperature", 0.2))
@@ -163,6 +182,20 @@ def _clean_override_value(value: Any) -> Any:
         return None
     return value
 
+def parse_refine_idea(value: Any, job_id: str) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip()
+    if not text:
+        return False
+    if text == "1":
+        return True
+    if text == "0":
+        return False
+    raise LauncherError(f"{job_id} 的 refine_idea 必须为 0 或 1")
+
 
 def normalize_idea_item(raw: Any, index: int) -> dict:
     if isinstance(raw, str):
@@ -173,6 +206,7 @@ def normalize_idea_item(raw: Any, index: int) -> dict:
     if not idea:
         raise LauncherError(f"第 {index} 条点子的 idea 不能为空")
     job_id = safe_job_id(raw.get("job_id", ""), f"idea-{index:03d}")
+    refine_idea = parse_refine_idea(raw.get("refine_idea"), job_id)
     overrides = {}
     nested_length = raw.get("length", {})
     if nested_length and not isinstance(nested_length, dict):
@@ -185,7 +219,9 @@ def normalize_idea_item(raw: Any, index: int) -> dict:
             overrides[field] = value
     return {
         "job_id": job_id,
+        "source_idea": idea,
         "idea": idea,
+        "refine_idea": refine_idea,
         "length_overrides": overrides,
     }
 
@@ -334,7 +370,7 @@ class AutoWriteCLI:
         ]
         completed = subprocess.run(
             command,
-            cwd=str(PROJECT_ROOT),
+            cwd=str(job_dir.resolve()),
             env=self.environment,
             capture_output=True,
             text=True,
@@ -380,7 +416,7 @@ class AutoWriteCLI:
         try:
             completed = subprocess.run(
                 command,
-                cwd=str(PROJECT_ROOT),
+                cwd=str(job_dir.resolve()),
                 env=self.environment,
                 capture_output=True,
                 text=True,
@@ -470,6 +506,40 @@ def _as_string_list(value: Any) -> list[str]:
     ))
 
 
+def _locked_writer_style(
+    primary_id: str,
+    writer_style: str,
+    capabilities: dict,
+) -> tuple[str, dict | None]:
+    rule = LOCKED_WRITER_STYLE_RULES.get(primary_id)
+    if not rule or writer_style not in rule["blocked_styles"]:
+        return writer_style, None
+
+    pattern_map = {
+        item.get("id") or item.get("key"): item
+        for item in capabilities.get("story_patterns", [])
+    }
+    primary = pattern_map.get(primary_id, {})
+    compatible = primary.get("compatible_styles", [])
+    replacement = str(rule.get("replacement", "")).strip()
+    if replacement not in compatible:
+        replacement = next((item for item in compatible if item), "")
+
+    style_keys = {
+        item.get("key") for item in capabilities.get("writer_styles", [])
+    }
+    if not replacement or replacement not in style_keys:
+        return writer_style, None
+
+    return replacement, {
+        "field": "writer_style",
+        "pattern": primary_id,
+        "from": writer_style,
+        "to": replacement,
+        "reason": "locked incompatible entertainment reveal emotion writer",
+    }
+
+
 def _material_constraints(capabilities: dict) -> dict:
     metadata = capabilities.get("material_library", {})
     groups = metadata.get("groups", {})
@@ -521,10 +591,8 @@ class OpenAISelector:
         self.base_url = os.environ.get(
             "LAUNCHER_BASE_URL", "https://api.openai.com/v1"
         ).strip()
-        self.model = (
-            str(selector_config.get("model", "")).strip()
-            or os.environ.get("LAUNCHER_MODEL", "").strip()
-        )
+        self.model = os.environ.get("LAUNCHER_MODEL", "").strip()
+
         self.temperature = float(selector_config.get("temperature", 0.2))
         self.max_retries = int(selector_config.get("max_retries", 2))
         self.timeout = int(
@@ -536,7 +604,7 @@ class OpenAISelector:
             raise LauncherError("缺少 LAUNCHER_BASE_URL")
         if not self.model:
             raise LauncherError(
-                "缺少 LAUNCHER_MODEL，或 batch_config.json 中的 selector.model"
+                "缺少 LAUNCHER_MODEL，请在 .env 中配置选择器模型名"
             )
 
     @property
@@ -677,6 +745,20 @@ def validate_selection(
         "pattern_config": selection.get("pattern_config", {}),
         "rationale": str(selection.get("rationale", "")).strip(),
     }
+    raw_pattern_for_lock = (
+        normalized["pattern_config"]
+        if isinstance(normalized["pattern_config"], dict)
+        else {}
+    )
+    locked_writer, writer_lock = _locked_writer_style(
+        str(raw_pattern_for_lock.get("primary") or "none").strip(),
+        normalized["writer_style"],
+        capabilities,
+    )
+    normalized["writer_style"] = locked_writer
+    if writer_lock:
+        normalized["selection_locks"] = [writer_lock]
+
     try:
         normalized["target_chapters"] = _as_int(
             selection.get("target_chapters"), "target_chapters"
@@ -986,6 +1068,9 @@ def write_batch_reports(batch_dir: Path, manifest: dict) -> dict:
                 "job_id": job["job_id"],
                 "status": job["status"],
                 "attempts": job.get("attempts", 0),
+                "refine_idea": int(bool(job.get("refine_idea", False))),
+                "source_idea": job.get("source_idea", job.get("idea", "")),
+                "used_idea": job.get("idea", ""),
                 "target_chapters": job.get("selection", {}).get(
                     "target_chapters", ""
                 ),
@@ -1015,6 +1100,9 @@ def write_batch_reports(batch_dir: Path, manifest: dict) -> dict:
             "job_id",
             "status",
             "attempts",
+            "refine_idea",
+            "source_idea",
+            "used_idea",
             "target_chapters",
             "words_per_chapter",
             "writer_style",
@@ -1030,6 +1118,7 @@ def write_batch_reports(batch_dir: Path, manifest: dict) -> dict:
 
 
 SelectorCallable = Callable[[str, dict, dict, dict | None], dict]
+IdeaRefinerCallable = Callable[[str], str]
 
 
 class BatchRunner:
@@ -1038,19 +1127,26 @@ class BatchRunner:
         batch_dir: Path,
         autowrite: AutoWriteCLI,
         selector: OpenAISelector | None = None,
+        refiner: IdeaRefinerCallable | None = None,
     ):
         self.batch_dir = batch_dir.resolve()
         self.manifest_path = self.batch_dir / "batch.json"
         self.autowrite = autowrite
         self.selector = selector
+        self.refiner = refiner
+        self.manifest_lock = threading.RLock()
+        self.log_lock = threading.Lock()
+        self.selector_lock = threading.RLock()
+        self.capabilities: dict = {}
         if not self.manifest_path.exists():
             raise LauncherError(f"找不到批次：{self.manifest_path}")
         self.manifest = read_json(self.manifest_path)
 
     def save(self) -> None:
-        self.manifest["updated_at"] = now_iso()
-        atomic_write_json(self.manifest_path, self.manifest)
-        write_batch_reports(self.batch_dir, self.manifest)
+        with self.manifest_lock:
+            self.manifest["updated_at"] = now_iso()
+            atomic_write_json(self.manifest_path, self.manifest)
+            write_batch_reports(self.batch_dir, self.manifest)
 
     def refresh_capabilities(self) -> dict:
         capabilities_path = self.batch_dir / "capabilities.json"
@@ -1066,57 +1162,140 @@ class BatchRunner:
         self.capabilities = capabilities
         return capabilities
 
+    def _log(self, message: str) -> None:
+        with self.log_lock:
+            print(message)
+
+    def _log_job(self, job_id: str, message: str) -> None:
+        self._log(f"  [{now_iso()}] [{job_id}] {message}")
+
     def _set_status(
         self,
         record: dict,
         status: str,
         error: str = "",
     ) -> None:
-        record["status"] = status
-        record["error"] = error
-        record["updated_at"] = now_iso()
-        status_payload = {
-            "job_id": record["job_id"],
-            "status": status,
-            "attempts": record.get("attempts", 0),
-            "error": error,
-            "updated_at": record["updated_at"],
-        }
-        job_dir = self.batch_dir / record["job_id"]
-        atomic_write_json(job_dir / "status.json", status_payload)
-        self.save()
+        with self.manifest_lock:
+            record["status"] = status
+            record["error"] = error
+            record["updated_at"] = now_iso()
+            status_payload = {
+                "job_id": record["job_id"],
+                "status": status,
+                "attempts": record.get("attempts", 0),
+                "error": error,
+                "updated_at": record["updated_at"],
+            }
+            job_dir = self.batch_dir / record["job_id"]
+            atomic_write_json(job_dir / "status.json", status_payload)
+            self.save()
 
     def _selector_instance(self) -> OpenAISelector:
         if self.selector is None:
             self.selector = OpenAISelector(self.manifest["config"]["selector"])
         return self.selector
 
+    def _refiner_instance(self) -> IdeaRefinerCallable:
+        if self.refiner is None:
+            project_root = str(PROJECT_ROOT)
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
+            from IdeaRefiner import refine_idea_for_batch
+
+            self.refiner = refine_idea_for_batch
+        return self.refiner
+
+    def _apply_refined_idea(self, record: dict, source: str, refined: str) -> None:
+        record["source_idea"] = source
+        record["refined_idea"] = refined
+        record["idea"] = refined
+
+    def _maybe_refine_idea(self, record: dict, job_dir: Path) -> None:
+        if not record.get("refine_idea"):
+            return
+        job_id = record["job_id"]
+        source = str(record.get("source_idea") or record.get("idea", "")).strip()
+        refinement_path = job_dir / "idea_refinement.json"
+        if refinement_path.exists():
+            payload = read_json(refinement_path)
+            refined = str(payload.get("refined_idea", "")).strip()
+            if payload.get("status") == "succeeded" and refined:
+                with self.manifest_lock:
+                    self._apply_refined_idea(record, source, refined)
+                    self.save()
+                self._log_job(job_id, "reused refined idea")
+                return
+
+        started_at = now_iso()
+        self._log_job(job_id, "refining idea")
+        self._set_status(record, "selecting")
+        atomic_write_json(refinement_path, {
+            "schema_version": 1,
+            "status": "running",
+            "source_idea": source,
+            "refined_idea": "",
+            "started_at": started_at,
+            "finished_at": "",
+            "error": "",
+        })
+        try:
+            with self.selector_lock:
+                refined = str(self._refiner_instance()(source)).strip()
+            if not refined:
+                raise LauncherError("精炼模型返回空内容")
+            atomic_write_json(refinement_path, {
+                "schema_version": 1,
+                "status": "succeeded",
+                "source_idea": source,
+                "refined_idea": refined,
+                "started_at": started_at,
+                "finished_at": now_iso(),
+                "error": "",
+            })
+            with self.manifest_lock:
+                self._apply_refined_idea(record, source, refined)
+                self.save()
+            self._log_job(job_id, "refined idea ready")
+        except Exception as error:
+            atomic_write_json(refinement_path, {
+                "schema_version": 1,
+                "status": "failed",
+                "source_idea": source,
+                "refined_idea": "",
+                "started_at": started_at,
+                "finished_at": now_iso(),
+                "error": str(error),
+            })
+            raise LauncherError(f"点子精炼失败：{error}") from error
+
+    def _choose(self, record: dict, repair: dict | None = None) -> dict:
+        with self.selector_lock:
+            return self._selector_instance().choose(
+                record["idea"],
+                record["constraints"],
+                self.capabilities,
+                repair=repair,
+            )
+
     def _select(self, record: dict) -> dict:
-        selector = self._selector_instance()
-        raw = selector.choose(
-            record["idea"],
-            record["constraints"],
-            self.capabilities,
-        )
+        raw = self._choose(record)
         normalized, issues = validate_selection(
             raw, record["constraints"], self.capabilities
         )
         if issues:
-            repaired = selector.choose(
-                record["idea"],
-                record["constraints"],
-                self.capabilities,
+            repaired = self._choose(
+                record,
                 repair={
                     "invalid_output": raw,
                     "validation_errors": issues,
-                    "instruction": "修复以上错误并重新输出完整 JSON。",
+                    "instruction": "Fix these errors and output complete JSON.",
                 },
             )
             normalized, repaired_issues = validate_selection(
                 repaired, record["constraints"], self.capabilities
             )
             if repaired_issues:
-                raise SelectionError("；".join(repaired_issues))
+                raise SelectionError("; ".join(repaired_issues))
         normalized["selected_at"] = now_iso()
         return normalized
 
@@ -1133,131 +1312,195 @@ class BatchRunner:
         normalized["selected_at"] = raw.get("selected_at", now_iso())
         return normalized
 
+    def _worker_count(self, max_workers: int | None) -> int:
+        configured = (
+            max_workers
+            if max_workers is not None
+            else self.manifest.get("config", {}).get(
+                "max_concurrent_jobs",
+                DEFAULT_CONFIG["max_concurrent_jobs"],
+            )
+        )
+        return validate_max_concurrent_jobs(configured)
+
+    def _process_record(
+        self,
+        idx: int,
+        total: int,
+        record: dict,
+        reuse_selection: bool,
+    ) -> None:
+        job_id = record["job_id"]
+        idea = record.get("idea", "")
+        idea_summary = idea[:60] + "..." if len(idea) > 60 else idea
+        job_dir = self.batch_dir / job_id
+        self._log(
+            f"\n{'=' * 60}\n"
+            f"[{now_iso()}] [{idx}/{total}] Processing: {job_id}\n"
+            f"  Idea: {idea_summary}\n"
+            f"{'=' * 60}"
+        )
+        job_dir.mkdir(parents=True, exist_ok=True)
+        for name in ("stdout.log", "stderr.log"):
+            path = job_dir / name
+            if not path.exists():
+                path.write_text("", encoding="utf-8")
+        try:
+            self._maybe_refine_idea(record, job_dir)
+            selection = (
+                self._reuse_selection(record, job_dir)
+                if reuse_selection
+                else None
+            )
+            if selection is None:
+                self._log_job(job_id, "selecting configuration")
+                self._set_status(record, "selecting")
+                selection = self._select(record)
+                self._log_job(
+                    job_id,
+                    "selected "
+                    f"style={selection.get('writer_style', '?')} "
+                    f"pattern={selection.get('pattern_config', {}).get('primary', '?')} "
+                    f"{selection.get('target_chapters', '?')}x"
+                    f"{selection.get('words_per_chapter', '?')}",
+                )
+                atomic_write_json(job_dir / "selection.json", selection)
+            with self.manifest_lock:
+                record["selection"] = selection
+                self.save()
+
+            job_payload = make_job_payload(
+                self.manifest["batch_id"],
+                record,
+                selection,
+            )
+            atomic_write_json(job_dir / "job.json", job_payload)
+            self._log_job(job_id, "preflight")
+            preflight = self.autowrite.validate_job(job_dir)
+            if preflight.get("status") != "validated":
+                self._log_job(job_id, "preflight failed; repairing selection")
+                repaired = self._choose(
+                    record,
+                    repair={
+                        "invalid_output": selection,
+                        "validation_errors": [
+                            preflight.get(
+                                "error", "AutoWrite CLI preflight failed"
+                            )
+                        ],
+                        "instruction": (
+                            "The latest content library rejected this job. "
+                            "Choose a complete valid configuration."
+                        ),
+                    },
+                )
+                selection, repair_issues = validate_selection(
+                    repaired, record["constraints"], self.capabilities
+                )
+                if repair_issues:
+                    raise SelectionError("; ".join(repair_issues))
+                selection["selected_at"] = now_iso()
+                with self.manifest_lock:
+                    record["selection"] = selection
+                    self.save()
+                atomic_write_json(job_dir / "selection.json", selection)
+                job_payload = make_job_payload(
+                    self.manifest["batch_id"], record, selection
+                )
+                atomic_write_json(job_dir / "job.json", job_payload)
+                preflight = self.autowrite.validate_job(job_dir)
+            if preflight.get("status") != "validated":
+                raise SelectionError(
+                    preflight.get("error", "AutoWrite CLI preflight failed")
+                )
+
+            self._log_job(job_id, "preflight passed")
+            with self.manifest_lock:
+                record["attempts"] = int(record.get("attempts", 0)) + 1
+            self._set_status(record, "running")
+            target_ch = selection.get("target_chapters", "?")
+            target_w = selection.get("words_per_chapter", "?")
+            self._log_job(job_id, f"writing {target_ch} chapters x {target_w} words")
+            result = self.autowrite.run_job(
+                job_dir,
+                self.manifest["config"]["job_timeout_seconds"],
+            )
+            if result.get("status") != "succeeded":
+                raise LauncherError(
+                    result.get("error", "AutoWrite CLI run failed")
+                )
+            with self.manifest_lock:
+                record["outputs"] = {
+                    "novel_file": result.get("novel_file", ""),
+                    "outline_file": result.get("outline_file", ""),
+                    "run_id": result.get("run_id", ""),
+                    "saved_chapter": result.get("saved_chapter", ""),
+                    "material_config": result.get("material_config", {}),
+                    "pattern_config": result.get("pattern_config", {}),
+                }
+                self.save()
+            self._set_status(record, "succeeded")
+            self._log_job(
+                job_id,
+                f"succeeded; saved_chapter={result.get('saved_chapter', '?')}",
+            )
+        except Exception as error:
+            self._log_job(job_id, f"failed: {error}")
+            result_path = job_dir / "result.json"
+            if (
+                record.get("status") != "running"
+                or not result_path.exists()
+            ):
+                atomic_write_json(result_path, {
+                    "schema_version": 2,
+                    "status": "failed",
+                    "stage": record.get("status", "unknown"),
+                    "error_type": type(error).__name__,
+                    "error": str(error),
+                    "finished_at": now_iso(),
+                })
+            self._set_status(record, "failed", str(error))
+
     def process(
         self,
         statuses: set[str] | None = None,
         reuse_selection: bool = False,
+        max_workers: int | None = None,
     ) -> dict:
         self.refresh_capabilities()
         statuses = statuses or {"pending", "failed", "selecting", "running"}
+        worker_count = self._worker_count(max_workers)
         total = len(self.manifest["jobs"])
+        jobs = []
         for idx, record in enumerate(self.manifest["jobs"], start=1):
             if record.get("status") == "succeeded":
                 continue
             if record.get("status", "pending") not in statuses:
                 continue
-            job_id = record["job_id"]
-            idea = record.get("idea", "")
-            idea_summary = idea[:60] + "..." if len(idea) > 60 else idea
-            print(f"\n{'='*60}")
-            print(f"[{now_iso()}] [{idx}/{total}] 正在处理: {job_id}")
-            print(f"  灵感: {idea_summary}")
-            print(f"{'='*60}")
-            job_dir = self.batch_dir / record["job_id"]
-            job_dir.mkdir(parents=True, exist_ok=True)
-            for name in ("stdout.log", "stderr.log"):
-                path = job_dir / name
-                if not path.exists():
-                    path.write_text("", encoding="utf-8")
-            try:
-                selection = (
-                    self._reuse_selection(record, job_dir)
-                    if reuse_selection
-                    else None
-                )
-                if selection is None:
-                    print(f"  [{now_iso()}] 🔍 正在AI选型配置...")
-                    self._set_status(record, "selecting")
-                    selection = self._select(record)
-                    print(f"  [{now_iso()}] ✅ 选型完成 — 风格: {selection.get('writer_style','?')}  套路: {selection.get('pattern_config',{}).get('primary','?')}  {selection.get('target_chapters','?')}章×{selection.get('words_per_chapter','?')}字")
-                    atomic_write_json(job_dir / "selection.json", selection)
-                record["selection"] = selection
-                job_payload = make_job_payload(
-                    self.manifest["batch_id"],
-                    record,
-                    selection,
-                )
-                atomic_write_json(job_dir / "job.json", job_payload)
-                print(f"  [{now_iso()}] 🔬 预检中...")
-                preflight = self.autowrite.validate_job(job_dir)
-                if preflight.get("status") != "validated":
-                    print(f"  [{now_iso()}] ⚠️ 预检失败，重新选型...")
-                    selector = self._selector_instance()
-                    repaired = selector.choose(
-                        record["idea"],
-                        record["constraints"],
-                        self.capabilities,
-                        repair={
-                            "invalid_output": selection,
-                            "validation_errors": [
-                                preflight.get(
-                                    "error", "AutoWrite CLI 预检失败"
-                                )
-                            ],
-                            "instruction": (
-                                "本体使用最新内容库校验并试抽素材失败；"
-                                "请重新选择完整配置。"
-                            ),
-                        },
-                    )
-                    selection, repair_issues = validate_selection(
-                        repaired, record["constraints"], self.capabilities
-                    )
-                    if repair_issues:
-                        raise SelectionError("；".join(repair_issues))
-                    selection["selected_at"] = now_iso()
-                    record["selection"] = selection
-                    atomic_write_json(job_dir / "selection.json", selection)
-                    job_payload = make_job_payload(
-                        self.manifest["batch_id"], record, selection
-                    )
-                    atomic_write_json(job_dir / "job.json", job_payload)
-                    preflight = self.autowrite.validate_job(job_dir)
-                if preflight.get("status") != "validated":
-                    raise SelectionError(
-                        preflight.get("error", "AutoWrite CLI preflight failed")
-                    )
-                print(f"  [{now_iso()}] ✅ 预检通过")
-                record["attempts"] = int(record.get("attempts", 0)) + 1
-                self._set_status(record, "running")
-                target_ch = selection.get("target_chapters", "?")
-                target_w = selection.get("words_per_chapter", "?")
-                print(f"  [{now_iso()}] ▶ 开始写作... ({target_ch}章×{target_w}字，请耐心等待)")
-                result = self.autowrite.run_job(
-                    job_dir,
-                    self.manifest["config"]["job_timeout_seconds"],
-                )
-                if result.get("status") != "succeeded":
-                    raise LauncherError(
-                        result.get("error", "AutoWrite CLI 运行失败")
-                    )
-                record["outputs"] = {
-                    "novel_file": result.get("novel_file", ""),
-                    "outline_file": result.get("outline_file", ""),
-                    "run_id": result.get("run_id", ""),
-                    "material_config": result.get("material_config", {}),
-                    "pattern_config": result.get("pattern_config", {}),
-                }
-                self._set_status(record, "succeeded")
-                print(f"  [{now_iso()}] 🎉 完成！{record['outputs'].get('saved_chapter', '?')}章已生成")
-            except Exception as error:
-                print(f"  [{now_iso()}] ❌ 失败: {error}")
-                result_path = job_dir / "result.json"
-                if (
-                    record.get("status") != "running"
-                    or not result_path.exists()
-                ):
-                    atomic_write_json(result_path, {
-                        "schema_version": 2,
-                        "status": "failed",
-                        "stage": record.get("status", "unknown"),
-                        "error_type": type(error).__name__,
-                        "error": str(error),
-                        "finished_at": now_iso(),
-                    })
-                self._set_status(record, "failed", str(error))
-        return write_batch_reports(self.batch_dir, self.manifest)
+            jobs.append((idx, record))
 
+        if jobs:
+            actual_workers = min(worker_count, len(jobs))
+            self._log(
+                f"[{now_iso()}] Running {len(jobs)} job(s) "
+                f"with max_workers={actual_workers}"
+            )
+            with ThreadPoolExecutor(max_workers=actual_workers) as pool:
+                futures = {
+                    pool.submit(
+                        self._process_record,
+                        idx,
+                        total,
+                        record,
+                        reuse_selection,
+                    ): record
+                    for idx, record in jobs
+                }
+                for future in as_completed(futures):
+                    future.result()
+
+        with self.manifest_lock:
+            return write_batch_reports(self.batch_dir, self.manifest)
 
 def initialize_batch(
     source_path: Path,

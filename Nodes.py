@@ -43,6 +43,10 @@ logger = logging.getLogger("AutoWrite")
 if not os.getenv("OPENAI_API_KEY"):
     logger.error("❌ 环境变量 OPENAI_API_KEY 未设置！请在 .env 文件中配置你的 API Key。")
     sys.exit(1)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "").strip()
+if not OPENAI_MODEL:
+    logger.error("❌ 环境变量 OPENAI_MODEL 未设置！请在 .env 文件中配置模型名。")
+    sys.exit(1)
 
 def _safe_file_stem(text: str, fallback: str) -> str:
     safe = "".join(c for c in str(text or "") if c not in r'\/:*?"<>|')
@@ -1267,7 +1271,7 @@ def load_prompt(file_name: str) -> str:
 # ==========================================
 def _create_llm(temperature: float, max_tokens: int = 4096) -> ChatOpenAI:
     return ChatOpenAI(
-        model="deepseek-v4-flash",
+        model=OPENAI_MODEL,
         temperature=temperature,
         timeout=MODEL_TIMEOUT_SECONDS,
         max_retries=MODEL_MAX_RETRIES,
