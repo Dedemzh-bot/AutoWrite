@@ -149,7 +149,7 @@ CHAPTER_FORMAT_PROMPT = """正文输出必须严格使用以下唯一格式：
 
 ARCHITECT_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
 字段必须完整：novel_title 为字符串；world_bible 为字符串；chapter_outlines 为对象，键是纯数字章节号、值是章节细纲；estimated_words 为整数。
-chapter_outlines 中每一章细纲去除空白后必须不少于 200 字。每章细纲必须明确写出本章开场状态、核心冲突、关键行动、人物关系变化、重要信息或伏笔、结尾结果与下一章钩子，禁止用空话凑字数。"""
+chapter_outlines 中每一章细纲去除空白后必须不少于 200 字。每章细纲必须严格使用固定中括号标签组织内容，非最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【结尾结果】【下一章钩子】；最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。禁止使用“开场：”“开场状态：”“核心冲突：”等冒号标签，禁止用空话凑字数。"""
 
 AUDITOR_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
 字段必须完整：审核状态为“通过”或“不通过”；发现的问题为逻辑硬伤或大纲偏离字符串数组；警告为软性问题字符串数组；套路执行状态为“通过”或“不通过”；套路问题为未完成的强制套路任务字符串数组；修改建议为字符串；大纲完成度、连续性评分、衔接评分为0到100整数；已完成事件、未完成事件、阻断问题、结局问题为字符串数组；结局完整性为布尔值。
@@ -379,33 +379,159 @@ def outline_validation_issues(outlines: dict, target_chapters: int) -> list[str]
         length = outline_char_count(outlines.get(key, ""))
         if length < MIN_OUTLINE_CHARS:
             issues.append(f"第{key}章细纲仅{length}字，少于{MIN_OUTLINE_CHARS}字")
+        body = _outline_body_text(outlines.get(key, ""))
+        is_final = int(key) >= target_chapters
+        required_labels = FINAL_OUTLINE_SECTION_ORDER if is_final else OUTLINE_SECTION_ORDER
+        for label in required_labels:
+            if f"【{label}】" not in body:
+                issues.append(f"第{key}章细纲缺少规范标签【{label}】")
     return issues
 
 
+OUTLINE_SECTION_ALIASES = {
+    "开场状态": "开场状态",
+    "开场": "开场状态",
+    "核心冲突": "核心冲突",
+    "关键行动": "关键行动",
+    "人物关系变化": "人物关系变化",
+    "关系变化": "人物关系变化",
+    "重要信息或伏笔": "重要信息或伏笔",
+    "重要信息/伏笔": "重要信息或伏笔",
+    "重要伏笔": "重要信息或伏笔",
+    "伏笔": "重要信息或伏笔",
+    "结尾结果与下一章钩子": "结尾结果与下一章钩子",
+    "结尾结果": "结尾结果",
+    "结尾": "结尾结果",
+    "下一章钩子": "下一章钩子",
+    "下章钩子": "下一章钩子",
+    "钩子": "下一章钩子",
+    "全书结局": "结尾结果",
+}
+OUTLINE_SECTION_ORDER = [
+    "开场状态",
+    "核心冲突",
+    "关键行动",
+    "人物关系变化",
+    "重要信息或伏笔",
+    "结尾结果",
+    "下一章钩子",
+]
+FINAL_OUTLINE_SECTION_ORDER = [
+    "开场状态",
+    "核心冲突",
+    "关键行动",
+    "人物关系变化",
+    "重要信息或伏笔",
+    "全书结局",
+]
+_OUTLINE_SECTION_PATTERN = "|".join(
+    re.escape(label)
+    for label in sorted(OUTLINE_SECTION_ALIASES, key=len, reverse=True)
+)
 _OUTLINE_SECTION_RE = re.compile(
     r"(?:^|[\n。；])\s*"
-    r"(开场状态|开场|核心冲突|关键行动|人物关系变化|关系变化|重要信息或伏笔|伏笔|"
-    r"结尾结果与下一章钩子|结尾结果|下一章钩子)\s*[:：]",
+    rf"(?:【\s*({_OUTLINE_SECTION_PATTERN})\s*】|({_OUTLINE_SECTION_PATTERN})\s*[:：])",
     re.MULTILINE,
+)
+_INLINE_OUTLINE_LABEL_RE = re.compile(
+    r"(本章)?(?:开场状态|开场|核心冲突|关键行动|人物关系变化|关系变化|重要信息/伏笔|"
+    r"重要信息或伏笔|重要伏笔|结尾结果|结尾|下一章钩子|下章钩子|钩子|全书结局)\s*[:：]"
 )
 
 
-def _outline_sections(outline: str) -> dict[str, str]:
+def _outline_body_text(outline: str) -> str:
     text = str(outline or "").strip()
     if "【剧情细纲】" in text:
-        text = text.split("【剧情细纲】", 1)[1].strip()
+        return text.split("【剧情细纲】", 1)[1].strip()
+    return text
+
+
+def _outline_sections(outline: str) -> dict[str, str]:
+    text = _outline_body_text(outline)
     matches = list(_OUTLINE_SECTION_RE.finditer(text))
     sections = {}
-    aliases = {
-        "开场": "开场状态",
-        "关系变化": "人物关系变化",
-    }
     for index, match in enumerate(matches):
         start = match.end()
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        key = aliases.get(match.group(1), match.group(1))
-        sections[key] = text[start:end].strip(" \n。；")
+        raw_key = match.group(1) or match.group(2)
+        key = OUTLINE_SECTION_ALIASES.get(raw_key, raw_key)
+        sections[key] = text[start:end].strip(" \n。；:：")
     return sections
+
+
+def _split_inline_hook_text(text: str) -> tuple[str, str]:
+    match = re.search(r"(?:下章钩子|下一章钩子)(?:（全书结局）)?\s*[:：]", text)
+    if not match:
+        return text, ""
+    before = text[:match.start()].strip(" \n。；:：")
+    after = text[match.end():].strip(" \n。；:：")
+    return before, after
+
+
+def _clean_outline_section_content(text: str) -> str:
+    return _INLINE_OUTLINE_LABEL_RE.sub(
+        lambda match: match.group(0).rstrip(":：") + "，",
+        str(text or ""),
+    ).strip(" \n。；:：")
+
+
+def normalize_outline_structure(outline: str, is_final: bool = False) -> str:
+    text = str(outline or "").strip()
+    if "【剧情细纲】" in text:
+        prefix, body = text.split("【剧情细纲】", 1)
+        normalized_body = normalize_outline_structure(body, is_final=is_final)
+        return f"{prefix.rstrip()}\n\n【剧情细纲】\n{normalized_body}".strip()
+
+    sections = _outline_sections(text)
+    if not sections:
+        return text
+
+    combined_ending = sections.get("结尾结果与下一章钩子", "")
+    if combined_ending:
+        sections.setdefault("结尾结果", combined_ending)
+        if not is_final:
+            sections.setdefault("下一章钩子", combined_ending)
+    ending_text = sections.get("结尾结果", "")
+    ending_before_hook, inline_hook = _split_inline_hook_text(ending_text)
+    if inline_hook:
+        if ending_before_hook:
+            sections["结尾结果"] = ending_before_hook
+        if is_final:
+            ending_base = sections.get("结尾结果", "").strip(" \n。；:：")
+            sections["结尾结果"] = (
+                f"{ending_base}。结局余韵：{inline_hook}"
+            ).strip(" \n。；:：")
+        else:
+            sections["下一章钩子"] = inline_hook
+    next_hook_text = sections.get("下一章钩子", "")
+    _, next_hook_after_marker = _split_inline_hook_text(next_hook_text)
+    if next_hook_after_marker:
+        sections["下一章钩子"] = next_hook_after_marker
+
+    rendered = []
+    if is_final:
+        for label in FINAL_OUTLINE_SECTION_ORDER:
+            source_label = "结尾结果" if label == "全书结局" else label
+            content = _clean_outline_section_content(sections.get(source_label, ""))
+            if content:
+                rendered.append(f"【{label}】{content}")
+    else:
+        for label in OUTLINE_SECTION_ORDER:
+            content = _clean_outline_section_content(sections.get(label, ""))
+            if content:
+                rendered.append(f"【{label}】{content}")
+    return "\n".join(rendered) if rendered else text
+
+
+def normalize_outline_structures(outlines: dict, target_chapters: int) -> dict[str, str]:
+    target_chapters = max(1, int(target_chapters))
+    return {
+        str(key): normalize_outline_structure(
+            value,
+            is_final=str(key).isdigit() and int(key) >= target_chapters,
+        )
+        for key, value in (outlines or {}).items()
+    }
 
 
 def _split_required_events(text: str) -> list[str]:
@@ -416,7 +542,7 @@ def _split_required_events(text: str) -> list[str]:
     events = []
     for part in parts:
         event = re.sub(
-            r"^(?:开场|核心冲突|关键行动|人物关系变化|关系变化|结尾结果|下一章钩子)\s*[:：]\s*",
+            r"^(?:【\s*(?:开场状态|开场|核心冲突|关键行动|人物关系变化|关系变化|重要信息或伏笔|重要伏笔|伏笔|结尾结果|下一章钩子|全书结局)\s*】|(?:开场状态|开场|核心冲突|关键行动|人物关系变化|关系变化|重要信息或伏笔|重要伏笔|伏笔|结尾结果|下一章钩子|全书结局)\s*[:：])\s*",
             "",
             part,
         ).strip(" ，,；;。")
@@ -2395,8 +2521,11 @@ def architect_node(state: NovelState):
     chapter_req = (
         f"规划严格且仅有{chapters}章的详细细纲，每章正文目标{words_per}字。"
         f"每章细纲去除空白后必须不少于{MIN_OUTLINE_CHARS}字，"
-        "必须包含开场状态、核心冲突、关键行动、人物关系变化、伏笔、"
-        "结尾结果和下一章钩子。"
+        "必须使用固定中括号标签输出章节结构。非最终章依次包含："
+        "【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】"
+        "【结尾结果】【下一章钩子】；最终章依次包含："
+        "【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。"
+        "不要使用“开场：”“开场状态：”“【开场状态】：”等冒号结构。"
         f"\n【创作套路：{pattern.get('name', '无套路')}】\n{pattern.get('architect', '')}"
         f"{strong_requirement}"
     )
@@ -2418,6 +2547,7 @@ def architect_node(state: NovelState):
             "chapter_requirement": active_chapter_req
         })
         chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
+        chapter_outlines = normalize_outline_structures(chapter_outlines, chapters)
         outline_issues = outline_validation_issues(chapter_outlines, chapters)
         if strong_pattern:
             outline_warnings = strong_pattern_outline_content_warnings(
@@ -2452,6 +2582,7 @@ def architect_node(state: NovelState):
             f"{'；'.join(outline_issues[:5])}"
         )
     chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
+    chapter_outlines = normalize_outline_structures(chapter_outlines, chapters)
     if strong_pattern:
         chapter_outlines = attach_pattern_plan_to_outlines(chapter_outlines, pattern_plan)
     chapter_contracts = build_chapter_contracts(chapter_outlines)

@@ -346,20 +346,82 @@ class TestChapterOutputFormat(unittest.TestCase):
 
         short_issues = outline_validation_issues({"1": "太短"}, 1)
         self.assertTrue(any("少于200字" in issue for issue in short_issues))
+        self.assertTrue(any("缺少规范标签【开场状态】" in issue for issue in short_issues))
         self.assertTrue(outline_validation_issues(None, 1))
         self.assertTrue(outline_validation_issues({}, 0))
 
-        detailed = "具体剧情推进与人物行动。" * 20
+        detailed = (
+            "【开场状态】主角被困塔顶，城市核心失控，外部救援被风暴隔绝。"
+            "【核心冲突】主角必须在核心爆炸前关闭装置，同时证明自己没有背叛同伴。"
+            "【关键行动】主角取得旧钥匙，破解三道机关，关闭失控核心，救出受伤同伴。"
+            "【人物关系变化】两人从互相怀疑转为重新信任，并确认继续并肩调查。"
+            "【重要信息或伏笔】旧钥匙其实是父亲留下的，钥匙背面刻着下个地点。"
+            "【全书结局】城市恢复正常，主角公开真相，反派被审判，父亲遗留的秘密完成闭环。"
+            "具体剧情推进与人物行动。" * 8
+        )
         self.assertEqual(outline_validation_issues({"1": detailed}, 1), [])
+
+    def test_normalizes_outline_labels_to_brackets(self):
+        from Nodes import normalize_outline_structure
+
+        outline = (
+            "开场：主角被困塔顶。核心冲突：必须关闭失控核心。"
+            "关键行动：主角取得钥匙；主角关闭核心；主角救出同伴。"
+            "人物关系变化：两人解除误会。重要伏笔：旧钥匙是父亲留下的。"
+            "结尾：城市恢复正常，主角回家。钩子：黑匣子传来新的求救信号。"
+        )
+
+        normalized = normalize_outline_structure(outline)
+
+        self.assertIn("【开场状态】主角被困塔顶", normalized)
+        self.assertIn("【重要信息或伏笔】旧钥匙是父亲留下的", normalized)
+        self.assertIn("【结尾结果】城市恢复正常，主角回家", normalized)
+        self.assertIn("【下一章钩子】黑匣子传来新的求救信号", normalized)
+        self.assertNotIn("开场：", normalized)
+
+    def test_normalizes_slash_foreshadowing_and_inline_hook(self):
+        from Nodes import normalize_outline_structure
+
+        outline = (
+            "【开场状态】主角被困塔顶。【核心冲突】必须关闭失控核心。"
+            "【关键行动】主角取得钥匙；主角关闭核心；主角救出同伴。"
+            "【人物关系变化】两人解除误会。【重要信息/伏笔】旧钥匙是父亲留下的。"
+            "【结尾结果】城市恢复正常。下章钩子：黑匣子传来新的求救信号。"
+        )
+
+        normalized = normalize_outline_structure(outline)
+
+        self.assertIn("【重要信息或伏笔】旧钥匙是父亲留下的", normalized)
+        self.assertIn("【结尾结果】城市恢复正常", normalized)
+        self.assertIn("【下一章钩子】黑匣子传来新的求救信号", normalized)
+        self.assertNotIn("【重要信息/伏笔】", normalized)
+        self.assertNotIn("下章钩子：", normalized)
+
+    def test_normalizes_final_outline_ending_label(self):
+        from Nodes import normalize_outline_structure, build_chapter_contracts
+
+        outline = (
+            "【开场状态】主角被困塔顶。【核心冲突】必须关闭失控核心。"
+            "【关键行动】主角取得钥匙；主角关闭核心；主角救出同伴。"
+            "【人物关系变化】两人解除误会。【重要信息或伏笔】旧钥匙是父亲留下的。"
+            "【结尾结果】城市恢复正常，主角回家。"
+        )
+
+        normalized = normalize_outline_structure(outline, is_final=True)
+        contracts = build_chapter_contracts({"1": normalized})
+
+        self.assertIn("【全书结局】城市恢复正常", normalized)
+        self.assertNotIn("【结尾结果】", normalized)
+        self.assertIn("城市恢复正常", contracts["1"]["ending_state"])
 
     def test_builds_structured_contract_from_labeled_outline(self):
         from Nodes import build_chapter_contracts, build_finale_contract
 
         outline = (
-            "开场状态：主角被困塔顶。核心冲突：必须关闭失控核心。"
-            "关键行动：主角取得钥匙；主角关闭核心；主角救出同伴。"
-            "人物关系变化：两人解除误会。重要信息或伏笔：旧钥匙是父亲留下的。"
-            "结尾结果：城市恢复正常，主角回家。下一章钩子：无。"
+            "【开场状态】主角被困塔顶。【核心冲突】必须关闭失控核心。"
+            "【关键行动】主角取得钥匙；主角关闭核心；主角救出同伴。"
+            "【人物关系变化】两人解除误会。【重要信息或伏笔】旧钥匙是父亲留下的。"
+            "【全书结局】城市恢复正常，主角回家。"
         )
         contracts = build_chapter_contracts({"1": outline})
         finale = build_finale_contract(contracts)
