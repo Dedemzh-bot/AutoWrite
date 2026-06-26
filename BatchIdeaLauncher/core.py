@@ -25,12 +25,12 @@ DEFAULT_RUNS_DIR = LAUNCHER_ROOT / "runs"
 
 DEFAULT_CONFIG = {
     "length": {
-        "preferred_chapters": 8,
+        "preferred_chapters": 6,
         "min_chapters": 5,
-        "max_chapters": 20,
-        "preferred_words_per_chapter": 1500,
-        "min_words_per_chapter": 1000,
-        "max_words_per_chapter": 2500,
+        "max_chapters": 7,
+        "preferred_words_per_chapter": 2500,
+        "min_words_per_chapter": 2200,
+        "max_words_per_chapter": 3000,
     },
     "job_timeout_seconds": 14400,
     "max_concurrent_jobs": 2,

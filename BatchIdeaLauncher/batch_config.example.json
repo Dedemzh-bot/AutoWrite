@@ -1,11 +1,11 @@
 {
   "length": {
-    "preferred_chapters": 8,
-    "min_chapters": 6,
-    "max_chapters": 14,
-    "preferred_words_per_chapter": 1500,
-    "min_words_per_chapter": 1200,
-    "max_words_per_chapter": 2000
+    "preferred_chapters": 6,
+    "min_chapters": 5,
+    "max_chapters": 7,
+    "preferred_words_per_chapter": 2500,
+    "min_words_per_chapter": 2200,
+    "max_words_per_chapter": 3000
   },
   "job_timeout_seconds": 14400,
   "max_concurrent_jobs": 2,

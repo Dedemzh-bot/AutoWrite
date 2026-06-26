@@ -1,6 +1,9 @@
 @echo off
 setlocal EnableExtensions
 chcp 65001 >nul
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
+set "PYTHONWARNINGS=ignore"
 
 set "SCRIPT_DIR=%~dp0"
 pushd "%SCRIPT_DIR%" >nul || (
@@ -15,7 +18,7 @@ if defined AUTOWRITE_PYTHON (
   set "PY=python"
 )
 
-"%PY%" --version >nul 2>nul
+"%PY%" --version <nul >nul 2>nul
 if errorlevel 1 (
   echo 找不到 Python：%PY%
   echo 请先安装 Python，或设置 AUTOWRITE_PYTHON 指向 python.exe。
@@ -40,7 +43,7 @@ echo  0. 退出
 echo.
 set "CHOICE="
 set /p "CHOICE=请选择："
-if errorlevel 1 goto done
+if "%CHOICE%"=="" goto menu
 
 if "%CHOICE%"=="1" goto run_batch
 if "%CHOICE%"=="2" goto status_batch
@@ -56,7 +59,6 @@ echo.
 echo 点子文件默认：%DEFAULT_IDEAS%
 set "IDEAS="
 set /p "IDEAS=点子文件路径（回车使用默认）："
-if errorlevel 1 goto done
 if "%IDEAS%"=="" set "IDEAS=%DEFAULT_IDEAS%"
 set "IDEAS=%IDEAS:"=%"
 
@@ -64,7 +66,6 @@ echo.
 echo 配置文件默认：%DEFAULT_CONFIG%
 set "CONFIG="
 set /p "CONFIG=配置文件路径（回车使用默认）："
-if errorlevel 1 goto done
 if "%CONFIG%"=="" set "CONFIG=%DEFAULT_CONFIG%"
 set "CONFIG=%CONFIG:"=%"
 
@@ -72,7 +73,6 @@ echo.
 set "WORKERS=2"
 set "WORKERS_INPUT="
 set /p "WORKERS_INPUT=并发篇数（回车=2，串行=1）："
-if errorlevel 1 goto done
 if not "%WORKERS_INPUT%"=="" set "WORKERS=%WORKERS_INPUT%"
 
 if not exist "%IDEAS%" (
@@ -138,7 +138,6 @@ exit /b 0
 echo.
 set "BATCH_ID="
 set /p "BATCH_ID=批次 ID（例如 batch-20260622-120000）："
-if errorlevel 1 goto done
 if "%BATCH_ID%"=="" (
   echo 批次 ID 不能为空。
   call :hold
@@ -151,7 +150,6 @@ echo.
 set "WORKERS=2"
 set "WORKERS_INPUT="
 set /p "WORKERS_INPUT=并发篇数（回车=2，串行=1）："
-if errorlevel 1 goto done
 if not "%WORKERS_INPUT%"=="" set "WORKERS=%WORKERS_INPUT%"
 exit /b 0
 

@@ -347,9 +347,12 @@ class LauncherTests(unittest.TestCase):
     def tearDown(self):
         self.temp_directory.cleanup()
 
-    def test_default_batch_length_is_eight_chapters(self):
-        self.assertEqual(DEFAULT_CONFIG["length"]["preferred_chapters"], 8)
+    def test_default_batch_length_is_quality_short_story(self):
+        self.assertEqual(DEFAULT_CONFIG["length"]["preferred_chapters"], 6)
         self.assertEqual(DEFAULT_CONFIG["max_concurrent_jobs"], 2)
+        self.assertEqual(DEFAULT_CONFIG["length"]["preferred_words_per_chapter"], 2500)
+        self.assertEqual(DEFAULT_CONFIG["length"]["min_chapters"], 5)
+        self.assertEqual(DEFAULT_CONFIG["length"]["max_chapters"], 7)
 
     def test_batch_concurrency_config_is_validated(self):
         config_path = self.temp / "config.json"

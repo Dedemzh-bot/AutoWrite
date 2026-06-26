@@ -80,6 +80,11 @@ class TestPydanticModels(unittest.TestCase):
 
 
 class TestArchitectFallback(unittest.TestCase):
+    def setUp(self):
+        import Nodes
+        Nodes._PROBED_PRIORITY = "function_calling"
+        Nodes._PERMANENT_FAILURES.clear()
+
     @staticmethod
     def payload():
         return {
@@ -378,6 +383,64 @@ class TestChapterOutputFormat(unittest.TestCase):
         self.assertIn("【结尾结果】城市恢复正常，主角回家", normalized)
         self.assertIn("【下一章钩子】黑匣子传来新的求救信号", normalized)
         self.assertNotIn("开场：", normalized)
+
+    def test_normalizes_title_prefixed_colon_outline_labels(self):
+        from Nodes import normalize_outline_structure, outline_validation_issues
+
+        filler = "具体剧情推进与人物行动都清楚落地，冲突推进没有摘要跳过。"
+        outline = (
+            "第一章 母女裂痕 开场状态：林秀兰在出租屋整理账本，发现大学学费和房租已经压到同一天，女儿却在门口等她给毕业旅行转账。"
+            "核心冲突：女儿坚持把手机、电脑、手表和旅行称作正常需求，林秀兰必须在沉默忍让和守住学费底线之间做选择。"
+            "关键行动：林秀兰拿出存折解释家里只剩八千元；女儿偷拍视频发到网上；邻居王婶看到热搜后决定保留工厂打卡和旧账本证据。"
+            "人物关系变化：母女从隐忍依赖转为公开撕裂，林秀兰第一次没有追出去哄女儿，女儿也第一次把母亲当成可以攻击的对象。"
+            "重要信息或伏笔：旧账本里夹着女儿小时候写给母亲的作文，后续会成为舆论反转时最刺痛她的证据。"
+            "全书结局：真相曝光后女儿终于理解母亲多年牺牲，林秀兰没有立刻原谅，而是把学费托人转交，搬进工厂宿舍重新开始。"
+            + filler * 8
+        )
+
+        normalized = normalize_outline_structure(outline, is_final=True)
+
+        self.assertTrue(normalized.startswith("【开场状态】"))
+        self.assertIn("【核心冲突】", normalized)
+        self.assertIn("【全书结局】", normalized)
+        self.assertEqual(outline_validation_issues({"1": normalized}, 1), [])
+
+    def test_normalizes_nested_outline_dict_values(self):
+        from Nodes import (
+            ArchitectOutput,
+            normalize_chapter_outlines,
+            normalize_outline_structures,
+            outline_validation_issues,
+        )
+
+        filler = "具体剧情推进与人物行动都清楚落地，冲突推进没有摘要跳过。"
+        raw_outline = {
+            "开场": "林秀兰在工厂宿舍外接到女儿电话，手里还攥着刚退掉的理疗药单。",
+            "core_conflict": "女儿要求母亲公开道歉，林秀兰必须决定是否继续替女儿遮掩家庭真实经济状况。",
+            "required_events": [
+                "林秀兰整理存折和旧账本",
+                "王婶把工厂打卡记录交给她",
+                "女儿在直播里继续控诉母亲",
+            ],
+            "relationship_change": "林秀兰从一味补偿转为设立边界，女儿从理直气壮转为第一次感到心虚。",
+            "重要信息/伏笔": "旧作文和退药单会在最终舆论反转时同时出现。",
+            "final_ending": "真相公布后女儿向母亲道歉，林秀兰仍选择把学费留下但不再共同生活。" + filler * 8,
+        }
+
+        normalized = normalize_chapter_outlines({"1": raw_outline}, 1)
+        normalized = normalize_outline_structures(normalized, 1)
+        parsed = ArchitectOutput.model_validate({
+            "novel_title": "高考后的账本",
+            "world_bible": "现实家庭伦理故事，围绕单亲母亲、女儿、邻居和同城舆论展开。",
+            "chapter_outlines": {"1": raw_outline},
+            "estimated_words": 2500,
+        })
+
+        self.assertIn("【开场状态】", normalized["1"])
+        self.assertIn("【关键行动】", normalized["1"])
+        self.assertIn("【全书结局】", normalized["1"])
+        self.assertIn("【开场状态】", parsed.chapter_outlines["1"])
+        self.assertEqual(outline_validation_issues(normalized, 1), [])
 
     def test_normalizes_slash_foreshadowing_and_inline_hook(self):
         from Nodes import normalize_outline_structure
@@ -764,6 +827,40 @@ class TestStoryPatternsAndReviewPolicy(unittest.TestCase):
 
         self.assertEqual(no_evidence["文风评分"], 7)
         self.assertEqual(with_evidence["文风评分"], 4)
+
+    def test_deterministic_ai_trace_flags_repeated_sentence_templates(self):
+        from Nodes import apply_deterministic_ai_trace_checks
+
+        draft = "第1章 测试\n\n他知道这不是终点而是开始。\n她知道这不是结束而是选择。\n我知道这不是退路而是代价。"
+        report = apply_deterministic_ai_trace_checks({"文风评分": 8}, draft)
+
+        self.assertLess(report["文风评分"], 7)
+        self.assertTrue(any("不是……而是" in issue for issue in report["AI痕迹问题"]))
+
+    def test_deterministic_ai_trace_warns_single_stock_expression(self):
+        from Nodes import apply_deterministic_ai_trace_checks
+
+        draft = "第1章 测试\n\n空气仿佛凝固。她推开门，递出证据。"
+        report = apply_deterministic_ai_trace_checks({"文风评分": 8}, draft)
+
+        self.assertEqual(report["文风评分"], 8)
+        self.assertFalse(report["AI痕迹问题"])
+        self.assertTrue(any("空气仿佛凝固" in warning for warning in report["AI痕迹警告"]))
+
+    def test_deterministic_ai_trace_flags_action_crutch_density(self):
+        from Nodes import apply_deterministic_ai_trace_checks
+
+        body = "\n".join(["他沉默片刻，深吸一口气，握紧那张纸。" for _ in range(5)])
+        report = apply_deterministic_ai_trace_checks({"文风评分": 8}, "第1章 测试\n\n" + body)
+
+        self.assertLess(report["文风评分"], 7)
+        self.assertTrue(any("动作拐杖" in issue for issue in report["AI痕迹问题"]))
+
+    def test_default_novel_length_is_six_by_twenty_five_hundred(self):
+        from Nodes import DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER
+
+        self.assertEqual(DEFAULT_CHAPTERS, 6)
+        self.assertEqual(DEFAULT_WORDS_PER_CHAPTER, 2500)
 
     def test_auditor_receives_continuity_and_next_outline(self):
         from Nodes import _audit_inputs

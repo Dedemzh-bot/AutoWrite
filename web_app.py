@@ -318,8 +318,8 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
     <div class="section">
       <label>📏 篇幅设置</label>
       <div class="scope-row">
-        章节数 <input id="chapters" type="number" value="8" min="1" max="200" style="width:60px"> 章
-        &nbsp;每章 <input id="wordsPerCh" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
+        章节数 <input id="chapters" type="number" value="6" min="1" max="200" style="width:60px"> 章
+        &nbsp;每章 <input id="wordsPerCh" type="number" value="2500" min="500" max="10000" step="100" style="width:70px"> 字
       </div>
       <div style="font-size:11px;color:#8b949e;margin-top:4px" id="estWords">预估: 约 12,000 字</div>
     </div>
@@ -405,7 +405,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f1117;c
       <label>📏 篇幅 (0=保持原大纲)</label>
       <div class="scope-row">
         章节数 <input id="washChapters" type="number" value="0" min="0" max="200" style="width:60px"> 章
-        &nbsp;每章 <input id="washWords" type="number" value="1500" min="500" max="10000" step="100" style="width:70px"> 字
+        &nbsp;每章 <input id="washWords" type="number" value="2500" min="500" max="10000" step="100" style="width:70px"> 字
       </div>
     </div>
     <div class="section">
@@ -1028,8 +1028,8 @@ function editRefineResult(){
 function startPipeline(){
   let idea=document.getElementById('idea').value.trim();
   if(!idea){log('请输入小说灵感','warn');return}
-  let targetChapters=parseInt(document.getElementById('chapters').value)||8;
-  let wordsPerChapter=parseInt(document.getElementById('wordsPerCh').value)||1500;
+  let targetChapters=parseInt(document.getElementById('chapters').value)||6;
+  let wordsPerChapter=parseInt(document.getElementById('wordsPerCh').value)||2500;
   let writerStyle=document.getElementById('writerStyle').value||'default';
   let patternConfig=patternConfigFor('create');
   if(patternConfig.primary==='custom'&&!patternConfig.custom_instruction){log('请填写自定义套路要求','warn');return}
@@ -1232,7 +1232,7 @@ function selectOutline(file){
 function startWash(){
   if(!selectedOutlineFile||!selectedOutlineData)return;
   let ch=parseInt(document.getElementById('washChapters').value)||0;
-  let w=parseInt(document.getElementById('washWords').value)||1500;
+  let w=parseInt(document.getElementById('washWords').value)||2500;
   let style=document.getElementById('washWriterStyle').value||'default';
   let patternConfig=patternConfigFor('wash');
   if(patternConfig.primary==='custom'&&!patternConfig.custom_instruction){log('请填写自定义套路要求','warn');return}

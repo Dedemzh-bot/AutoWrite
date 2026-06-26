@@ -109,8 +109,8 @@ def generate_wash_title(original_title: str, style: str) -> str:
         title = title.replace(ch, "")
     return title.strip() or f"{original_title}·重制版"
 
-DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "8"))
-DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "1500"))
+DEFAULT_CHAPTERS = int(os.getenv("DEFAULT_CHAPTERS", "6"))
+DEFAULT_WORDS_PER_CHAPTER = int(os.getenv("DEFAULT_WORDS_PER_CHAPTER", "2500"))
 MIN_OUTLINE_CHARS = 200
 MIN_CHAPTER_RATIO = 0.85
 STYLE_PASS_SCORE = 7
@@ -137,6 +137,57 @@ _STRUCTURED_STRATEGY_ORDER = os.getenv(
 _PROBED_PRIORITY = None
 _PERMANENT_FAILURES: set[str] = set()
 
+AI_SENTENCE_TEMPLATE_PATTERNS = {
+    "“不是……而是……”模板": (r"不是[^。！？\n]{0,30}而是", 1, 2),
+    "“仿佛……似的”模板": (r"仿佛[^。！？\n]{0,30}似的", 1, 2),
+    "“没有……只是……”让步模板": (r"没有[^。！？\n]{0,30}只是", 2, 3),
+    "“像是……又像是……”摇摆比喻模板": (r"像是[^。！？\n]{0,35}又像是", 1, 2),
+    "“他/她知道……”解释模板": (r"(?:他|她|我|他们|她们)[^。！？\n]{0,6}知道[^。！？\n]{0,45}", 2, 3),
+    "“他/她必须……”任务宣告模板": (r"(?:他|她|我|他们|她们)[^。！？\n]{0,6}必须[^。！？\n]{0,45}", 2, 3),
+    "“这一切……”总结模板": (r"这一切[^。！？\n]{0,45}", 2, 3),
+}
+
+AI_ACTION_CRUTCHES = [
+    "沉默片刻",
+    "深吸一口气",
+    "握紧",
+    "攥紧",
+    "盯着",
+    "看着",
+    "抬起头",
+    "低下头",
+    "垂下眼",
+    "闭了闭眼",
+    "扯了扯嘴角",
+    "指尖发凉",
+]
+
+AI_ABSTRACT_NARRATION_TERMS = [
+    "感到",
+    "意识到",
+    "明白",
+    "复杂",
+    "疲惫",
+    "痛苦",
+    "孤独",
+    "压抑",
+    "绝望",
+    "命运",
+    "真正",
+    "无法形容",
+    "说不清",
+]
+
+AI_SUMMARY_TRANSITIONS = [
+    "几天后",
+    "很快",
+    "最终",
+    "就这样",
+    "接下来的几天",
+    "不知过了多久",
+    "与此同时",
+]
+
 CHAPTER_FORMAT_PROMPT = """正文输出必须严格使用以下唯一格式：
 第X章 章节名字
 
@@ -149,7 +200,8 @@ CHAPTER_FORMAT_PROMPT = """正文输出必须严格使用以下唯一格式：
 
 ARCHITECT_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
 字段必须完整：novel_title 为字符串；world_bible 为字符串；chapter_outlines 为对象，键是纯数字章节号、值是章节细纲；estimated_words 为整数。
-chapter_outlines 中每一章细纲去除空白后必须不少于 200 字。每章细纲必须严格使用固定中括号标签组织内容，非最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【结尾结果】【下一章钩子】；最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。禁止使用“开场：”“开场状态：”“核心冲突：”等冒号标签，禁止用空话凑字数。"""
+chapter_outlines 的每个值必须是纯字符串，不能是对象、数组或带字段名的嵌套结构；字符串开头第一个非空字符必须是【开场状态】，不要在细纲前写“第X章”“章节标题”或小标题。
+chapter_outlines 中每一章细纲去除空白后必须不少于 200 字。每章细纲必须严格使用固定中括号标签组织内容，非最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【结尾结果】【下一章钩子】；最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。每章只设置一个主冲突、一个关键转折和一个关系变化，给正文留下足够场景空间；不要把多章剧情压缩成摘要。禁止使用“开场：”“开场状态：”“核心冲突：”等冒号标签，禁止用空话凑字数。"""
 
 AUDITOR_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
 字段必须完整：审核状态为“通过”或“不通过”；发现的问题为逻辑硬伤或大纲偏离字符串数组；警告为软性问题字符串数组；套路执行状态为“通过”或“不通过”；套路问题为未完成的强制套路任务字符串数组；修改建议为字符串；大纲完成度、连续性评分、衔接评分为0到100整数；已完成事件、未完成事件、阻断问题、结局问题为字符串数组；结局完整性为布尔值。
@@ -157,7 +209,7 @@ AUDITOR_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 
 
 SCENE_PLAN_SYSTEM_PROMPT = """你是小说执行导演。请先把本章契约转成可执行场景计划，再交给写手。
 必须仅输出有效 JSON：scenes 为按顺序排列的场景字符串数组；coverage 为“契约事件→对应场景”的对象；ending_strategy 为本章如何到达规定结束状态的字符串。
-每个必须事件都要在 coverage 中出现。不得新增改变主线方向的事件。最终章必须把终局事件分配到具体场景并留出明确收束场景。"""
+普通章建议拆成3-4个场景，每个场景都要包含目标、阻力、行动和结果。每个必须事件都要在 coverage 中出现。不得新增改变主线方向的事件。最终章必须把终局事件分配到具体场景并留出明确收束场景。"""
 
 EDITOR_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
 字段必须完整：文风评分为 1 到 10 的整数；AI痕迹问题为字符串数组；AI痕迹警告为字符串数组；改进建议为字符串。"""
@@ -337,6 +389,96 @@ def chapter_quality_warnings(state: NovelState) -> list[str]:
     return warnings
 
 
+def _outline_value_to_text(value: Any, is_final: bool | None = None) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if value is None:
+        return ""
+    if isinstance(value, (list, tuple, set)):
+        return "；".join(
+            text for item in value
+            if (text := _outline_value_to_text(item).strip())
+        )
+    if not isinstance(value, dict):
+        return str(value).strip()
+
+    label_aliases = {
+        "开场状态": "开场状态",
+        "开场": "开场状态",
+        "opening_state": "开场状态",
+        "opening": "开场状态",
+        "start_state": "开场状态",
+        "核心冲突": "核心冲突",
+        "冲突": "核心冲突",
+        "core_conflict": "核心冲突",
+        "conflict": "核心冲突",
+        "关键行动": "关键行动",
+        "行动": "关键行动",
+        "required_events": "关键行动",
+        "key_action": "关键行动",
+        "key_actions": "关键行动",
+        "events": "关键行动",
+        "人物关系变化": "人物关系变化",
+        "关系变化": "人物关系变化",
+        "relationship_change": "人物关系变化",
+        "relationship": "人物关系变化",
+        "重要信息或伏笔": "重要信息或伏笔",
+        "重要信息/伏笔": "重要信息或伏笔",
+        "重要伏笔": "重要信息或伏笔",
+        "伏笔": "重要信息或伏笔",
+        "facts_and_foreshadowing": "重要信息或伏笔",
+        "foreshadowing": "重要信息或伏笔",
+        "important_info": "重要信息或伏笔",
+        "结尾结果": "结尾结果",
+        "结尾": "结尾结果",
+        "ending_state": "结尾结果",
+        "ending_result": "结尾结果",
+        "result": "结尾结果",
+        "下一章钩子": "下一章钩子",
+        "下章钩子": "下一章钩子",
+        "钩子": "下一章钩子",
+        "next_handoff": "下一章钩子",
+        "next_hook": "下一章钩子",
+        "hook": "下一章钩子",
+        "全书结局": "全书结局",
+        "finale": "全书结局",
+        "final_ending": "全书结局",
+    }
+    sections: dict[str, str] = {}
+    fallback_parts: list[str] = []
+    passthrough_keys = {"source_outline", "outline", "content", "text", "细纲", "剧情细纲"}
+    ignored_keys = {"estimated_words", "chapter", "chapter_num", "is_final"}
+
+    for raw_key, raw_value in value.items():
+        key_text = str(raw_key).strip().strip("【】[]（）() ")
+        if key_text in ignored_keys:
+            continue
+        text = _outline_value_to_text(raw_value).strip(" \n。；:：")
+        if not text:
+            continue
+        label = label_aliases.get(key_text)
+        if label:
+            sections[label] = text
+        elif key_text in passthrough_keys:
+            fallback_parts.append(text)
+        else:
+            fallback_parts.append(f"{key_text}：{text}")
+
+    if is_final is True:
+        order = FINAL_OUTLINE_SECTION_ORDER
+    elif is_final is False:
+        order = OUTLINE_SECTION_ORDER
+    else:
+        order = list(dict.fromkeys(OUTLINE_SECTION_ORDER + FINAL_OUTLINE_SECTION_ORDER))
+    rendered = [
+        f"【{label}】{sections[label]}"
+        for label in order
+        if sections.get(label)
+    ]
+    if rendered:
+        return "\n".join(rendered)
+    return "\n".join(fallback_parts).strip() or str(value).strip()
+
 def normalize_chapter_outlines(outlines: dict, target_chapters: int) -> dict[str, str]:
     target_chapters = max(1, int(target_chapters))
     outlines = outlines if isinstance(outlines, dict) else {}
@@ -353,9 +495,9 @@ def normalize_chapter_outlines(outlines: dict, target_chapters: int) -> dict[str
             if chapter_num == target_chapters
             else f"承接上一章继续推进主线，并为第{chapter_num + 1}章制造明确悬念。"
         )
-        normalized[key] = numeric_outlines.get(
-            key,
-            fallback,
+        normalized[key] = _outline_value_to_text(
+            numeric_outlines.get(key, fallback),
+            is_final=chapter_num == target_chapters,
         )
     return normalized
 
@@ -429,8 +571,7 @@ _OUTLINE_SECTION_PATTERN = "|".join(
     for label in sorted(OUTLINE_SECTION_ALIASES, key=len, reverse=True)
 )
 _OUTLINE_SECTION_RE = re.compile(
-    r"(?:^|[\n。；])\s*"
-    rf"(?:【\s*({_OUTLINE_SECTION_PATTERN})\s*】|({_OUTLINE_SECTION_PATTERN})\s*[:：])",
+    rf"(?:【\s*({_OUTLINE_SECTION_PATTERN})\s*】\s*[:：]?|({_OUTLINE_SECTION_PATTERN})\s*[:：])",
     re.MULTILINE,
 )
 _INLINE_OUTLINE_LABEL_RE = re.compile(
@@ -440,7 +581,7 @@ _INLINE_OUTLINE_LABEL_RE = re.compile(
 
 
 def _outline_body_text(outline: str) -> str:
-    text = str(outline or "").strip()
+    text = _outline_value_to_text(outline).strip()
     if "【剧情细纲】" in text:
         return text.split("【剧情细纲】", 1)[1].strip()
     return text
@@ -476,7 +617,7 @@ def _clean_outline_section_content(text: str) -> str:
 
 
 def normalize_outline_structure(outline: str, is_final: bool = False) -> str:
-    text = str(outline or "").strip()
+    text = _outline_value_to_text(outline, is_final=is_final).strip()
     if "【剧情细纲】" in text:
         prefix, body = text.split("【剧情细纲】", 1)
         normalized_body = normalize_outline_structure(body, is_final=is_final)
@@ -1420,7 +1561,7 @@ llm_summarizer = _create_llm(0, max_tokens=4096)
 class ArchitectOutput(BaseModel):
     novel_title: str = Field(description="小说的书名，8-20字，简洁有力有网感")
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
-    chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到不少于200字的详细细纲文本。键必须为纯数字如'1', '2'。")
+    chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到不少于200字的详细细纲字符串。每个值必须从【开场状态】开始，不能是嵌套对象。")
     estimated_words: int = Field(default=0, description="预估总字数")
 
     @model_validator(mode='before')
@@ -1434,7 +1575,7 @@ class ArchitectOutput(BaseModel):
             if ew is not None:
                 data.setdefault("estimated_words", ew)
             data["chapter_outlines"] = {
-                str(k): str(v) for k, v in outlines.items()
+                str(k): _outline_value_to_text(v) for k, v in outlines.items()
                 if str(k).isdigit()
             }
         if "estimated_words" in data and isinstance(data["estimated_words"], str):
@@ -1633,35 +1774,104 @@ def normalize_editor_report(report: dict) -> dict:
     return normalized
 
 
+def _style_body_text(draft: str) -> str:
+    text = str(draft or "")
+    parts = text.split("\n", 1)
+    return parts[1] if len(parts) > 1 else text
+
+
+def _style_paragraphs(body_text: str) -> list[str]:
+    return [
+        paragraph.strip()
+        for paragraph in re.split(r"\n\s*\n|\n", body_text)
+        if paragraph.strip()
+    ]
+
+
+def _paragraph_opening_signature(paragraph: str) -> str:
+    compact = paragraph.strip()
+    match = re.match(
+        r"^((?:他|她|我|他们|她们|[\u4e00-\u9fff]{2,4})"
+        r"(?:看着|盯着|握紧|攥紧|沉默|深吸|抬起|低下|垂下|转身|停下|站在|坐在|想起|知道|意识到|明白))",
+        compact,
+    )
+    return match.group(1) if match else ""
+
+
 def apply_deterministic_ai_trace_checks(report: dict, draft: str) -> dict:
     normalized = normalize_editor_report(report)
     hard_issues = list(normalized["AI痕迹问题"])
     warnings = list(normalized["AI痕迹警告"])
     text = str(draft or "")
+    body_text = _style_body_text(text)
+    body_chars = len(re.sub(r"\s+", "", body_text))
+
     for expression in AI_STOCK_EXPRESSIONS:
         count = text.count(expression)
         if count >= 2:
-            hard_issues.append(
-                f"库存表达“{expression}”重复出现{count}次"
-            )
+            hard_issues.append(f"库存表达“{expression}”重复出现{count}次")
         elif count == 1:
             warnings.append(f"库存表达“{expression}”出现1次")
-    template_patterns = {
-        "“不是……而是……”模板": r"不是[^。！？\n]{0,30}而是",
-        "“仿佛……似的”模板": r"仿佛[^。！？\n]{0,30}似的",
-    }
-    for label, pattern in template_patterns.items():
+
+    for label, (pattern, warn_at, hard_at) in AI_SENTENCE_TEMPLATE_PATTERNS.items():
         count = len(re.findall(pattern, text))
-        if count >= 2:
+        if count >= hard_at:
             hard_issues.append(f"{label}重复出现{count}次")
-        elif count == 1:
-            warnings.append(f"{label}出现1次")
+        elif count >= warn_at:
+            warnings.append(f"{label}出现{count}次")
+
+    opening_counts: dict[str, int] = {}
+    for paragraph in _style_paragraphs(body_text):
+        signature = _paragraph_opening_signature(paragraph)
+        if signature:
+            opening_counts[signature] = opening_counts.get(signature, 0) + 1
+    for signature, count in opening_counts.items():
+        if count >= 3:
+            hard_issues.append(f"段落开头“{signature}...”重复出现{count}次")
+        elif count == 2:
+            warnings.append(f"段落开头“{signature}...”出现2次")
+
+    action_counts = [(term, text.count(term)) for term in AI_ACTION_CRUTCHES]
+    repeated_action_warnings = [
+        f"{term}{count}次" for term, count in action_counts if 3 <= count < 5
+    ]
+    repeated_action_issues = [
+        f"{term}{count}次" for term, count in action_counts if count >= 5
+    ]
+    if repeated_action_issues:
+        hard_issues.append("动作拐杖重复过密：" + "、".join(repeated_action_issues[:5]))
+    elif repeated_action_warnings:
+        warnings.append("动作拐杖偏密：" + "、".join(repeated_action_warnings[:5]))
+
+    total_actions = sum(count for _, count in action_counts)
+    if total_actions >= max(18, body_chars // 150):
+        hard_issues.append(f"动作拐杖总量过高，共{total_actions}处")
+    elif total_actions >= max(12, body_chars // 220):
+        warnings.append(f"动作拐杖总量偏高，共{total_actions}处")
+
+    abstract_count = sum(text.count(term) for term in AI_ABSTRACT_NARRATION_TERMS)
+    abstract_warn_at = max(14, body_chars // 140)
+    abstract_hard_at = max(26, body_chars // 90)
+    if abstract_count >= abstract_hard_at and hard_issues:
+        hard_issues.append(f"抽象情绪/判断词密度过高，共{abstract_count}处")
+    elif abstract_count >= abstract_warn_at:
+        warnings.append(f"抽象情绪/判断词偏多，共{abstract_count}处")
+
+    transition_count = sum(text.count(term) for term in AI_SUMMARY_TRANSITIONS)
+    if transition_count >= 4:
+        hard_issues.append(f"总结式转场过多，共{transition_count}处，疑似跳过关键场面")
+    elif transition_count >= 2:
+        warnings.append(f"总结式转场偏多，共{transition_count}处")
+
     normalized["AI痕迹问题"] = list(dict.fromkeys(hard_issues))
     normalized["AI痕迹警告"] = list(dict.fromkeys(warnings))
     if normalized["AI痕迹问题"]:
         normalized["文风评分"] = min(normalized["文风评分"], STYLE_PASS_SCORE - 1)
         if normalized["改进建议"] == "无":
-            normalized["改进建议"] = "删除重复库存表达，改用人物动作、选择和具体感官事实呈现。"
+            normalized["改进建议"] = (
+                "优先局部修订问题句和问题段：删除重复库存表达，减少动作拐杖，"
+                "把抽象情绪和总结旁白改成可见的动作、选择、对话和具体场面。"
+            )
     return normalized
 
 
@@ -2521,6 +2731,11 @@ def architect_node(state: NovelState):
     chapter_req = (
         f"规划严格且仅有{chapters}章的详细细纲，每章正文目标{words_per}字。"
         f"每章细纲去除空白后必须不少于{MIN_OUTLINE_CHARS}字，"
+        "chapter_outlines 的每章值必须是纯字符串，且第一个非空字符必须是【开场状态】，不得输出嵌套对象、字段字典、章节标题或小标题。"
+        "每章只承载一个主冲突、一个关键转折和一个关系变化；"
+        "关键场面必须能展开为3-4个有目标、阻力、行动和结果的场景，"
+        "不得用几句话跳过说服、背叛、和解、暴露、反杀等核心场面。"
+        "每章必须写清读者期待点：主角想要什么、阻力是什么、章末发生什么新变化。"
         "必须使用固定中括号标签输出章节结构。非最终章依次包含："
         "【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】"
         "【结尾结果】【下一章钩子】；最终章依次包含："
