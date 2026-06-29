@@ -11,8 +11,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 MATERIAL_LIBRARY_PATH = ROOT / "material_library.json"
 PATTERN_LIBRARY_PATH = ROOT / "pattern_library.json"
+NOVEL_TAG_LIBRARY_PATH = ROOT / "novel_tag_library.json"
 MATERIAL_SCHEMA_VERSION = 2
 PATTERN_SCHEMA_VERSION = 2
+NOVEL_TAG_SCHEMA_VERSION = 1
+NOVEL_TAG_CATEGORIES = ("情节", "角色", "情绪", "背景")
 DEFAULT_MATERIAL_COUNT = 4
 MIN_MATERIAL_COUNT = 0
 MAX_MATERIAL_COUNT = 8
@@ -91,6 +94,143 @@ def load_pattern_library() -> dict:
     if issues:
         raise LibraryValidationError("套路库校验失败：" + "；".join(issues[:10]))
     return library
+
+
+def load_novel_tag_library() -> dict:
+    """Load on every call so manual JSON edits apply to the next outline."""
+    library = _read_json(NOVEL_TAG_LIBRARY_PATH)
+    issues = validate_novel_tag_library(library)
+    if issues:
+        raise LibraryValidationError("小说Tag库校验失败：" + "；".join(issues[:10]))
+    return {
+        "schema_version": NOVEL_TAG_SCHEMA_VERSION,
+        "core_tags": [item.strip() for item in library["core_tags"]],
+        "secondary_tags": {
+            category: [item.strip() for item in library["secondary_tags"][category]]
+            for category in NOVEL_TAG_CATEGORIES
+        },
+    }
+
+
+def validate_novel_tag_library(library: dict) -> list[str]:
+    issues: list[str] = []
+    if not isinstance(library, dict):
+        return ["词库根节点必须是对象"]
+    if library.get("schema_version") != NOVEL_TAG_SCHEMA_VERSION:
+        issues.append(f"schema_version 必须为 {NOVEL_TAG_SCHEMA_VERSION}")
+
+    core_tags = library.get("core_tags")
+    if not isinstance(core_tags, list):
+        issues.append("core_tags 必须是字符串数组")
+        core_tags = []
+
+    secondary_tags = library.get("secondary_tags")
+    if not isinstance(secondary_tags, dict):
+        issues.append("secondary_tags 必须是对象")
+        secondary_tags = {}
+    else:
+        missing = [key for key in NOVEL_TAG_CATEGORIES if key not in secondary_tags]
+        extra = [key for key in secondary_tags if key not in NOVEL_TAG_CATEGORIES]
+        if missing:
+            issues.append("缺少辅助Tag分类：" + "、".join(missing))
+        if extra:
+            issues.append("存在未知辅助Tag分类：" + "、".join(extra))
+
+    seen: dict[str, str] = {}
+
+    def validate_group(group_name: str, values: Any) -> int:
+        if not isinstance(values, list):
+            issues.append(f"{group_name}必须是字符串数组")
+            return 0
+        valid_count = 0
+        for index, value in enumerate(values, start=1):
+            if not isinstance(value, str):
+                issues.append(f"{group_name}第{index}项必须是字符串")
+                continue
+            tag = value.strip()
+            if not tag:
+                issues.append(f"{group_name}第{index}项不能为空")
+                continue
+            valid_count += 1
+            if tag in seen:
+                issues.append(f"Tag重复：{tag}（{seen[tag]}、{group_name}）")
+            else:
+                seen[tag] = group_name
+        return valid_count
+
+    core_count = validate_group("核心Tag", core_tags)
+    secondary_count = sum(
+        validate_group(category, secondary_tags.get(category))
+        for category in NOVEL_TAG_CATEGORIES
+    )
+    if core_count < 1:
+        issues.append("核心Tag至少需要1个可用词")
+    if secondary_count < 5:
+        issues.append("辅助Tag总数至少需要5个可用词")
+    return list(dict.fromkeys(issues))
+
+
+def format_novel_tag_library(library: dict | None = None) -> str:
+    library = library or load_novel_tag_library()
+    lines = ["核心Tag（必须且只能选1个）：" + "、".join(library["core_tags"])]
+    lines.append("辅助Tag（四类合计选5-7个，各分类数量不限）：")
+    for category in NOVEL_TAG_CATEGORIES:
+        lines.append(f"- {category}：" + "、".join(library["secondary_tags"][category]))
+    return "\n".join(lines)
+
+
+def normalize_novel_tag_selection(selection: Any) -> dict:
+    selection = selection if isinstance(selection, dict) else {}
+    normalized = {"core": str(selection.get("core", "")).strip()}
+    for category in NOVEL_TAG_CATEGORIES:
+        values = selection.get(category, [])
+        if not isinstance(values, list):
+            values = []
+        normalized[category] = [str(item).strip() for item in values]
+    return normalized
+
+
+def validate_novel_tag_selection(
+    selection: Any, library: dict | None = None
+) -> list[str]:
+    issues: list[str] = []
+    if not isinstance(selection, dict):
+        return ["novel_tags 必须是对象"]
+    library = library or load_novel_tag_library()
+    normalized = normalize_novel_tag_selection(selection)
+
+    expected_keys = {"core", *NOVEL_TAG_CATEGORIES}
+    missing = [key for key in expected_keys if key not in selection]
+    extra = [key for key in selection if key not in expected_keys]
+    if missing:
+        issues.append("novel_tags 缺少字段：" + "、".join(sorted(missing)))
+    if extra:
+        issues.append("novel_tags 存在未知字段：" + "、".join(extra))
+
+    core = normalized["core"]
+    if core not in library["core_tags"]:
+        issues.append(f"核心Tag不在词库中：{core or '空'}")
+
+    selected: list[str] = []
+    for category in NOVEL_TAG_CATEGORIES:
+        raw_values = selection.get(category)
+        if not isinstance(raw_values, list):
+            issues.append(f"{category}Tag必须是数组")
+            continue
+        allowed = set(library["secondary_tags"][category])
+        for tag in normalized[category]:
+            if not tag:
+                issues.append(f"{category}Tag不能为空")
+            elif tag not in allowed:
+                issues.append(f"{category}Tag不在该分类词库中：{tag}")
+            selected.append(tag)
+
+    if not 5 <= len(selected) <= 7:
+        issues.append(f"辅助Tag必须为5-7个，当前为{len(selected)}个")
+    duplicates = sorted({tag for tag in selected if selected.count(tag) > 1 and tag})
+    if duplicates:
+        issues.append("辅助Tag不能重复：" + "、".join(duplicates))
+    return list(dict.fromkeys(issues))
 
 
 def validate_material_library(library: dict) -> list[str]:

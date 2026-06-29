@@ -780,6 +780,16 @@ function renderMaterialCards(mode='create'){
   }).join('');
 }
 
+const novelTagCategories=['情节','角色','情绪','背景'];
+function formatNovelTags(tags){
+  if(!tags||typeof tags!=='object'||!tags.core)return '作品Tag：未打标\n\n';
+  let secondary=novelTagCategories.map(category=>{
+    let values=Array.isArray(tags[category])?tags[category].filter(Boolean):[];
+    return values.length?`${category}：${values.join('、')}`:'';
+  }).filter(Boolean);
+  return `核心Tag：${tags.core}\n辅助Tag：${secondary.join('；')||'无'}\n\n`;
+}
+
 function handleMsg(msg){
   switch(msg.type){
     case 'material_library':
@@ -840,7 +850,7 @@ function handleMsg(msg){
         for(let o of msg.data){
           listHtml+=`<div class="outline-item" data-file="${o.file}" onclick="selectOutline('${o.file}')">
             <span class="otitle">${o.title}</span>
-            <span class="ometa">${o.chapters}章 · ${(o.created_at||'').slice(0,10)}</span>
+            <span class="ometa">${o.chapters}章 · ${(o.created_at||'').slice(0,10)}${o.core_tag?` · ${escapeHtml(o.core_tag)}`:''}</span>
           </div>`;
         }
       }
@@ -848,7 +858,7 @@ function handleMsg(msg){
       break;
     case 'outline_content':
       selectedOutlineData=msg.data;
-      let ocText=`《${msg.data.title||'未命名'}》\n\n${msg.data.world_bible||''}\n\n======== 章节细纲 ========\n\n`;
+      let ocText=`《${msg.data.title||'未命名'}》\n\n${formatNovelTags(msg.data.novel_tags)}${msg.data.world_bible||''}\n\n======== 章节细纲 ========\n\n`;
       for(let[k,v]of Object.entries(msg.data.chapter_outlines||{})){
         ocText+='第'+k+'章: '+v.replace(/\\n/g,'\n')+'\n\n';
       }
@@ -885,6 +895,7 @@ function handleMsg(msg){
       log(`✅ 架构师完成大纲 — 《${msg.data.novel_title||'未命名'}》`,'success');
       let outlineText='';
       if(msg.data.novel_title) outlineText+=`《${msg.data.novel_title}》\n\n`;
+      outlineText+=formatNovelTags(msg.data.novel_tags);
       outlineText+=msg.data.world_bible+'\n\n======== 章节细纲 ========\n\n';
       for(let[k,v]of Object.entries(msg.data.chapter_outlines||{})){
         outlineText+='第'+k+'章: '+v.replace(/\\n/g,'\n')+'\n\n';
@@ -1511,6 +1522,7 @@ async def ws_handler(websocket: WebSocket):
             await send({"type": "architect_result", "data": {
                 "novel_title": init_state.get("novel_title", ""),
                 "world_bible": init_state.get("world_bible", ""),
+                "novel_tags": init_state.get("novel_tags", {}),
                 "chapter_outlines": init_state.get("chapter_outlines", {})
             }})
 

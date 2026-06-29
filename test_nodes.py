@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -45,6 +45,13 @@ class TestPydanticModels(unittest.TestCase):
             novel_title="绝世剑神",
             world_bible="测试世界观，不少于500字的内容填充" * 20,
             chapter_outlines={"1": "第1章剧情", "2": "第2章剧情", "3": "第3章剧情", "4": "第4章剧情", "5": "第5章剧情"},
+            novel_tags={
+                "core": "玄幻升级",
+                "情节": ["逆袭打脸", "重生"],
+                "角色": ["天才主角"],
+                "情绪": ["热血"],
+                "背景": ["古代"],
+            },
             estimated_words=30000
         )
         self.assertEqual(data.novel_title, "绝世剑神")
@@ -91,6 +98,13 @@ class TestArchitectFallback(unittest.TestCase):
             "novel_title": "回声井",
             "world_bible": "稳定世界观",
             "chapter_outlines": {"1": "第一章细纲"},
+            "novel_tags": {
+                "core": "规则怪谈",
+                "情节": ["女性成长", "无限流"],
+                "角色": ["大女主"],
+                "情绪": ["惊悚"],
+                "背景": ["副本世界"],
+            },
             "estimated_words": 12000,
         }
 
@@ -247,6 +261,7 @@ class TestNovelState(unittest.TestCase):
         state: NovelState = {
             "user_idea": "测试",
             "world_bible": "",
+            "novel_tags": {},
             "chapter_outlines": {},
             "keywords": [],
             "target_chapters": 12,
@@ -270,6 +285,200 @@ class TestNovelState(unittest.TestCase):
         self.assertEqual(state["words_per_chapter"], 2500)
         self.assertEqual(state["writer_style"], "default")
         self.assertEqual(state["story_pattern"], "none")
+
+
+class TestNovelTagLibrary(unittest.TestCase):
+    @staticmethod
+    def library():
+        return {
+            "schema_version": 1,
+            "core_tags": ["规则怪谈", "都市情感"],
+            "secondary_tags": {
+                "情节": ["女性成长", "无限流"],
+                "角色": ["大女主", "群像"],
+                "情绪": ["惊悚", "治愈"],
+                "背景": ["现代都市", "副本世界"],
+            },
+        }
+
+    def test_loads_valid_library_without_cache(self):
+        from LibraryV2 import load_novel_tag_library
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "tags.json"
+            path.write_text(
+                json.dumps(self.library(), ensure_ascii=False),
+                encoding="utf-8",
+            )
+            with patch("LibraryV2.NOVEL_TAG_LIBRARY_PATH", path):
+                first = load_novel_tag_library()
+                updated = self.library()
+                updated["core_tags"].append("悬疑推理")
+                path.write_text(
+                    json.dumps(updated, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                second = load_novel_tag_library()
+
+        self.assertNotIn("悬疑推理", first["core_tags"])
+        self.assertIn("悬疑推理", second["core_tags"])
+
+    def test_rejects_missing_category_duplicate_empty_and_too_few_tags(self):
+        from LibraryV2 import validate_novel_tag_library
+
+        invalid_cases = {}
+
+        missing = self.library()
+        missing["secondary_tags"].pop("背景")
+        invalid_cases["缺少分类"] = missing
+
+        duplicate = self.library()
+        duplicate["secondary_tags"]["角色"][0] = "女性成长"
+        invalid_cases["重复词"] = duplicate
+
+        empty = self.library()
+        empty["core_tags"].append(" ")
+        invalid_cases["空词"] = empty
+
+        too_few = self.library()
+        too_few["secondary_tags"] = {
+            "情节": ["女性成长"],
+            "角色": ["大女主"],
+            "情绪": ["惊悚"],
+            "背景": ["副本世界"],
+        }
+        invalid_cases["词数不足"] = too_few
+
+        for name, library in invalid_cases.items():
+            with self.subTest(name=name):
+                self.assertTrue(validate_novel_tag_library(library))
+
+    def test_validates_selection_membership_category_uniqueness_and_count(self):
+        from LibraryV2 import validate_novel_tag_selection
+
+        library = self.library()
+        valid = {
+            "core": "规则怪谈",
+            "情节": ["女性成长", "无限流"],
+            "角色": ["大女主"],
+            "情绪": ["惊悚"],
+            "背景": ["副本世界"],
+        }
+        self.assertEqual(validate_novel_tag_selection(valid, library), [])
+
+        outside = {**valid, "core": "自由生成词"}
+        self.assertTrue(validate_novel_tag_selection(outside, library))
+
+        wrong_category = {**valid, "角色": ["女性成长"]}
+        self.assertTrue(validate_novel_tag_selection(wrong_category, library))
+
+        duplicate = {**valid, "角色": ["大女主", "大女主"]}
+        self.assertTrue(validate_novel_tag_selection(duplicate, library))
+
+        too_few = {**valid, "情节": ["女性成长"]}
+        too_few["背景"] = []
+        self.assertTrue(validate_novel_tag_selection(too_few, library))
+
+        too_many = {
+            "core": "规则怪谈",
+            "情节": ["女性成长", "无限流"],
+            "角色": ["大女主", "群像"],
+            "情绪": ["惊悚", "治愈"],
+            "背景": ["现代都市", "副本世界"],
+        }
+        self.assertTrue(validate_novel_tag_selection(too_many, library))
+
+
+class TestArchitectNovelTags(unittest.TestCase):
+    def test_invalid_tags_retry_and_valid_tags_are_saved(self):
+        from Nodes import ArchitectOutput, architect_node
+
+        library = TestNovelTagLibrary.library()
+        base = {
+            "novel_title": "病患之眼",
+            "world_bible": "完整世界观",
+            "chapter_outlines": {"1": "【开场状态】剧情"},
+            "estimated_words": 1500,
+        }
+        invalid = ArchitectOutput.model_validate({**base})
+        self.assertEqual(invalid.novel_tags.core, "")
+        valid_tags = {
+            "core": "规则怪谈",
+            "情节": ["女性成长", "无限流"],
+            "角色": ["大女主"],
+            "情绪": ["惊悚"],
+            "背景": ["副本世界"],
+        }
+        valid = ArchitectOutput(**base, novel_tags=valid_tags)
+        pattern_config = {
+            "primary": "none",
+            "secondary": [],
+            "custom_instruction": "",
+            "manifest": {},
+            "structure_plan": {},
+        }
+        dump = MagicMock()
+
+        with patch("Nodes.load_novel_tag_library", return_value=library), patch(
+            "Nodes.normalize_pattern_config", return_value=pattern_config
+        ), patch("Nodes.normalize_material_config", return_value={}), patch(
+            "Nodes.validate_pattern_config", return_value=[]
+        ), patch("Nodes.validate_material_config", return_value=[]), patch(
+            "Nodes.resolve_story_pattern",
+            return_value={"strong": False, "name": "无套路", "architect": ""},
+        ), patch("Nodes.format_selected_materials", return_value="无"), patch(
+            "Nodes.invoke_architect_with_fallback",
+            side_effect=[invalid, valid],
+        ) as invoke, patch(
+            "Nodes.normalize_chapter_outlines",
+            side_effect=lambda outlines, chapters: outlines,
+        ), patch(
+            "Nodes.normalize_outline_structures",
+            side_effect=lambda outlines, chapters: outlines,
+        ), patch(
+            "Nodes.outline_validation_issues",
+            side_effect=lambda outlines, chapters: [],
+        ), patch(
+            "Nodes.build_chapter_contracts", return_value={"1": {}}
+        ), patch("Nodes.build_finale_contract", return_value={}), patch(
+            "Nodes.load_prompt", return_value=""
+        ), patch("Nodes.os.makedirs"), patch(
+            "builtins.open", mock_open()
+        ), patch("Nodes.json.dump", dump):
+            result = architect_node({
+                "user_idea": "规则怪谈中的女医生成长故事",
+                "target_chapters": 1,
+                "words_per_chapter": 1500,
+                "writer_style": "default",
+                "pattern_config": {},
+                "material_config": {},
+            })
+
+        self.assertEqual(invoke.call_count, 2)
+        self.assertEqual(result["novel_tags"], valid_tags)
+        saved_payload = dump.call_args.args[0]
+        self.assertEqual(saved_payload["schema_version"], 2)
+        self.assertEqual(saved_payload["novel_tags"], valid_tags)
+
+    def test_old_schema_v2_outline_without_tags_still_loads_and_lists(self):
+        from Nodes import list_outline_files, load_outline_json
+
+        old_outline = {
+            "schema_version": 2,
+            "title": "旧大纲",
+            "world_bible": "设定",
+            "chapter_outlines": {"1": "细纲"},
+            "created_at": "2026-01-01T00:00:00",
+        }
+        reader = mock_open(read_data=json.dumps(old_outline, ensure_ascii=False))
+        with patch("Nodes.os.makedirs"), patch(
+            "Nodes.os.listdir", return_value=["old.json"]
+        ), patch("builtins.open", reader):
+            listed = list_outline_files()
+            loaded = load_outline_json("old.json")
+
+        self.assertEqual(listed[0]["core_tag"], "")
+        self.assertNotIn("novel_tags", loaded)
 
 
 class TestChapterOutputFormat(unittest.TestCase):
@@ -433,6 +642,13 @@ class TestChapterOutputFormat(unittest.TestCase):
             "novel_title": "高考后的账本",
             "world_bible": "现实家庭伦理故事，围绕单亲母亲、女儿、邻居和同城舆论展开。",
             "chapter_outlines": {"1": raw_outline},
+            "novel_tags": {
+                "core": "都市情感",
+                "情节": ["女性成长"],
+                "角色": ["大女主", "成长型主角"],
+                "情绪": ["治愈"],
+                "背景": ["现代都市"],
+            },
             "estimated_words": 2500,
         })
 

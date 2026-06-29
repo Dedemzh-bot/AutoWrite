@@ -4,6 +4,7 @@ class NovelState(TypedDict):
     # --- 基础输入与设定 ---
     user_idea: str
     world_bible: str
+    novel_tags: dict
     chapter_outlines: dict
     chapter_contracts: dict
     finale_contract: dict

@@ -20,12 +20,16 @@ from WriterStyles import (
 )
 from LibraryV2 import (
     LibraryValidationError,
+    format_novel_tag_library,
     format_selected_materials,
+    load_novel_tag_library,
     normalize_material_config,
+    normalize_novel_tag_selection,
     normalize_pattern_config,
     pattern_map,
     resolve_pattern_bundle,
     validate_material_config,
+    validate_novel_tag_selection,
     validate_pattern_config,
 )
 
@@ -74,7 +78,12 @@ def list_outline_files() -> list[dict]:
                     "file": name,
                     "title": data.get("title", name),
                     "chapters": len(data.get("chapter_outlines", {})),
-                    "created_at": data.get("created_at", "")
+                    "created_at": data.get("created_at", ""),
+                    "core_tag": (
+                        data.get("novel_tags", {}).get("core", "")
+                        if isinstance(data.get("novel_tags"), dict)
+                        else ""
+                    ),
                 })
             except Exception:
                 pass
@@ -199,7 +208,8 @@ CHAPTER_FORMAT_PROMPT = """正文输出必须严格使用以下唯一格式：
 除这一行章节标题和正文外，不要输出任何说明。"""
 
 ARCHITECT_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
-字段必须完整：novel_title 为字符串；world_bible 为字符串；chapter_outlines 为对象，键是纯数字章节号、值是章节细纲；estimated_words 为整数。
+字段必须完整：novel_title 为字符串；world_bible 为字符串；chapter_outlines 为对象，键是纯数字章节号、值是章节细纲；novel_tags 为对象；estimated_words 为整数。
+novel_tags 必须完整包含 core、情节、角色、情绪、背景五个字段。core 为一个核心Tag字符串；其余四个字段为辅助Tag字符串数组，四类合计必须为5-7个且不得重复。
 chapter_outlines 的每个值必须是纯字符串，不能是对象、数组或带字段名的嵌套结构；字符串开头第一个非空字符必须是【开场状态】，不要在细纲前写“第X章”“章节标题”或小标题。
 chapter_outlines 中每一章细纲去除空白后必须不少于 200 字。每章细纲必须严格使用固定中括号标签组织内容，非最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【结尾结果】【下一章钩子】；最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。每章只设置一个主冲突、一个关键转折和一个关系变化，给正文留下足够场景空间；不要把多章剧情压缩成摘要。禁止使用“开场：”“开场状态：”“核心冲突：”等冒号标签，禁止用空话凑字数。"""
 
@@ -1558,10 +1568,19 @@ llm_summarizer = _create_llm(0, max_tokens=4096)
 # ==========================================
 # 2. 强制 JSON 结构化定义 (键名保持中文)
 # ==========================================
+class NovelTagSelection(BaseModel):
+    core: str = Field(description="从核心Tag库精确选择的唯一核心Tag")
+    情节: list[str] = Field(description="从情节Tag库精确选择的辅助Tag")
+    角色: list[str] = Field(description="从角色Tag库精确选择的辅助Tag")
+    情绪: list[str] = Field(description="从情绪Tag库精确选择的辅助Tag")
+    背景: list[str] = Field(description="从背景Tag库精确选择的辅助Tag")
+
+
 class ArchitectOutput(BaseModel):
     novel_title: str = Field(description="小说的书名，8-20字，简洁有力有网感")
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
     chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到不少于200字的详细细纲字符串。每个值必须从【开场状态】开始，不能是嵌套对象。")
+    novel_tags: NovelTagSelection = Field(description="严格从本地小说Tag库选择的作品分类")
     estimated_words: int = Field(default=0, description="预估总字数")
 
     @model_validator(mode='before')
@@ -1569,6 +1588,13 @@ class ArchitectOutput(BaseModel):
     def sanitize(cls, data: Any) -> Any:
         if not isinstance(data, dict):
             return data
+        tags = data.get("novel_tags")
+        if not isinstance(tags, dict):
+            tags = {}
+        tags.setdefault("core", "")
+        for category in ("情节", "角色", "情绪", "背景"):
+            tags.setdefault(category, [])
+        data["novel_tags"] = tags
         outlines = data.get("chapter_outlines", {})
         if isinstance(outlines, dict):
             ew = outlines.pop("estimated_words", None)
@@ -2684,6 +2710,7 @@ def architect_node(state: NovelState):
     if state.get("world_bible"):
         return {}
 
+    novel_tag_library = load_novel_tag_library()
     pattern_config = normalize_pattern_config(state.get("pattern_config", {}))
     material_config = normalize_material_config(state.get("material_config", {}))
     config_issues = validate_pattern_config(
@@ -2759,11 +2786,19 @@ def architect_node(state: NovelState):
         result = invoke_architect_with_fallback(prompt, {
             "user_idea": state.get("user_idea"),
             "materials": materials_str,
+            "novel_tag_library": format_novel_tag_library(novel_tag_library),
             "chapter_requirement": active_chapter_req
         })
         chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
         chapter_outlines = normalize_outline_structures(chapter_outlines, chapters)
         outline_issues = outline_validation_issues(chapter_outlines, chapters)
+        novel_tags = normalize_novel_tag_selection(result.novel_tags.model_dump())
+        outline_issues.extend(
+            f"小说Tag：{issue}"
+            for issue in validate_novel_tag_selection(
+                novel_tags, novel_tag_library
+            )
+        )
         if strong_pattern:
             outline_warnings = strong_pattern_outline_content_warnings(
                 manifest, pattern_plan, chapter_outlines, chapters
@@ -2800,6 +2835,7 @@ def architect_node(state: NovelState):
     chapter_outlines = normalize_outline_structures(chapter_outlines, chapters)
     if strong_pattern:
         chapter_outlines = attach_pattern_plan_to_outlines(chapter_outlines, pattern_plan)
+    novel_tags = normalize_novel_tag_selection(result.novel_tags.model_dump())
     chapter_contracts = build_chapter_contracts(chapter_outlines)
     finale_contract = build_finale_contract(chapter_contracts, manifest)
 
@@ -2816,6 +2852,7 @@ def architect_node(state: NovelState):
                 "title": result.novel_title,
                 "run_id": state.get("run_id", ""),
                 "world_bible": result.world_bible,
+                "novel_tags": novel_tags,
                 "chapter_outlines": chapter_outlines,
                 "chapter_contracts": chapter_contracts,
                 "finale_contract": finale_contract,
@@ -2831,6 +2868,7 @@ def architect_node(state: NovelState):
     return {
         "novel_title": result.novel_title,
         "world_bible": result.world_bible,
+        "novel_tags": novel_tags,
         "chapter_outlines": chapter_outlines,
         "chapter_contracts": chapter_contracts,
         "finale_contract": finale_contract,
