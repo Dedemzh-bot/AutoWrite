@@ -416,7 +416,10 @@ class AutoWriteCLI:
         try:
             completed = subprocess.run(
                 command,
-                cwd=str(job_dir.resolve()),
+                # AutoWrite resolves Novel/ and Outline/ relative to cwd.
+                # Run from the application root so batch outputs are collected
+                # alongside regular outputs while job metadata stays isolated.
+                cwd=str(self.entry.parent),
                 env=self.environment,
                 capture_output=True,
                 text=True,
@@ -565,9 +568,9 @@ def _material_constraints(capabilities: dict) -> dict:
     defaults = dict(metadata.get("default_group_counts") or {})
     for group_id in limits:
         defaults.setdefault(group_id, 0)
-    count_range = metadata.get("count_range", [2, 8])
+    count_range = metadata.get("count_range", [0, 8])
     if not isinstance(count_range, list) or len(count_range) != 2:
-        count_range = [2, 8]
+        count_range = [0, 8]
     return {
         "schema_version": int(metadata.get("schema_version", 2)),
         "limits": {key: int(value) for key, value in limits.items()},

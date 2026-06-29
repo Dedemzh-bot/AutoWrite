@@ -739,7 +739,8 @@ function drawMaterials(mode='create',randomizeTypes=false){
   let selected=isWash?washSelectedCats:selectedCats;
   let config=isWash?washMaterialConfig:materialConfig;
   updateMaterialTotal(mode);
-  if(config.count<2||config.count>8){log('素材总数必须在2到8之间','warn');return}
+  let [minCount,maxCount]=materialMeta.count_range||[0,8];
+  if(config.count<minCount||config.count>maxCount){log(`素材总数必须在${minCount}到${maxCount}之间`,'warn');return}
   config={...config,filters:{categories:[],subcategories:[...selected],tags:[]}};
   if(isWash)washMaterialConfig=config;else materialConfig=config;
   sendMsg({action:'sample_materials',data:{mode,randomize_types:randomizeTypes,material_config:config,pattern_config:patternConfigFor(mode)}});
@@ -1034,7 +1035,7 @@ function startPipeline(){
   let patternConfig=patternConfigFor('create');
   if(patternConfig.primary==='custom'&&!patternConfig.custom_instruction){log('请填写自定义套路要求','warn');return}
   if(isStrongPatternKey(patternConfig.primary)&&!createPatternConfirmed){log('请先确认强套路契约','warn');return}
-  if((materialConfig.items||[]).length!==(materialConfig.count||4)){log('请先抽取并确认完整素材配置','warn');return}
+  if((materialConfig.items||[]).length!==(materialConfig.count??4)){log('请先抽取并确认完整素材配置','warn');return}
   document.getElementById('btnStart').disabled=true;
   document.getElementById('approvalBar').classList.add('hidden');
   document.getElementById('progressStatus').textContent='提交中...';
@@ -1237,7 +1238,7 @@ function startWash(){
   let patternConfig=patternConfigFor('wash');
   if(patternConfig.primary==='custom'&&!patternConfig.custom_instruction){log('请填写自定义套路要求','warn');return}
   if(isStrongPatternKey(patternConfig.primary)&&!washPatternConfirmed){log('请先确认强套路契约','warn');return}
-  if((washMaterialConfig.items||[]).length!==(washMaterialConfig.count||4)){log('请先确认完整的洗文素材配置','warn');return}
+  if((washMaterialConfig.items||[]).length!==(washMaterialConfig.count??4)){log('请先确认完整的洗文素材配置','warn');return}
   document.getElementById('btnWashStart').disabled=true;
   document.getElementById('washStatus').textContent='生成新书名...';
   Object.keys(agentMap).forEach(k=>setAgentState(k,'idle'));

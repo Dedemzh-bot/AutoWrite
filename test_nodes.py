@@ -1238,6 +1238,34 @@ class TestContentLibrariesV2(unittest.TestCase):
             before["core_conflict:1"], after["core_conflict:1"]
         )
 
+    def test_zero_material_quota_is_valid_without_changing_default(self):
+        from LibraryV2 import (
+            DEFAULT_MATERIAL_COUNT,
+            default_material_config,
+            default_pattern_config,
+            material_library_metadata,
+            sample_materials,
+            validate_material_config,
+        )
+
+        self.assertEqual(DEFAULT_MATERIAL_COUNT, 4)
+        self.assertEqual(material_library_metadata()["count_range"], [0, 8])
+        config = default_material_config()
+        config["group_counts"] = {
+            group_id: 0 for group_id in config["group_counts"]
+        }
+        sampled = sample_materials(
+            config,
+            default_pattern_config(),
+            seed=11,
+        )
+        self.assertEqual(sampled["count"], 0)
+        self.assertEqual(sampled["items"], [])
+        self.assertEqual(
+            validate_material_config(sampled, default_pattern_config()),
+            [],
+        )
+
     def test_same_group_items_have_independent_selection_keys(self):
         from LibraryV2 import (
             default_material_config,

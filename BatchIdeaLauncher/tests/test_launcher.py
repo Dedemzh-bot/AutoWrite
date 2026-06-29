@@ -102,7 +102,7 @@ def sample_capabilities():
         ],
         "material_library": {
             "schema_version": 2,
-            "count_range": [2, 8],
+            "count_range": [0, 8],
             "default_group_counts": {
                 "world_stage": 1,
                 "protagonist": 1,
@@ -216,10 +216,11 @@ if args.validate_job_file:
     raise SystemExit(0)
 
 job = json.loads(Path(args.job_file).read_text(encoding="utf-8"))
-with (cwd.parent / "order.log").open("a", encoding="utf-8") as stream:
+job_dir = Path(args.job_file).resolve().parent
+with (job_dir.parent / "order.log").open("a", encoding="utf-8") as stream:
     stream.write(job["job_id"] + "\\n")
 
-marker = cwd / ".failed-once"
+marker = job_dir / ".failed-once"
 if job["job_id"] == "idea-002" and not marker.exists():
     marker.write_text("1", encoding="utf-8")
     Path(args.result_file).write_text(
@@ -615,8 +616,8 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(manifest["config"]["max_concurrent_jobs"], 2)
         for item in ideas:
             job_dir = batch_dir / item["job_id"]
-            self.assertTrue((job_dir / "Novel" / f"{item['job_id']}.txt").exists())
-            self.assertTrue((job_dir / "Outline" / f"{item['job_id']}.json").exists())
+            self.assertTrue((self.temp / "Novel" / f"{item['job_id']}.txt").exists())
+            self.assertTrue((self.temp / "Outline" / f"{item['job_id']}.json").exists())
             self.assertEqual(read_json(job_dir / "status.json")["status"], "succeeded")
         order_lines = (batch_dir / "order.log").read_text(
             encoding="utf-8"
@@ -764,10 +765,10 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(manifest["jobs"][0]["attempts"], 1)
         self.assertEqual(manifest["jobs"][1]["attempts"], 1)
         self.assertTrue(
-            (batch_dir / "idea-001" / "Novel" / "idea-001.txt").exists()
+            (self.temp / "Novel" / "idea-001.txt").exists()
         )
         self.assertFalse(
-            (batch_dir / "idea-002" / "Novel" / "idea-002.txt").exists()
+            (self.temp / "Novel" / "idea-002.txt").exists()
         )
 
         second_summary = BatchRunner(
@@ -779,7 +780,7 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(manifest["jobs"][0]["attempts"], 1)
         self.assertEqual(manifest["jobs"][1]["attempts"], 2)
         self.assertTrue(
-            (batch_dir / "idea-002" / "Novel" / "idea-002.txt").exists()
+            (self.temp / "Novel" / "idea-002.txt").exists()
         )
         self.assertTrue((batch_dir / "summary.json").exists())
         self.assertTrue((batch_dir / "summary.csv").exists())
@@ -846,7 +847,7 @@ class LauncherTests(unittest.TestCase):
         self.assertIn("preflight rejected", str(selector.calls[1]))
         job_dir = batch_dir / "idea-001"
         self.assertEqual(read_json(job_dir / "preflight.json")["status"], "validated")
-        self.assertTrue((job_dir / "Novel" / "idea-001.txt").exists())
+        self.assertTrue((self.temp / "Novel" / "idea-001.txt").exists())
 
     def test_real_cli_exports_twelve_styles_and_launcher_has_no_web_stack(self):
         project_root = Path(__file__).resolve().parents[2]
@@ -882,7 +883,7 @@ class LauncherTests(unittest.TestCase):
         ))
         self.assertEqual(exported["pattern_library"]["max_secondary"], 2)
         self.assertEqual(
-            exported["material_library"]["count_range"], [2, 8]
+            exported["material_library"]["count_range"], [0, 8]
         )
         self.assertGreaterEqual(
             {item["key"] for item in exported["writer_styles"]},

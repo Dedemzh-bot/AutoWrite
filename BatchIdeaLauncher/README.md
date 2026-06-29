@@ -35,7 +35,7 @@ python launcher.py retry --batch-id batch-20260622-120000 --failed-only --worker
 `batch_console.bat`。菜单里可以开始新批次、查看状态、重试失败任务、续跑未完成任务和
 刷新能力表；新批次默认按 `workers=2` 双并发执行。是否精炼点子由 CSV/JSONL 每行的 `refine_idea` 决定，不需要额外菜单项。
 
-`run` 和 `retry` 默认按 `max_concurrent_jobs: 2` 同时跑两篇；需要串行时传 `--workers 1`。单篇失败会记录错误并继续，成功任务在 `retry` 时自动跳过。每篇任务拥有独立的 `Outline/`、`Novel/`、日志和结果文件。
+`run` 和 `retry` 默认按 `max_concurrent_jobs: 2` 同时跑两篇；需要串行时传 `--workers 1`。单篇失败会记录错误并继续，成功任务在 `retry` 时自动跳过。小说正文和大纲统一输出到项目根目录的 `Novel/`、`Outline/`；每篇任务仍拥有独立的日志、状态和结果文件。
 
 ## schema v2 选型
 
