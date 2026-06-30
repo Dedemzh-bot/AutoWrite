@@ -185,6 +185,7 @@ parser.add_argument("--job-file")
 parser.add_argument("--validate-job-file")
 parser.add_argument("--result-file")
 parser.add_argument("--auto-approve", action="store_true")
+parser.add_argument("--restart", action="store_true")
 args = parser.parse_args()
 
 if args.describe_capabilities:
@@ -397,8 +398,10 @@ class LauncherTests(unittest.TestCase):
             "--failed-only",
             "--workers",
             "1",
+            "--restart-failed",
         ])
         self.assertEqual(retry_args.workers, 1)
+        self.assertTrue(retry_args.restart_failed)
 
     def test_txt_inherits_config_and_csv_can_override(self):
         config_path = self.temp / "config.json"

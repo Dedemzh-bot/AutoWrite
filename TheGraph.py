@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import hashlib
 import json
 import logging
 import os
@@ -22,7 +23,7 @@ from Nodes import (
     load_story_patterns,
     DEFAULT_CHAPTERS, DEFAULT_WORDS_PER_CHAPTER,
     MAX_REVIEW_ATTEMPTS, STYLE_PASS_SCORE, should_retry_short_draft,
-    route_after_review_decision,
+    route_after_review_decision, publish_staged_novel,
     is_strong_pattern, roll_pattern_manifest, format_pattern_manifest,
 )
 from LibraryV2 import (
@@ -124,6 +125,142 @@ def _write_json(path: str | os.PathLike, payload: dict) -> Path:
     return target
 
 
+def _job_hash(job: dict) -> str:
+    encoded = json.dumps(
+        job,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _checkpoint_candidate_files(artifact_dir: str | os.PathLike) -> list[str]:
+    root = Path(artifact_dir).expanduser().resolve() / "candidates"
+    return [str(path.resolve()) for path in sorted(root.glob("chapter-*/attempt-*.json"))]
+
+
+def _save_resume_checkpoint(
+    checkpoint_file: str | os.PathLike,
+    job_hash: str,
+    run_id: str,
+    state: dict,
+    material_config: dict,
+    pattern_config: dict,
+    stage: str,
+    complete: bool = False,
+) -> Path:
+    normalized_state = dict(state or {})
+    normalized_state["run_id"] = run_id
+    normalized_state["artifact_dir"] = str(Path(checkpoint_file).resolve().parent)
+    payload = {
+        "schema_version": 1,
+        "job_hash": job_hash,
+        "run_id": run_id,
+        "stage": stage,
+        "complete": bool(complete),
+        "saved_chapter": int(normalized_state.get("saved_chapter", 0) or 0),
+        "next_chapter": int(normalized_state.get("current_chapter", 1) or 1),
+        "material_config": material_config,
+        "pattern_config": pattern_config,
+        "state": normalized_state,
+        "updated_at": _now_iso(),
+    }
+    return _write_json(checkpoint_file, payload)
+
+
+def _load_resume_checkpoint(
+    work_root: Path,
+    expected_job_hash: str,
+) -> tuple[dict, Path] | tuple[None, None]:
+    if not work_root.exists():
+        return None, None
+    candidates = sorted(
+        work_root.glob("*/resume.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in candidates:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("schema_version") != 1:
+                logger.warning("⚠️ 忽略不兼容断点：%s", path)
+                continue
+            if payload.get("complete"):
+                continue
+            if payload.get("job_hash") != expected_job_hash:
+                logger.warning("⚠️ 忽略任务哈希不匹配的断点：%s", path)
+                continue
+            state = payload.get("state")
+            if not isinstance(state, dict) or not payload.get("run_id"):
+                logger.warning("⚠️ 忽略缺少状态或 run_id 的断点：%s", path)
+                continue
+            saved_chapter = int(state.get("saved_chapter", 0) or 0)
+            chapters_dir = path.parent / "chapters"
+            if any(
+                not (chapters_dir / f"{chapter:04d}.txt").is_file()
+                for chapter in range(1, saved_chapter + 1)
+            ):
+                logger.warning("⚠️ 忽略章节分片不完整的断点：%s", path)
+                continue
+            return payload, path.resolve()
+        except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
+            logger.warning("⚠️ 忽略损坏断点 %s：%s", path, error)
+    return None, None
+
+
+def _prepare_retry_state(state: dict) -> dict:
+    prepared = dict(state or {})
+    outlines = prepared.get("chapter_outlines", {})
+    chapter = int(prepared.get("current_chapter", 1) or 1)
+    if not outlines or chapter > len(outlines):
+        return prepared
+    clean_candidates = [
+        candidate
+        for candidate in prepared.get("draft_candidates", [])
+        if candidate.get("chapter") == chapter
+        and candidate.get("draft")
+        and not candidate.get("continuity_report", {}).get("conflicts", [])
+    ]
+    best = max(
+        clean_candidates,
+        key=lambda candidate: candidate.get("score", 0),
+        default={},
+    )
+    if best:
+        for target, source in (
+            ("current_draft", "draft"),
+            ("audit_report", "audit_report"),
+            ("editor_report", "editor_report"),
+            ("ledger_delta", "ledger_delta"),
+            ("continuity_report", "continuity_report"),
+        ):
+            prepared[target] = best.get(source, prepared.get(target))
+        prepared["iteration_count"] = 4 if chapter >= len(outlines) else 3
+    else:
+        prepared["iteration_count"] = 0
+        prepared["current_draft"] = ""
+        prepared["audit_report"] = {}
+        prepared["editor_report"] = {}
+        prepared["ledger_delta"] = {}
+        prepared["continuity_report"] = {}
+    prepared["scene_plan"] = {}
+    return prepared
+
+
+def _failure_stage(error: Exception, state: dict, active_stage: str) -> str:
+    message = str(error)
+    if not state.get("world_bible"):
+        return "architect"
+    if "台账合并" in message or "事实冲突" in message:
+        return "ledger_merge"
+    if "最终章" in message or "完整结局" in message:
+        return "finale"
+    if active_stage in {"architect", "writer", "reviewer", "summarizer", "approval"}:
+        return active_stage
+    return "generation"
+
+
 def build_capabilities() -> dict:
     pattern_items = list(pattern_library_metadata().values())
     material_library = material_library_metadata()
@@ -141,6 +278,8 @@ def build_capabilities() -> dict:
         "material_library": material_library,
         "cli_contract": {
             "supports_job_preflight": True,
+            "supports_job_resume": True,
+            "publishes_novel_on_success_only": True,
         },
         "job_schema": {
             "schema_version": 2,
@@ -290,10 +429,15 @@ def _initial_state_from_job(
     run_id: str,
     material_config: dict,
     pattern_config: dict,
+    artifact_dir: str,
 ) -> dict:
     return {
         "user_idea": job["idea"],
         "run_id": run_id,
+        "artifact_dir": artifact_dir,
+        "partial_novel_file": "",
+        "candidate_files": [],
+        "resumed": False,
         "material_config": material_config,
         "pattern_config": pattern_config,
         "target_chapters": job["target_chapters"],
@@ -395,7 +539,7 @@ def validate_job_file(
     return 0 if result["status"] == "validated" else 1
 
 
-def run_job_file(
+def _run_job_file_legacy(
     job_path: str | os.PathLike,
     result_path: str | os.PathLike | None,
     auto_approve: bool,
@@ -495,6 +639,257 @@ def run_job_file(
     return 0 if result["status"] == "succeeded" else 1
 
 
+def run_job_file(
+    job_path: str | os.PathLike,
+    result_path: str | os.PathLike | None,
+    auto_approve: bool,
+    restart_failed: bool = False,
+) -> int:
+    source_path = Path(job_path).expanduser().resolve()
+    target_path = (
+        Path(result_path).expanduser().resolve()
+        if result_path
+        else source_path.with_name("result.json")
+    )
+    result = {
+        "schema_version": 2,
+        "status": "failed",
+        "job_file": str(source_path),
+        "started_at": _now_iso(),
+        "failure_stage": "",
+        "checkpoint_file": "",
+        "candidate_files": [],
+        "partial_novel_file": "",
+        "novel_file": "",
+        "resumed": False,
+        "resume_from_chapter": 1,
+    }
+    config = None
+    checkpoint_path = None
+    job_hash = ""
+    material_config = {}
+    pattern_config = {}
+    state_values = {}
+    initial_state = {}
+    active_stage = "preflight"
+    run_id = ""
+
+    try:
+        raw_job = json.loads(source_path.read_text(encoding="utf-8-sig"))
+        job, generated_materials, generated_pattern = prepare_job(raw_job)
+        job_hash = _job_hash(job)
+        work_root = (source_path.parent / "work").resolve()
+        resume_payload, resume_path = (
+            (None, None)
+            if restart_failed
+            else _load_resume_checkpoint(work_root, job_hash)
+        )
+
+        if resume_payload:
+            run_id = str(resume_payload["run_id"])
+            checkpoint_path = resume_path
+            artifact_dir = checkpoint_path.parent
+            material_config = normalize_material_config(
+                resume_payload.get("material_config") or generated_materials
+            )
+            pattern_config = normalize_pattern_config(
+                resume_payload.get("pattern_config") or generated_pattern
+            )
+            initial_state = _prepare_retry_state(resume_payload["state"])
+            initial_state.update({
+                "run_id": run_id,
+                "artifact_dir": str(artifact_dir),
+                "resumed": True,
+            })
+            resumed = True
+            resume_from_chapter = int(initial_state.get("current_chapter", 1) or 1)
+            logger.info(
+                "▶️ 从断点继续 %s，第 %d 章",
+                run_id,
+                resume_from_chapter,
+            )
+        else:
+            run_id = (
+                f"cli-{_safe_run_identifier(job['job_id'])}-"
+                f"{uuid.uuid4().hex[:8]}"
+            )
+            artifact_dir = (work_root / run_id).resolve()
+            checkpoint_path = artifact_dir / "resume.json"
+            material_config = generated_materials
+            pattern_config = generated_pattern
+            initial_state = _initial_state_from_job(
+                job,
+                run_id,
+                material_config,
+                pattern_config,
+                str(artifact_dir),
+            )
+            resumed = False
+            resume_from_chapter = 1
+
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        config = {"configurable": {"thread_id": run_id}}
+        result.update({
+            "job_id": job["job_id"],
+            "run_id": run_id,
+            "configuration": job,
+            "material_config": material_config,
+            "pattern_config": pattern_config,
+            "checkpoint_file": str(checkpoint_path),
+            "resumed": resumed,
+            "resume_from_chapter": resume_from_chapter,
+        })
+
+        active_stage = "architect"
+        print(f"--- CLI任务 {job['job_id']}：生成或恢复大纲 ---")
+        for output in app.stream(initial_state, config=config):
+            for node_name in output:
+                active_stage = node_name
+                print(f"✅ 节点 [{node_name}] 执行完毕")
+            state_values = dict(app.get_state(config).values or {})
+            _save_resume_checkpoint(
+                checkpoint_path,
+                job_hash,
+                run_id,
+                state_values,
+                material_config,
+                pattern_config,
+                active_stage,
+            )
+
+        state_values = dict(app.get_state(config).values or {})
+        result["novel_title"] = state_values.get("novel_title", "")
+        result["outline_file"] = _find_run_output("Outline", run_id, ".json")
+
+        active_stage = "approval"
+        approved = auto_approve
+        if not auto_approve:
+            answer = input("大纲已生成，输入 Y 批准继续：").strip().upper()
+            approved = answer == "Y"
+        if not approved:
+            raise RuntimeError("大纲未获批准，任务终止")
+
+        active_stage = "writer"
+        print("--- 大纲已批准：开始全自动写作 ---")
+        for output in app.stream(None, config=config):
+            for node_name, node_state in output.items():
+                active_stage = node_name
+                if node_name == "writer":
+                    print(
+                        f"✍️ 写手产出第 {node_state.get('current_chapter')} 章"
+                    )
+                elif node_name == "summarizer":
+                    print(
+                        f"🗂️ 已保存第 {node_state.get('saved_chapter')} 章"
+                    )
+            state_values = dict(app.get_state(config).values or {})
+            _save_resume_checkpoint(
+                checkpoint_path,
+                job_hash,
+                run_id,
+                state_values,
+                material_config,
+                pattern_config,
+                active_stage,
+            )
+
+        state_values = dict(app.get_state(config).values or {})
+        saved_chapter = int(state_values.get("saved_chapter", 0) or 0)
+        if saved_chapter < int(job["target_chapters"]):
+            raise RuntimeError(
+                f"流水线提前结束：仅保存{saved_chapter}/{job['target_chapters']}章"
+            )
+        partial_novel_file = str(
+            state_values.get("partial_novel_file")
+            or (artifact_dir / "partial_novel.txt")
+        )
+        active_stage = "publish"
+        novel_file = publish_staged_novel(
+            state_values.get("novel_title", result.get("novel_title", "")),
+            run_id,
+            partial_novel_file,
+        )
+        candidate_files = _checkpoint_candidate_files(artifact_dir)
+        result.update({
+            "status": "succeeded",
+            "failure_stage": "",
+            "novel_title": state_values.get(
+                "novel_title", result.get("novel_title", "")
+            ),
+            "saved_chapter": saved_chapter,
+            "outline_file": result.get("outline_file")
+            or _find_run_output("Outline", run_id, ".json"),
+            "novel_file": novel_file,
+            "partial_novel_file": str(Path(partial_novel_file).resolve()),
+            "candidate_files": candidate_files,
+        })
+        try:
+            _save_resume_checkpoint(
+                checkpoint_path,
+                job_hash,
+                run_id,
+                state_values,
+                material_config,
+                pattern_config,
+                "succeeded",
+                complete=True,
+            )
+        except Exception as checkpoint_error:
+            logger.warning("⚠️ 成功发布后更新完成标记失败：%s", checkpoint_error)
+    except Exception as error:
+        if config is not None:
+            try:
+                snapshot_values = dict(app.get_state(config).values or {})
+                if snapshot_values:
+                    state_values = snapshot_values
+            except Exception:
+                pass
+        failure_stage = _failure_stage(error, state_values or initial_state, active_stage)
+        if checkpoint_path is not None and job_hash and run_id:
+            try:
+                retry_state = _prepare_retry_state(state_values or initial_state)
+                retry_state["artifact_dir"] = str(checkpoint_path.parent)
+                _save_resume_checkpoint(
+                    checkpoint_path,
+                    job_hash,
+                    run_id,
+                    retry_state,
+                    material_config,
+                    pattern_config,
+                    failure_stage,
+                )
+                state_values = retry_state
+            except Exception as checkpoint_error:
+                logger.warning("⚠️ 失败断点保存失败：%s", checkpoint_error)
+        artifact_dir = (
+            checkpoint_path.parent
+            if checkpoint_path is not None
+            else source_path.parent / "work"
+        )
+        partial_path = artifact_dir / "partial_novel.txt"
+        result.update({
+            "status": "failed",
+            "failure_stage": failure_stage,
+            "error_type": type(error).__name__,
+            "error": str(error),
+            "traceback": traceback.format_exc(),
+            "novel_file": "",
+            "saved_chapter": int(state_values.get("saved_chapter", 0) or 0),
+            "partial_novel_file": (
+                str(partial_path.resolve()) if partial_path.is_file() else ""
+            ),
+            "candidate_files": _checkpoint_candidate_files(artifact_dir),
+            "outline_file": result.get("outline_file")
+            or (_find_run_output("Outline", run_id, ".json") if run_id else ""),
+        })
+        logger.error("❌ CLI任务失败：%s", error)
+    finally:
+        result["finished_at"] = _now_iso()
+        written_path = _write_json(target_path, result)
+        print(f"RESULT_PATH={written_path}")
+    return 0 if result["status"] == "succeeded" else 1
+
+
 def parse_cli_args():
     parser = argparse.ArgumentParser(
         description="AutoWrite 小说流水线命令行入口"
@@ -525,6 +920,11 @@ def parse_cli_args():
         action="store_true",
         help="自动批准架构师大纲",
     )
+    parser.add_argument(
+        "--restart",
+        action="store_true",
+        help="忽略兼容断点并创建新运行",
+    )
     return parser.parse_args()
 
 
@@ -546,6 +946,7 @@ if __name__ == "__main__":
                 cli_args.job_file,
                 cli_args.result_file,
                 cli_args.auto_approve,
+                restart_failed=cli_args.restart,
             )
         )
     if cli_args.validate_job_file:

@@ -1,4 +1,5 @@
 import datetime
+import difflib
 import json
 import logging
 import os
@@ -7,6 +8,7 @@ import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from typing import Any
 from pydantic import BaseModel, Field, model_validator
 from langchain_openai import ChatOpenAI
@@ -63,6 +65,56 @@ def _build_output_path(title: str, run_id: str = "") -> str:
         safe = f"{safe}_{_safe_file_stem(run_id, 'run')}"
     os.makedirs("Novel", exist_ok=True)
     return os.path.join("Novel", f"{safe}.txt")
+
+def _atomic_write_text(path: str | os.PathLike, content: str) -> Path:
+    target = Path(path).expanduser().resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_suffix(target.suffix + ".tmp")
+    temporary.write_text(content, encoding="utf-8")
+    temporary.replace(target)
+    return target
+
+
+def _atomic_write_json(path: str | os.PathLike, payload: dict) -> Path:
+    return _atomic_write_text(
+        path,
+        json.dumps(payload, ensure_ascii=False, indent=2),
+    )
+
+
+def stage_accepted_chapter(
+    artifact_dir: str | os.PathLike,
+    chapter_num: int,
+    chapter_text: str,
+) -> str:
+    work_dir = Path(artifact_dir).expanduser().resolve()
+    chapters_dir = work_dir / "chapters"
+    _atomic_write_text(
+        chapters_dir / f"{int(chapter_num):04d}.txt",
+        str(chapter_text).strip(),
+    )
+    chapter_parts = [
+        item.read_text(encoding="utf-8").strip()
+        for item in sorted(chapters_dir.glob("*.txt"))
+    ]
+    partial = _atomic_write_text(
+        work_dir / "partial_novel.txt",
+        "\n\n".join(part for part in chapter_parts if part),
+    )
+    return str(partial)
+
+
+def publish_staged_novel(
+    title: str,
+    run_id: str,
+    partial_novel_file: str | os.PathLike,
+) -> str:
+    source = Path(partial_novel_file).expanduser().resolve()
+    if not source.is_file() or not source.read_text(encoding="utf-8").strip():
+        raise RuntimeError("小说中转文件不存在或为空，拒绝发布")
+    target = Path(_build_output_path(title, run_id)).resolve()
+    _atomic_write_text(target, source.read_text(encoding="utf-8"))
+    return str(target)
 
 def list_outline_files() -> list[dict]:
     files = []
@@ -208,10 +260,14 @@ CHAPTER_FORMAT_PROMPT = """正文输出必须严格使用以下唯一格式：
 除这一行章节标题和正文外，不要输出任何说明。"""
 
 ARCHITECT_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
-字段必须完整：novel_title 为字符串；world_bible 为字符串；chapter_outlines 为对象，键是纯数字章节号、值是章节细纲；novel_tags 为对象；estimated_words 为整数。
-novel_tags 必须完整包含 core、情节、角色、情绪、背景五个字段。core 为一个核心Tag字符串；其余四个字段为辅助Tag字符串数组，四类合计必须为5-7个且不得重复。
+字段必须完整：novel_title 为字符串；world_bible 为字符串；chapter_outlines 为对象，键是纯数字章节号、值是章节细纲；estimated_words 为整数。不要输出 novel_tags，Tag 会在大纲定稿后由独立分类器选择。
+world_bible 建议控制在500-800字；每章细纲建议控制在220-400字，避免无边界扩写。
 chapter_outlines 的每个值必须是纯字符串，不能是对象、数组或带字段名的嵌套结构；字符串开头第一个非空字符必须是【开场状态】，不要在细纲前写“第X章”“章节标题”或小标题。
 chapter_outlines 中每一章细纲去除空白后必须不少于 200 字。每章细纲必须严格使用固定中括号标签组织内容，非最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【结尾结果】【下一章钩子】；最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。每章只设置一个主冲突、一个关键转折和一个关系变化，给正文留下足够场景空间；不要把多章剧情压缩成摘要。禁止使用“开场：”“开场状态：”“核心冲突：”等冒号标签，禁止用空话凑字数。"""
+
+TAG_SELECTION_PROMPT = """你是小说分类器。只能依据已经完成的标题、世界观和完整大纲选择Tag，绝对不能修改或建议修改故事。
+必须仅输出有效JSON：core为核心Tag字符串；情节、角色、情绪、背景为字符串数组。
+core必须从核心Tag库精确选择1个；四类辅助Tag合计选择5-7个且不得重复，只能使用对应分类词库原词。"""
 
 AUDITOR_JSON_PROMPT = """必须仅输出一个有效 JSON 对象，不要输出 Markdown 或说明文字。
 字段必须完整：审核状态为“通过”或“不通过”；发现的问题为逻辑硬伤或大纲偏离字符串数组；警告为软性问题字符串数组；套路执行状态为“通过”或“不通过”；套路问题为未完成的强制套路任务字符串数组；修改建议为字符串；大纲完成度、连续性评分、衔接评分为0到100整数；已完成事件、未完成事件、阻断问题、结局问题为字符串数组；结局完整性为布尔值。
@@ -537,6 +593,50 @@ def outline_validation_issues(outlines: dict, target_chapters: int) -> list[str]
         for label in required_labels:
             if f"【{label}】" not in body:
                 issues.append(f"第{key}章细纲缺少规范标签【{label}】")
+    return issues
+OPEN_FINALE_MARKERS = (
+    "这只是开始",
+    "才刚刚开始",
+    "为续集",
+    "下一段旅程",
+    "下一个目标",
+    "新的挑战",
+    "复仇之路才刚",
+    "寻找幕后黑手",
+    "追查幕后黑手",
+    "还有未完成的事",
+    "最后的战场",
+    "大战爆发",
+    "踏上征途",
+    "开放结局",
+)
+
+
+def finale_outline_validation_issues(
+    outlines: dict, target_chapters: int
+) -> list[str]:
+    target_chapters = max(1, int(target_chapters))
+    key = str(target_chapters)
+    outline = str((outlines or {}).get(key, ""))
+    sections = _outline_sections(outline)
+    ending = sections.get("全书结局", "") or sections.get("结尾结果", "")
+    issues = []
+    if "【下一章钩子】" in _outline_body_text(outline):
+        issues.append("最终章不得包含【下一章钩子】")
+    for marker in OPEN_FINALE_MARKERS:
+        if marker in ending:
+            issues.append(f"最终章仍在开启后续主线：{marker}")
+    action_events = _split_required_events(sections.get("关键行动", ""))
+    if len(action_events) > 4:
+        issues.append(
+            f"最终章关键行动超过4个，当前为{len(action_events)}个，"
+            "必须压缩为单一终局冲突"
+        )
+    if ending and not any(
+        signal in ending
+        for signal in ("结束", "落幕", "尘埃落定", "重建", "多年后", "年后", "从此")
+    ):
+        issues.append("最终章缺少明确的故事结束信号")
     return issues
 
 
@@ -1351,7 +1451,11 @@ def build_pattern_plan(manifest: dict, chapters: int, words_per_chapter: int) ->
             "conflict_module": module.get("name", "按人物因果推进"),
             "conflict_stage": conflict_stage,
             "relationship_change": relationship_change,
-            "ending_hook": profile.get("ending_hook", "用新的后果、证据、规则或局势变化形成下一章钩子"),
+            "ending_hook": (
+                "以已解决主冲突后的余韵确认故事结束，禁止引出下一章、新任务或新主线"
+                if chapter == chapters
+                else profile.get("ending_hook", "用新的后果、证据、规则或局势变化形成下一章钩子")
+            ),
             "is_paywall_turn": chapter == paywall_chapter,
             "paywall_target_word": paywall_target_word if chapter == paywall_chapter else None,
             "total_words": total_words,
@@ -1398,7 +1502,7 @@ def format_pattern_chapter_task(task: dict) -> str:
             (f"本章{labels.get('conflict', '强套路')}模块", "conflict_module"),
             (f"{labels.get('conflict', '强套路')}执行阶段", "conflict_stage"),
             ("关系变化", "relationship_change"),
-            ("结尾钩子", "ending_hook"),
+            (("终局余韵" if task.get("is_final") else "结尾钩子"), "ending_hook"),
         )
     )
 
@@ -1564,6 +1668,7 @@ llm_writer = _create_llm(0.8, max_tokens=16384)
 llm_editor = _create_llm(0.5, max_tokens=4096)
 llm_auditor_raw = _create_llm(0, max_tokens=4096)
 llm_summarizer = _create_llm(0, max_tokens=4096)
+llm_tag_selector = _create_llm(0.1, max_tokens=2048)
 
 # ==========================================
 # 2. 强制 JSON 结构化定义 (键名保持中文)
@@ -1580,7 +1685,6 @@ class ArchitectOutput(BaseModel):
     novel_title: str = Field(description="小说的书名，8-20字，简洁有力有网感")
     world_bible: str = Field(description="不少于500字的世界观、力量体系、主角人设详细设定。")
     chapter_outlines: dict[str, str] = Field(description="章节号(纯数字)映射到不少于200字的详细细纲字符串。每个值必须从【开场状态】开始，不能是嵌套对象。")
-    novel_tags: NovelTagSelection = Field(description="严格从本地小说Tag库选择的作品分类")
     estimated_words: int = Field(default=0, description="预估总字数")
 
     @model_validator(mode='before')
@@ -1588,13 +1692,6 @@ class ArchitectOutput(BaseModel):
     def sanitize(cls, data: Any) -> Any:
         if not isinstance(data, dict):
             return data
-        tags = data.get("novel_tags")
-        if not isinstance(tags, dict):
-            tags = {}
-        tags.setdefault("core", "")
-        for category in ("情节", "角色", "情绪", "背景"):
-            tags.setdefault(category, [])
-        data["novel_tags"] = tags
         outlines = data.get("chapter_outlines", {})
         if isinstance(outlines, dict):
             ew = outlines.pop("estimated_words", None)
@@ -1607,6 +1704,10 @@ class ArchitectOutput(BaseModel):
         if "estimated_words" in data and isinstance(data["estimated_words"], str):
             data["estimated_words"] = int(data["estimated_words"])
         return data
+
+
+class OutlineRepairOutput(BaseModel):
+    chapter_outlines: dict[str, str] = Field(description="仅包含需要修复的章节号和完整细纲")
 
 class AuditReport(BaseModel):
     审核状态: str = Field(description="严格输出 '通过' 或 '不通过'。")
@@ -1741,6 +1842,16 @@ class ContinuityReview(BaseModel):
 
 llm_architect_structured = llm_architect.with_structured_output(
     ArchitectOutput,
+    method="function_calling",
+    include_raw=True,
+)
+llm_tag_selector_structured = llm_tag_selector.with_structured_output(
+    NovelTagSelection,
+    method="function_calling",
+    include_raw=True,
+)
+llm_outline_repair_structured = llm_architect.with_structured_output(
+    OutlineRepairOutput,
     method="function_calling",
     include_raw=True,
 )
@@ -2138,10 +2249,21 @@ def merge_story_ledger(
         if existing:
             if _normalized_fact_text(existing.get("statement", "")) == _normalized_fact_text(statement):
                 continue
-            raise LedgerMergeError(
-                f"{existing.get('id', fact_key)}不可变事实冲突："
-                f"已入库“{existing.get('statement', '')}”，新增“{statement}”"
+            base_key = f"{fact_key}__detail_c{int(chapter_num)}"
+            derived_key = base_key
+            suffix = 2
+            while derived_key in by_key:
+                derived_key = f"{base_key}_{suffix}"
+                suffix += 1
+            logger.warning(
+                "⚠️ 台账事实键 %s 已存在；连续性审核通过，"
+                "保留原事实并将新增细节记录为 %s",
+                fact_key,
+                derived_key,
             )
+            fact["derived_from_fact_key"] = fact_key
+            fact_key = derived_key
+            fact["fact_key"] = fact_key
         normalized_statement = _normalized_fact_text(statement)
         if normalized_statement in by_statement:
             continue
@@ -2465,11 +2587,13 @@ def _architect_content(value: Any) -> str:
     return str(content or "")
 
 
-def _extract_first_json_object(text: str) -> dict:
+def _extract_json_objects(text: str) -> list[dict]:
     source = str(text or "").strip()
     if not source:
-        raise ValueError("模型返回空内容")
+        return []
     decoder = json.JSONDecoder()
+    objects = []
+    seen = set()
     for index, char in enumerate(source):
         if char != "{":
             continue
@@ -2477,8 +2601,30 @@ def _extract_first_json_object(text: str) -> dict:
             payload, _ = decoder.raw_decode(source[index:])
         except json.JSONDecodeError:
             continue
-        if isinstance(payload, dict):
-            return payload
+        if not isinstance(payload, dict):
+            continue
+        signature = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+        if signature not in seen:
+            seen.add(signature)
+            objects.append(payload)
+    return objects
+
+
+def _json_candidate_score(payload: dict, required: set[str]) -> tuple[int, int, int]:
+    keys = set(payload)
+    return (
+        len(required.intersection(keys)),
+        int(required.issubset(keys)),
+        len(json.dumps(payload, ensure_ascii=False)),
+    )
+
+
+def _extract_first_json_object(text: str) -> dict:
+    objects = _extract_json_objects(text)
+    if objects:
+        return objects[0]
+    if not str(text or "").strip():
+        raise ValueError("模型返回空内容")
     raise ValueError("未找到完整 JSON 对象")
 
 
@@ -2489,17 +2635,33 @@ def _architect_output_from_candidate(value: Any) -> ArchitectOutput:
         parsed = value.get("parsed")
         if parsed is not None:
             return _architect_output_from_candidate(parsed)
-        if {"novel_title", "world_bible", "chapter_outlines"}.intersection(value):
-            return ArchitectOutput.model_validate(value)
+
+    candidates = []
+    if isinstance(value, dict) and "raw" not in value:
+        candidates.append(value)
     for payload in _architect_tool_payloads(value):
         if isinstance(payload, dict):
+            candidates.append(payload)
+        elif isinstance(payload, str) and payload.strip():
+            candidates.extend(_extract_json_objects(payload))
+    candidates.extend(_extract_json_objects(_architect_content(value)))
+
+    required = {"novel_title", "world_bible", "chapter_outlines"}
+    candidates.sort(
+        key=lambda payload: _json_candidate_score(payload, required),
+        reverse=True,
+    )
+    last_error = None
+    for payload in candidates:
+        try:
             return ArchitectOutput.model_validate(payload)
-        if isinstance(payload, str) and payload.strip():
-            return ArchitectOutput.model_validate(
-                _extract_first_json_object(payload)
-            )
-    content = _architect_content(value)
-    return ArchitectOutput.model_validate(_extract_first_json_object(content))
+        except Exception as error:
+            last_error = error
+    if last_error is not None:
+        raise last_error
+    if not _architect_content(value).strip():
+        raise ValueError("架构师返回内容为空")
+    raise ValueError("无法从架构师返回中解析完整的顶层JSON对象")
 
 
 def _structured_output_from_candidate(value: Any, schema: type[BaseModel]) -> BaseModel:
@@ -2616,6 +2778,200 @@ def _safe_structured_invoke(
     return None
 
 
+NOVEL_TAG_ALIASES = {
+    "末世求生": "末日求生",
+    "女医生": "医生",
+    "男医生": "医生",
+    "娱乐圈": "娱乐圏",
+    "民国旧影": "民国I旧影",
+    "糙汉": "糙汊",
+    "婆媳": "娑媳",
+}
+
+CORE_TAG_SIGNALS = {
+    "婚姻家庭": ("婚姻", "夫妻", "婆媳", "家庭", "离婚"),
+    "女生生活": ("女性", "女孩", "闺蜜", "女生"),
+    "男生生活": ("男人", "兄弟", "男生"),
+    "现言甜宠": ("甜宠", "恋爱", "总裁", "现代爱情"),
+    "虐心婚恋": ("虐恋", "背叛", "追妻", "婚恋"),
+    "青春虐恋": ("青春", "校园", "初恋", "遗憾"),
+    "男生情感": ("父子", "兄弟", "男人", "情感"),
+    "女性成长": ("女性成长", "独立", "觉醒", "大女主"),
+    "悬疑惊悚": ("悬疑", "推理", "凶案", "惊悚", "诡异", "规则怪谈"),
+    "玄幻仙侠": ("修仙", "宗门", "灵气", "仙侠", "剑修", "丹药"),
+    "宫斗宅斗": ("宫斗", "宅斗", "后宫", "嫡女"),
+    "年代": ("年代", "知青", "改革开放"),
+    "古言甜宠": ("古言", "王爷", "侯府", "甜宠"),
+    "古风世情": ("古代", "世家", "宗族", "古风"),
+    "都市日常": ("都市", "日常", "职场", "城市"),
+    "男频脑洞": ("系统", "末日", "重生", "升级", "异能", "脑洞"),
+    "女频脑洞": ("穿书", "女频", "系统", "重生", "空间"),
+    "古言虐恋": ("古言", "虐恋", "和离", "王妃"),
+    "历史古代": ("历史", "朝廷", "皇帝", "将军", "权谋"),
+    "民国I旧影": ("民国", "军阀", "旧上海"),
+    "纯爱": ("纯爱", "双男主", "双女主"),
+}
+
+CORE_TAG_FALLBACKS = {
+    "悬疑惊悚": ["推理", "惊悚", "民间奇闻", "规则怪谈", "救赎"],
+    "玄幻仙侠": ["升级流", "金手指", "爽文", "架空", "重生"],
+    "男频脑洞": ["系统", "金手指", "升级流", "爽文", "都市异能"],
+    "女频脑洞": ["系统", "重生", "大女主", "爽文", "救赎"],
+    "女性成长": ["大女主", "女性互助", "打脸逆袭", "励志", "救赎"],
+    "婚姻家庭": ["婚恋", "家庭", "先婚后爱", "救赎", "励志"],
+    "虐心婚恋": ["婚恋", "追妻火葬场", "虐文", "救赎", "现代"],
+    "现言甜宠": ["先婚后爱", "甜宠", "暗恋", "霸总", "现代"],
+    "历史古代": ["权谋", "架空", "古代", "爽文", "励志"],
+    "宫斗宅斗": ["权谋", "架空", "古代", "大女主", "打脸逆袭"],
+    "都市日常": ["职场", "现代", "励志", "救赎", "爽文"],
+    "其他": ["架空", "救赎", "励志", "爽文", "现代"],
+}
+
+
+def _normalized_tag_text(value: Any) -> str:
+    return re.sub(r"[\W_]+", "", str(value or "")).lower()
+
+
+def _canonical_novel_tag(value: Any, allowed: list[str]) -> str:
+    tag = str(value or "").strip()
+    if tag in allowed:
+        return tag
+    alias = NOVEL_TAG_ALIASES.get(tag, "")
+    if alias in allowed:
+        return alias
+    normalized = _normalized_tag_text(tag)
+    if not normalized:
+        return ""
+    contained = [
+        candidate
+        for candidate in allowed
+        if _normalized_tag_text(candidate) in normalized
+        or normalized in _normalized_tag_text(candidate)
+    ]
+    if contained:
+        return max(contained, key=len)
+    scored = [
+        (
+            difflib.SequenceMatcher(
+                None, normalized, _normalized_tag_text(candidate)
+            ).ratio(),
+            candidate,
+        )
+        for candidate in allowed
+    ]
+    score, candidate = max(scored, default=(0.0, ""))
+    return candidate if score >= 0.80 else ""
+
+
+def _tag_relevance_score(tag: str, corpus: str, core: str) -> int:
+    normalized_corpus = _normalized_tag_text(corpus)
+    normalized_tag = _normalized_tag_text(tag)
+    score = 10000 if normalized_tag and normalized_tag in normalized_corpus else 0
+    for source, target in NOVEL_TAG_ALIASES.items():
+        if target == tag and _normalized_tag_text(source) in normalized_corpus:
+            score += 8000
+    fallbacks = CORE_TAG_FALLBACKS.get(
+        core, CORE_TAG_FALLBACKS["其他"]
+    )
+    if tag in fallbacks:
+        score += 1000 - fallbacks.index(tag) * 10
+    return score
+
+
+def _fallback_core_tag(library: dict, corpus: str) -> str:
+    allowed = list(library.get("core_tags", []))
+    best_tag = "其他" if "其他" in allowed else (allowed[0] if allowed else "")
+    best_score = 0
+    normalized = _normalized_tag_text(corpus)
+    for tag in allowed:
+        score = 10000 if _normalized_tag_text(tag) in normalized else 0
+        score += 100 * sum(
+            normalized.count(_normalized_tag_text(signal))
+            for signal in CORE_TAG_SIGNALS.get(tag, ())
+        )
+        if score > best_score:
+            best_tag, best_score = tag, score
+    return best_tag
+
+
+def finalize_novel_tag_selection(
+    selection: Any,
+    library: dict,
+    corpus: str,
+) -> dict:
+    raw = selection if isinstance(selection, dict) else {}
+    allowed_core = list(library.get("core_tags", []))
+    core = _canonical_novel_tag(raw.get("core"), allowed_core)
+    if not core:
+        core = _fallback_core_tag(library, corpus)
+
+    categories = ("情节", "角色", "情绪", "背景")
+    secondary = library.get("secondary_tags", {})
+    result = {"core": core, **{category: [] for category in categories}}
+    selected = set()
+    for category in categories:
+        allowed = list(secondary.get(category, []))
+        values = raw.get(category, [])
+        if not isinstance(values, list):
+            values = []
+        for value in values:
+            tag = _canonical_novel_tag(value, allowed)
+            if tag and tag not in selected and len(selected) < 7:
+                result[category].append(tag)
+                selected.add(tag)
+
+    ranked = []
+    ordinal = 0
+    for category in categories:
+        for tag in secondary.get(category, []):
+            if tag not in selected:
+                ranked.append(
+                    (_tag_relevance_score(tag, corpus, core), -ordinal, category, tag)
+                )
+            ordinal += 1
+    ranked.sort(reverse=True)
+    for _, _, category, tag in ranked:
+        if len(selected) >= 5:
+            break
+        result[category].append(tag)
+        selected.add(tag)
+    return normalize_novel_tag_selection(result)
+
+
+def select_novel_tags(
+    title: str,
+    world_bible: str,
+    chapter_outlines: dict,
+    material_config: dict,
+    pattern_config: dict,
+) -> dict:
+    library = load_novel_tag_library()
+    corpus = "\n".join([
+        title,
+        world_bible,
+        *map(str, chapter_outlines.values()),
+        json.dumps(material_config, ensure_ascii=False),
+        json.dumps(pattern_config, ensure_ascii=False),
+    ])
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", TAG_SELECTION_PROMPT),
+        ("user", "【Tag词库】\n{library}\n\n【已完成小说】\n{story}"),
+    ])
+    result = _safe_structured_invoke(
+        prompt,
+        {
+            "library": format_novel_tag_library(library),
+            "story": corpus,
+        },
+        llm_tag_selector,
+        llm_tag_selector_structured,
+        NovelTagSelection,
+        "小说Tag分类",
+    )
+    raw = result.model_dump() if result is not None else {}
+    return finalize_novel_tag_selection(raw, library, corpus)
+
+
 def _architect_response_diagnostics(value: Any) -> str:
     raw = _architect_raw_message(value)
     content_length = len(_architect_content(value))
@@ -2705,20 +3061,98 @@ def invoke_architect_with_fallback(prompt, inputs: dict) -> ArchitectOutput:
 # 3. 核心节点
 # ==========================================
 
+def _validate_architect_candidate(
+    result: ArchitectOutput,
+    chapters: int,
+    strong_pattern: bool,
+    manifest: dict,
+    pattern_plan: dict,
+) -> tuple[dict[str, str], dict[str, str], list[str], list[str]]:
+    raw_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
+    raw_outlines = normalize_outline_structures(raw_outlines, chapters)
+    issues = outline_validation_issues(raw_outlines, chapters)
+    issues.extend(finale_outline_validation_issues(raw_outlines, chapters))
+    warnings = []
+    final_outlines = raw_outlines
+    if strong_pattern:
+        warnings = strong_pattern_outline_content_warnings(
+            manifest, pattern_plan, raw_outlines, chapters
+        )
+        final_outlines = attach_pattern_plan_to_outlines(raw_outlines, pattern_plan)
+        issues.extend(
+            strong_pattern_validation_issues(
+                manifest, pattern_plan, final_outlines, chapters
+            )
+        )
+    return raw_outlines, final_outlines, list(dict.fromkeys(issues)), warnings
+
+
+def _repair_best_outline_candidate(
+    result: ArchitectOutput,
+    raw_outlines: dict[str, str],
+    issues: list[str],
+    chapters: int,
+) -> ArchitectOutput:
+    invalid_keys = {
+        match.group(1)
+        for issue in issues
+        if (match := re.search(r"第(\d+)章", issue))
+    }
+    if any("最终章" in issue for issue in issues):
+        invalid_keys.add(str(chapters))
+    invalid_keys = {
+        key for key in invalid_keys if key in raw_outlines
+    } or {str(chapters)}
+    repair_prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "你是大纲修复器。只能重写指定的问题章节，禁止修改书名、世界观和其他合格章节。"
+            "仅输出chapter_outlines JSON对象。每章220-400字并保留全部规范标签；"
+            "最终章必须闭环主冲突，禁止续集钩子、新任务或新反派。",
+        ),
+        (
+            "user",
+            "【待修章节】\n{outlines}\n\n【确定性问题】\n{issues}",
+        ),
+    ])
+    repaired = _safe_structured_invoke(
+        repair_prompt,
+        {
+            "outlines": json.dumps(
+                {key: raw_outlines[key] for key in sorted(invalid_keys, key=int)},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            "issues": "\n".join(f"- {issue}" for issue in issues),
+        },
+        llm_architect,
+        llm_outline_repair_structured,
+        OutlineRepairOutput,
+        "架构师局部大纲修复",
+    )
+    if repaired is None:
+        return result
+    merged = dict(raw_outlines)
+    for key, value in repaired.chapter_outlines.items():
+        normalized_key = str(key)
+        if normalized_key in invalid_keys:
+            merged[normalized_key] = _outline_value_to_text(
+                value, is_final=int(normalized_key) >= chapters
+            )
+    return result.model_copy(update={"chapter_outlines": merged}, deep=True)
+
+
 def architect_node(state: NovelState):
     logger.info("🧠 架构师正在深度推演世界观与大纲...")
     if state.get("world_bible"):
         return {}
 
-    novel_tag_library = load_novel_tag_library()
     pattern_config = normalize_pattern_config(state.get("pattern_config", {}))
     material_config = normalize_material_config(state.get("material_config", {}))
     config_issues = validate_pattern_config(
         pattern_config, state.get("writer_style", "")
     )
-    config_issues.extend(
-        validate_material_config(material_config, pattern_config)
-    )
+    config_issues.extend(validate_material_config(material_config, pattern_config))
     if config_issues:
         raise LibraryValidationError("创作配置无效：" + "；".join(config_issues))
 
@@ -2728,7 +3162,6 @@ def architect_node(state: NovelState):
     if strong_pattern and validate_pattern_manifest(manifest):
         manifest = roll_pattern_manifest(pattern.get("key", STRONG_PATTERN_KEY))
     pattern_config["manifest"] = manifest
-
     materials_str = format_selected_materials(material_config)
 
     chapters = state.get("target_chapters", DEFAULT_CHAPTERS)
@@ -2749,72 +3182,86 @@ def architect_node(state: NovelState):
             f"{json.dumps(pattern_plan, ensure_ascii=False)}\n"
             "每章细纲必须严格服从对应章节任务，不得跳过已确认的核心反转卡点，"
             f"不得让{labels.get('conflict', '强套路')}模块无因果突然发生或被随机素材替代。"
-            f"请在细纲中清楚描述开篇钩子、45%-50%核心反转、{labels.get('protagonist', '主角')}状态变化、"
-            f"确认的{labels.get('ending', '结局')}方向和已选{labels.get('conflict', '强套路')}模块如何建立前因与后果；"
-            "允许使用符合剧情的自然措辞。"
-            "若本次随机素材非空，素材只能作为世界观舞台、人物关系或局部冲突补充，"
-            "不得替代强套路的核心驱动力和逐章节拍计划。"
+            f"请写清开篇钩子、45%-50%核心反转、{labels.get('protagonist', '主角')}状态变化、"
+            f"确认的{labels.get('ending', '结局')}方向和已选{labels.get('conflict', '强套路')}模块的因果；"
+            "素材只能作为世界观、人物关系或局部冲突补充。"
         )
     chapter_req = (
         f"规划严格且仅有{chapters}章的详细细纲，每章正文目标{words_per}字。"
-        f"每章细纲去除空白后必须不少于{MIN_OUTLINE_CHARS}字，"
-        "chapter_outlines 的每章值必须是纯字符串，且第一个非空字符必须是【开场状态】，不得输出嵌套对象、字段字典、章节标题或小标题。"
-        "每章只承载一个主冲突、一个关键转折和一个关系变化；"
-        "关键场面必须能展开为3-4个有目标、阻力、行动和结果的场景，"
-        "不得用几句话跳过说服、背叛、和解、暴露、反杀等核心场面。"
-        "每章必须写清读者期待点：主角想要什么、阻力是什么、章末发生什么新变化。"
-        "必须使用固定中括号标签输出章节结构。非最终章依次包含："
-        "【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】"
-        "【结尾结果】【下一章钩子】；最终章依次包含："
+        f"每章细纲不少于{MIN_OUTLINE_CHARS}字，建议220-400字。"
+        "chapter_outlines 的每章值必须是纯字符串，首字符必须是【开场状态】，"
+        "不得输出嵌套对象、章节标题或小标题。每章只承载一个主冲突、"
+        "一个关键转折和一个关系变化，关键场面拆成3-4个场景。"
+        "非最终章依次包含：【开场状态】【核心冲突】【关键行动】【人物关系变化】"
+        "【重要信息或伏笔】【结尾结果】【下一章钩子】；最终章依次包含："
         "【开场状态】【核心冲突】【关键行动】【人物关系变化】【重要信息或伏笔】【全书结局】。"
-        "不要使用“开场：”“开场状态：”“【开场状态】：”等冒号结构。"
-        f"\n【创作套路：{pattern.get('name', '无套路')}】\n{pattern.get('architect', '')}"
-        f"{strong_requirement}"
+        "最终章必须解决本书主冲突、交代主要人物命运并给出明确结束信号；"
+        "禁止使用‘这只是开始’‘下一个目标’‘为续集留伏笔’等方式开启新主线。"
+        "不要使用冒号标签，也不要输出novel_tags。"
+        f"\n【创作套路：{pattern.get('name', '无套路')}】\n"
+        f"{pattern.get('architect', '')}{strong_requirement}"
     )
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("architect_system.md")),
         ("system", ARCHITECT_JSON_PROMPT),
-        ("user", load_prompt("architect_user.md"))
-        ])
-    
+        ("user", load_prompt("architect_user.md")),
+    ])
+
     result = None
+    final_outlines = {}
     outline_issues = []
     outline_warnings = []
     active_chapter_req = chapter_req
+    best = None
+    best_score = None
+    last_error = None
+
     for outline_attempt in range(APP_INVOKE_ATTEMPTS):
-        result = invoke_architect_with_fallback(prompt, {
-            "user_idea": state.get("user_idea"),
-            "materials": materials_str,
-            "novel_tag_library": format_novel_tag_library(novel_tag_library),
-            "chapter_requirement": active_chapter_req
-        })
-        chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
-        chapter_outlines = normalize_outline_structures(chapter_outlines, chapters)
-        outline_issues = outline_validation_issues(chapter_outlines, chapters)
-        novel_tags = normalize_novel_tag_selection(result.novel_tags.model_dump())
-        outline_issues.extend(
-            f"小说Tag：{issue}"
-            for issue in validate_novel_tag_selection(
-                novel_tags, novel_tag_library
+        try:
+            candidate = invoke_architect_with_fallback(
+                prompt,
+                {
+                    "user_idea": state.get("user_idea"),
+                    "materials": materials_str,
+                    "chapter_requirement": active_chapter_req,
+                },
+            )
+        except RuntimeError as error:
+            last_error = error
+            outline_issues = [str(error)]
+            logger.warning(
+                "   ⚠️ 架构师输出无法解析 (%d/%d): %s",
+                outline_attempt + 1,
+                APP_INVOKE_ATTEMPTS,
+                error,
+            )
+            active_chapter_req = (
+                chapter_req
+                + "\n【上一轮输出过长或无法解析】请压缩世界观和各章细纲，只输出完整顶层JSON。"
+            )
+            continue
+
+        raw_outlines, candidate_outlines, candidate_issues, candidate_warnings = (
+            _validate_architect_candidate(
+                candidate, chapters, strong_pattern, manifest, pattern_plan
             )
         )
-        if strong_pattern:
-            outline_warnings = strong_pattern_outline_content_warnings(
-                manifest, pattern_plan, chapter_outlines, chapters
-            )
-            chapter_outlines = attach_pattern_plan_to_outlines(chapter_outlines, pattern_plan)
-            outline_issues.extend(
-                strong_pattern_validation_issues(
-                    manifest, pattern_plan, chapter_outlines, chapters
-                )
-            )
+        score = (
+            len(candidate_issues),
+            -sum(
+                min(outline_char_count(value), 600)
+                for value in raw_outlines.values()
+            ),
+        )
+        if best_score is None or score < best_score:
+            best = (candidate, raw_outlines)
+            best_score = score
+        result = candidate
+        final_outlines = candidate_outlines
+        outline_issues = candidate_issues
+        outline_warnings = candidate_warnings
         if not outline_issues:
-            if outline_warnings:
-                logger.warning(
-                    "   ⚠️ 强套路细纲存在措辞层面的提醒，但结构化任务已补齐，不阻断生成: %s",
-                    "；".join(outline_warnings[:5]),
-                )
             break
         logger.warning(
             "   ⚠️ 架构师大纲验收未通过 (%d/%d): %s",
@@ -2826,50 +3273,82 @@ def architect_node(state: NovelState):
             f"{chapter_req}\n【上一稿确定性验收失败，下一稿必须逐项修复】\n"
             + "\n".join(f"- {issue}" for issue in outline_issues)
         )
-    if result is None or outline_issues:
-        raise RuntimeError(
-            f"架构师连续{APP_INVOKE_ATTEMPTS}次未能生成合格大纲："
-            f"{'；'.join(outline_issues[:5])}"
+
+    if outline_issues and best is not None:
+        result = _repair_best_outline_candidate(
+            best[0], best[1], outline_issues, chapters
         )
-    chapter_outlines = normalize_chapter_outlines(result.chapter_outlines, chapters)
-    chapter_outlines = normalize_outline_structures(chapter_outlines, chapters)
-    if strong_pattern:
-        chapter_outlines = attach_pattern_plan_to_outlines(chapter_outlines, pattern_plan)
-    novel_tags = normalize_novel_tag_selection(result.novel_tags.model_dump())
-    chapter_contracts = build_chapter_contracts(chapter_outlines)
+        _, final_outlines, outline_issues, outline_warnings = (
+            _validate_architect_candidate(
+                result, chapters, strong_pattern, manifest, pattern_plan
+            )
+        )
+
+    if result is None or outline_issues:
+        detail = "；".join(outline_issues[:5])
+        if not detail and last_error is not None:
+            detail = str(last_error)
+        raise RuntimeError(
+            f"架构师连续{APP_INVOKE_ATTEMPTS}次未能生成合格大纲：{detail}"
+        )
+
+    if outline_warnings:
+        logger.warning(
+            "   ⚠️ 强套路细纲存在措辞提醒但不阻断生成: %s",
+            "；".join(outline_warnings[:5]),
+        )
+
+    novel_tags = select_novel_tags(
+        result.novel_title,
+        result.world_bible,
+        final_outlines,
+        material_config,
+        pattern_config,
+    )
+    tag_issues = validate_novel_tag_selection(
+        novel_tags, load_novel_tag_library()
+    )
+    if tag_issues:
+        logger.warning("⚠️ Tag本地兜底后仍有提醒: %s", "；".join(tag_issues))
+
+    chapter_contracts = build_chapter_contracts(final_outlines)
     finale_contract = build_finale_contract(chapter_contracts, manifest)
 
-    # 保存大纲 JSON 到 Outline/ 目录
     try:
         os.makedirs("Outline", exist_ok=True)
         safe_title = _safe_file_stem(result.novel_title, "未命名大纲")
         if state.get("run_id"):
             safe_title = f"{safe_title}_{_safe_file_stem(state.get('run_id'), 'run')}"
         save_path = os.path.join("Outline", f"{safe_title}.json")
-        with open(save_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "schema_version": 2,
-                "title": result.novel_title,
-                "run_id": state.get("run_id", ""),
-                "world_bible": result.world_bible,
-                "novel_tags": novel_tags,
-                "chapter_outlines": chapter_outlines,
-                "chapter_contracts": chapter_contracts,
-                "finale_contract": finale_contract,
-                "material_config": material_config,
-                "pattern_config": pattern_config,
-                "estimated_words": chapters * words_per,
-                "created_at": datetime.datetime.now().isoformat()
-            }, f, ensure_ascii=False, indent=2)
+        with open(save_path, "w", encoding="utf-8") as stream:
+            json.dump(
+                {
+                    "schema_version": 2,
+                    "title": result.novel_title,
+                    "run_id": state.get("run_id", ""),
+                    "world_bible": result.world_bible,
+                    "novel_tags": novel_tags,
+                    "chapter_outlines": final_outlines,
+                    "chapter_contracts": chapter_contracts,
+                    "finale_contract": finale_contract,
+                    "material_config": material_config,
+                    "pattern_config": pattern_config,
+                    "estimated_words": chapters * words_per,
+                    "created_at": datetime.datetime.now().isoformat(),
+                },
+                stream,
+                ensure_ascii=False,
+                indent=2,
+            )
         logger.info("📁 大纲已保存 → %s", save_path)
-    except Exception as e:
-        logger.warning("⚠️ 大纲保存失败: %s", e)
+    except Exception as error:
+        logger.warning("⚠️ 大纲保存失败: %s", error)
 
     return {
         "novel_title": result.novel_title,
         "world_bible": result.world_bible,
         "novel_tags": novel_tags,
-        "chapter_outlines": chapter_outlines,
+        "chapter_outlines": final_outlines,
         "chapter_contracts": chapter_contracts,
         "finale_contract": finale_contract,
         "material_config": material_config,
@@ -2878,10 +3357,8 @@ def architect_node(state: NovelState):
         "ledger_delta": {},
         "continuity_report": {},
         "draft_candidates": [],
-        "current_chapter": 1
+        "current_chapter": 1,
     }
-
-
 def _build_scene_plan(
     state: NovelState, chapter_contract: dict, finale_contract: dict
 ) -> dict:
@@ -2906,6 +3383,7 @@ def _build_scene_plan(
     audit = state.get("audit_report", {})
     review_feedback = (
         f"未完成事件：{audit.get('未完成事件', [])}；"
+        f"结局问题：{audit.get('结局问题', [])}；"
         f"阻断问题：{audit.get('阻断问题', [])}；"
         f"修改建议：{audit.get('修改建议', '无')}"
     )
@@ -2974,8 +3452,25 @@ def writer_node(state: NovelState):
     
     audit_report = state.get("audit_report", {})
     editor_report = state.get("editor_report", {})
+    continuity_report = normalize_continuity_report(
+        state.get("continuity_report", {})
+    )
+    previous_draft = state.get("current_draft", "")
+    if final_chapter and iteration >= 5:
+        repair_base = select_best_draft(
+            state,
+            require_complete_finale=False,
+            require_continuity_clean=True,
+        )
+        if repair_base:
+            previous_draft = repair_base.get("draft", previous_draft)
+            audit_report = repair_base.get("audit_report", audit_report)
+            editor_report = repair_base.get("editor_report", editor_report)
+            continuity_report = normalize_continuity_report(
+                repair_base.get("continuity_report", continuity_report)
+            )
     feedback = ""
-    previous_draft_chars = chapter_body_char_count(state.get("current_draft", ""))
+    previous_draft_chars = chapter_body_char_count(previous_draft)
     if iteration == 2:
         feedback += "\n\n【第二稿模式】：根据审核反馈完整重写，优先纠正大纲偏离和连续性问题。"
     elif iteration == 3:
@@ -3006,14 +3501,12 @@ def writer_node(state: NovelState):
     if audit_report.get("审核状态") == "不通过":
         feedback += (
             f"\n\n【审计退稿修改令】：未完成事件：{audit_report.get('未完成事件', [])}；"
+            f"结局问题：{audit_report.get('结局问题', [])}；"
             f"阻断问题：{audit_report.get('阻断问题', [])}；"
             f"逻辑或大纲问题：{audit_report.get('发现的问题')}；"
             f"套路执行问题：{audit_report.get('套路问题', [])}。"
             f"请按以下建议修复：{audit_report.get('修改建议')}"
         )
-    continuity_report = normalize_continuity_report(
-        state.get("continuity_report", {})
-    )
     if continuity_report["conflicts"]:
         feedback += "\n\n【连续性硬冲突修复令】：\n" + "\n".join(
             f"- {conflict.get('fact_id', '未知事实')}规定"
@@ -3030,9 +3523,14 @@ def writer_node(state: NovelState):
         )
 
     scene_plan = state.get("scene_plan", {})
-    if not scene_plan or iteration in (1, 3):
+    if (
+        not scene_plan
+        or iteration in (1, 3)
+        or (final_chapter and iteration >= 5)
+    ):
         plan_state = dict(state)
         plan_state["iteration_count"] = iteration
+        plan_state["audit_report"] = audit_report
         scene_plan = _build_scene_plan(plan_state, chapter_contract, finale_contract)
 
     prompt = ChatPromptTemplate.from_messages([
@@ -3054,7 +3552,7 @@ def writer_node(state: NovelState):
         "scene_plan": json.dumps(scene_plan, ensure_ascii=False, indent=2),
         "chapter_type": "最终章" if final_chapter else "普通章节",
         "length_guidance": length_guidance,
-        "previous_draft": state.get("current_draft", "") if iteration > 1 else "无",
+        "previous_draft": previous_draft if iteration > 1 else "无",
         "pattern_writer": pattern.get("writer", ""),
         "pattern_contract": format_pattern_manifest(pattern_config.get("manifest", {})),
         "pattern_chapter_task": format_pattern_chapter_task(pattern_task),
@@ -3314,6 +3812,33 @@ def _continuity_internal(state: NovelState) -> dict:
     }
 
 
+def _persist_draft_candidate(state: NovelState, candidate: dict) -> str:
+    artifact_dir = str(state.get("artifact_dir", "")).strip()
+    if not artifact_dir:
+        return ""
+    chapter = int(candidate.get("chapter", state.get("current_chapter", 1)))
+    iteration = int(candidate.get("iteration", state.get("iteration_count", 1)))
+    candidate_dir = (
+        Path(artifact_dir).expanduser().resolve()
+        / "candidates"
+        / f"chapter-{chapter:03d}"
+    )
+    path = candidate_dir / f"attempt-{iteration:02d}.json"
+    duplicate = 2
+    while path.exists():
+        path = candidate_dir / (
+            f"attempt-{iteration:02d}-resume-{duplicate:02d}.json"
+        )
+        duplicate += 1
+    payload = {
+        "schema_version": 1,
+        "run_id": state.get("run_id", ""),
+        "saved_at": datetime.datetime.now().isoformat(),
+        **candidate,
+    }
+    return str(_atomic_write_json(path, payload))
+
+
 def reviewer_node(state: NovelState):
     logger.info("🔍 审稿员正在进行逻辑+文风+连续性并行三检...")
     with ThreadPoolExecutor(max_workers=3) as pool:
@@ -3353,6 +3878,10 @@ def reviewer_node(state: NovelState):
         if item.get("chapter") == state.get("current_chapter", 1)
     ]
     candidates.append(candidate)
+    candidate_files = list(state.get("candidate_files", []))
+    candidate_file = _persist_draft_candidate(state, candidate)
+    if candidate_file and candidate_file not in candidate_files:
+        candidate_files.append(candidate_file)
     logger.info(
         "🔍 审计:%s | 连续性:%s | 文风:%d/10",
         audit_report.get("审核状态"),
@@ -3373,6 +3902,7 @@ def reviewer_node(state: NovelState):
             "问题": audit_report.get("结局问题", []),
         },
         "draft_candidates": candidates,
+        "candidate_files": candidate_files,
     }
 
 def summarizer_node(state: NovelState):
@@ -3426,14 +3956,29 @@ def summarizer_node(state: NovelState):
             f"第{current_chap_num}章台账合并失败，正文未入库：{error}"
         ) from error
 
-    file_path = _build_output_path(state.get("novel_title", "小说输出"), state.get("run_id", ""))
-    has_existing_content = os.path.exists(file_path) and os.path.getsize(file_path) > 0
-    
-    with open(file_path, "a", encoding="utf-8") as f:
-        if has_existing_content:
-            f.write("\n\n")
-        f.write(latest_chapter)
-    logger.info("💾 第 %d 章已安全入库 → %s", current_chap_num, file_path)
+    artifact_dir = str(state.get("artifact_dir", "")).strip()
+    if artifact_dir:
+        partial_novel_file = stage_accepted_chapter(
+            artifact_dir,
+            current_chap_num,
+            latest_chapter,
+        )
+        logger.info(
+            "💾 第 %d 章已写入中转区 → %s",
+            current_chap_num,
+            partial_novel_file,
+        )
+    else:
+        file_path = _build_output_path(
+            state.get("novel_title", "小说输出"), state.get("run_id", "")
+        )
+        has_existing_content = os.path.exists(file_path) and os.path.getsize(file_path) > 0
+        with open(file_path, "a", encoding="utf-8") as stream:
+            if has_existing_content:
+                stream.write("\n\n")
+            stream.write(latest_chapter)
+        partial_novel_file = str(Path(file_path).resolve())
+        logger.info("💾 第 %d 章已安全入库 → %s", current_chap_num, file_path)
 
     selected_state = dict(state)
     selected_state.update({
@@ -3466,6 +4011,7 @@ def summarizer_node(state: NovelState):
         "iteration_count": 0,
         "scene_plan": {},
         "draft_candidates": [],
+        "partial_novel_file": partial_novel_file,
         "saved_chapter": current_chap_num,
         "audit_report": {},
         "editor_report": {},

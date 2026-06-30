@@ -29,13 +29,15 @@ python launcher.py catalog
 python launcher.py run --ideas ideas.example.csv --config batch_config.example.json --workers 2
 python launcher.py status --batch-id batch-20260622-120000
 python launcher.py retry --batch-id batch-20260622-120000 --failed-only --workers 2
+# 如需丢弃失败章节断点并创建全新运行：
+python launcher.py retry --batch-id batch-20260622-120000 --failed-only --restart-failed
 ```
 
 不想每次输命令时，直接双击项目根目录的 `启动批量工具.bat`，或在本目录运行
 `batch_console.bat`。菜单里可以开始新批次、查看状态、重试失败任务、续跑未完成任务和
 刷新能力表；新批次默认按 `workers=2` 双并发执行。是否精炼点子由 CSV/JSONL 每行的 `refine_idea` 决定，不需要额外菜单项。
 
-`run` 和 `retry` 默认按 `max_concurrent_jobs: 2` 同时跑两篇；需要串行时传 `--workers 1`。单篇失败会记录错误并继续，成功任务在 `retry` 时自动跳过。小说正文和大纲统一输出到项目根目录的 `Novel/`、`Outline/`；每篇任务仍拥有独立的日志、状态和结果文件。
+`run` 和 `retry` 默认按 `max_concurrent_jobs: 2` 同时跑两篇；需要串行时传 `--workers 1`。单篇失败会记录错误并继续，成功任务在 `retry` 时自动跳过。大纲输出到项目根目录 `Outline/`；正文生成期间保存在任务的 `work/<run_id>/` 中转区，只有最终状态为 `succeeded` 才原子发布到根目录 `Novel/`。失败任务的 `result.json` 会保留 `checkpoint_file`、`partial_novel_file` 和 `candidate_files`，普通 `retry` 默认从失败章节继续。
 
 ## schema v2 选型
 

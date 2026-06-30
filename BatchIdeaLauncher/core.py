@@ -399,7 +399,12 @@ class AutoWriteCLI:
             atomic_write_json(result_path, result)
         return result
 
-    def run_job(self, job_dir: Path, timeout_seconds: int) -> dict:
+    def run_job(
+        self,
+        job_dir: Path,
+        timeout_seconds: int,
+        resume: bool = True,
+    ) -> dict:
         job_path = (job_dir / "job.json").resolve()
         result_path = (job_dir / "result.json").resolve()
         stdout_path = job_dir / "stdout.log"
@@ -413,6 +418,8 @@ class AutoWriteCLI:
             str(result_path),
             "--auto-approve",
         ]
+        if not resume:
+            command.append("--restart")
         try:
             completed = subprocess.run(
                 command,
@@ -1332,6 +1339,7 @@ class BatchRunner:
         total: int,
         record: dict,
         reuse_selection: bool,
+        restart_failed: bool,
     ) -> None:
         job_id = record["job_id"]
         idea = record.get("idea", "")
@@ -1427,6 +1435,7 @@ class BatchRunner:
             result = self.autowrite.run_job(
                 job_dir,
                 self.manifest["config"]["job_timeout_seconds"],
+                resume=not restart_failed,
             )
             if result.get("status") != "succeeded":
                 raise LauncherError(
@@ -1436,8 +1445,12 @@ class BatchRunner:
                 record["outputs"] = {
                     "novel_file": result.get("novel_file", ""),
                     "outline_file": result.get("outline_file", ""),
+                    "partial_novel_file": result.get("partial_novel_file", ""),
+                    "checkpoint_file": result.get("checkpoint_file", ""),
+                    "candidate_files": result.get("candidate_files", []),
                     "run_id": result.get("run_id", ""),
                     "saved_chapter": result.get("saved_chapter", ""),
+                    "resumed": result.get("resumed", False),
                     "material_config": result.get("material_config", {}),
                     "pattern_config": result.get("pattern_config", {}),
                 }
@@ -1469,6 +1482,7 @@ class BatchRunner:
         statuses: set[str] | None = None,
         reuse_selection: bool = False,
         max_workers: int | None = None,
+        restart_failed: bool = False,
     ) -> dict:
         self.refresh_capabilities()
         statuses = statuses or {"pending", "failed", "selecting", "running"}
@@ -1496,6 +1510,7 @@ class BatchRunner:
                         total,
                         record,
                         reuse_selection,
+                        restart_failed,
                     ): record
                     for idx, record in jobs
                 }

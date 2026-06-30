@@ -32,8 +32,9 @@ D:\文档\工具\AutoWrite
 - `启动AutoWrite-本地安全.bat`：推荐启动入口。
 - `.env.example`：配置模板。
 - `.env`：你自己创建的本地密钥配置文件。
-- `Novel\`：生成的小说正文输出目录。
+- `Novel\`：仅收录最终状态为 `succeeded` 的完整小说正文。
 - `Outline\`：生成的大纲输出目录。
+- 批量任务的未完成正文、候选稿与断点保存在对应 job 的 `work\<run_id>\` 中转目录。
 - `Role\`：写作、审稿、责编等提示词。
 - `material_library.json`：素材库。
 - `pattern_library.json`：套路库。

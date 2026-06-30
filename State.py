@@ -38,6 +38,10 @@ class NovelState(TypedDict):
     summary_skipped: bool     # 最后一章保存后是否跳过摘要模型
     novel_title: str          # 小说标题
     run_id: str               # 单次网页/命令行运行标识，用于多开时隔离输出
+    artifact_dir: str         # 批量任务的章节、候选稿与断点中转目录
+    partial_novel_file: str   # 当前已验收章节组装出的中转预览
+    candidate_files: list[str] # 已持久化的候选稿文件
+    resumed: bool             # 是否从磁盘断点恢复
     outline_file: str         # 洗文来源大纲文件名
     wash_original_title: str  # 洗文原始标题
 

@@ -75,6 +75,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="只重试 failed；否则也恢复 pending/selecting/running",
     )
     retry.add_argument("--workers", type=int)
+    retry.add_argument(
+        "--restart-failed",
+        action="store_true",
+        help="忽略失败任务断点并创建全新运行",
+    )
     return parser
 
 
@@ -151,6 +156,7 @@ def command_retry(args) -> int:
             if args.workers is not None
             else None
         ),
+        restart_failed=args.restart_failed,
     )
     print(format_status(read_json(batch_dir / "batch.json")))
     print(f"汇总报告：{batch_dir / 'summary.csv'}")

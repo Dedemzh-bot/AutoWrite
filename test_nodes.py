@@ -390,18 +390,16 @@ class TestNovelTagLibrary(unittest.TestCase):
 
 
 class TestArchitectNovelTags(unittest.TestCase):
-    def test_invalid_tags_retry_and_valid_tags_are_saved(self):
+    def test_tags_are_selected_only_after_outline_acceptance(self):
         from Nodes import ArchitectOutput, architect_node
 
         library = TestNovelTagLibrary.library()
-        base = {
-            "novel_title": "病患之眼",
-            "world_bible": "完整世界观",
-            "chapter_outlines": {"1": "【开场状态】剧情"},
-            "estimated_words": 1500,
-        }
-        invalid = ArchitectOutput.model_validate({**base})
-        self.assertEqual(invalid.novel_tags.core, "")
+        candidate = ArchitectOutput(
+            novel_title="病患之眼",
+            world_bible="完整世界观",
+            chapter_outlines={"1": "【开场状态】剧情"},
+            estimated_words=1500,
+        )
         valid_tags = {
             "core": "规则怪谈",
             "情节": ["女性成长", "无限流"],
@@ -409,7 +407,6 @@ class TestArchitectNovelTags(unittest.TestCase):
             "情绪": ["惊悚"],
             "背景": ["副本世界"],
         }
-        valid = ArchitectOutput(**base, novel_tags=valid_tags)
         pattern_config = {
             "primary": "none",
             "secondary": [],
@@ -427,9 +424,10 @@ class TestArchitectNovelTags(unittest.TestCase):
             "Nodes.resolve_story_pattern",
             return_value={"strong": False, "name": "无套路", "architect": ""},
         ), patch("Nodes.format_selected_materials", return_value="无"), patch(
-            "Nodes.invoke_architect_with_fallback",
-            side_effect=[invalid, valid],
+            "Nodes.invoke_architect_with_fallback", return_value=candidate
         ) as invoke, patch(
+            "Nodes.select_novel_tags", return_value=valid_tags
+        ) as select_tags, patch(
             "Nodes.normalize_chapter_outlines",
             side_effect=lambda outlines, chapters: outlines,
         ), patch(
@@ -438,6 +436,8 @@ class TestArchitectNovelTags(unittest.TestCase):
         ), patch(
             "Nodes.outline_validation_issues",
             side_effect=lambda outlines, chapters: [],
+        ), patch(
+            "Nodes.finale_outline_validation_issues", return_value=[]
         ), patch(
             "Nodes.build_chapter_contracts", return_value={"1": {}}
         ), patch("Nodes.build_finale_contract", return_value={}), patch(
@@ -454,7 +454,9 @@ class TestArchitectNovelTags(unittest.TestCase):
                 "material_config": {},
             })
 
-        self.assertEqual(invoke.call_count, 2)
+        self.assertEqual(invoke.call_count, 1)
+        self.assertNotIn("novel_tag_library", invoke.call_args.args[1])
+        select_tags.assert_called_once()
         self.assertEqual(result["novel_tags"], valid_tags)
         saved_payload = dump.call_args.args[0]
         self.assertEqual(saved_payload["schema_version"], 2)
@@ -840,12 +842,17 @@ class TestChapterOutputFormat(unittest.TestCase):
                 "keywords": ["信托", "贪污"],
             }]
         }
-        with self.assertRaisesRegex(LedgerMergeError, "不可变事实冲突"):
+        conflict = {
+            "fact_id": "F-C2-01",
+            "established_fact": ledger["immutable_facts"][0]["statement"],
+            "draft_claim": delta["new_immutable_facts"][0]["statement"],
+        }
+        with self.assertRaisesRegex(LedgerMergeError, "连续性审核未通过"):
             merge_story_ledger(
                 ledger,
                 delta,
                 8,
-                {"status": "pass", "conflicts": []},
+                {"status": "fail", "conflicts": [conflict]},
             )
 
     def test_same_character_can_have_multiple_distinct_history_facts(self):
@@ -2128,10 +2135,17 @@ class TestSummarizerBehavior(unittest.TestCase):
                         "keywords": ["沈念", "祠堂", "流产"],
                     }],
                 },
-                "continuity_report": {"status": "pass", "conflicts": []},
+                "continuity_report": {
+                    "status": "fail",
+                    "conflicts": [{
+                        "fact_id": "F-C3-02",
+                        "established_fact": "沈念在医院楼梯摔倒后流产",
+                        "draft_claim": "沈念在祠堂摔倒后流产",
+                    }],
+                },
             }
             with patch("Nodes._build_output_path", return_value=output_path):
-                with self.assertRaisesRegex(LedgerMergeError, "正文未入库"):
+                with self.assertRaisesRegex(LedgerMergeError, "没有可安全入库"):
                     summarizer_node(state)
             self.assertFalse(os.path.exists(output_path))
 
@@ -2159,6 +2173,311 @@ class TestSummarizerBehavior(unittest.TestCase):
             ],
         })
         self.assertEqual(selected["draft"], "一致稿")
+
+
+class TestGenerationReliabilityChanges(unittest.TestCase):
+    def test_tag_fallback_normalizes_aliases_truncates_and_fills(self):
+        from LibraryV2 import load_novel_tag_library, validate_novel_tag_selection
+        from Nodes import finalize_novel_tag_selection
+
+        library = load_novel_tag_library()
+        result = finalize_novel_tag_selection(
+            {
+                "core": "空",
+                "情节": [
+                    "末世求生",
+                    "末日求生",
+                    "基地建设",
+                    "系统",
+                    "推理",
+                    "直播",
+                    "科幻",
+                    "升级流",
+                ],
+                "角色": ["女医生"],
+                "情绪": ["惊悚"],
+                "背景": ["现代"],
+            },
+            library,
+            "末世爆发后，女医生在现代城市带队求生并调查病毒来源。",
+        )
+        auxiliary = sum(
+            (result[category] for category in ("情节", "角色", "情绪", "背景")),
+            [],
+        )
+        self.assertEqual(validate_novel_tag_selection(result, library), [])
+        self.assertGreaterEqual(len(auxiliary), 5)
+        self.assertLessEqual(len(auxiliary), 7)
+        self.assertIn("末日求生", result["情节"])
+        self.assertIn("医生", result["角色"])
+
+    def test_tag_model_failure_uses_local_selection(self):
+        from LibraryV2 import load_novel_tag_library, validate_novel_tag_selection
+        from Nodes import select_novel_tags
+
+        library = load_novel_tag_library()
+        with patch("Nodes._safe_structured_invoke", return_value=None):
+            result = select_novel_tags(
+                "末日值班室",
+                "女医生在末日医院保护幸存者。",
+                {"1": "调查病毒来源", "2": "关闭感染源，城市开始重建。"},
+                {},
+                {},
+            )
+        self.assertEqual(validate_novel_tag_selection(result, library), [])
+
+    def test_open_finale_outline_is_rejected(self):
+        from Nodes import finale_outline_validation_issues
+
+        bad = (
+            "【开场状态】终战开始【核心冲突】击败首领"
+            "【关键行动】主角完成决战【人物关系变化】众人和解"
+            "【重要信息或伏笔】真相公开"
+            "【全书结局】旧敌倒下，但下一个目标出现，这只是开始"
+        )
+        good = bad.replace(
+            "旧敌倒下，但下一个目标出现，这只是开始",
+            "旧敌倒下，主要人物各归其位，风波尘埃落定，故事结束",
+        )
+        self.assertTrue(finale_outline_validation_issues({"1": bad}, 1))
+        self.assertEqual(finale_outline_validation_issues({"1": good}, 1), [])
+
+    def test_compatible_fact_detail_uses_derived_key(self):
+        from Nodes import merge_story_ledger
+
+        ledger = {
+            "immutable_facts": [{
+                "id": "F-C2-01",
+                "fact_key": "blood_letter",
+                "chapter": 2,
+                "category": "evidence",
+                "subject": "血书",
+                "statement": "血书记载了幕后人的姓氏",
+                "source_evidence": "第2章",
+                "keywords": ["血书"],
+            }],
+        }
+        delta = {
+            "new_immutable_facts": [{
+                "fact_key": "blood_letter",
+                "category": "evidence",
+                "subject": "血书",
+                "statement": "血书还记录了交接时间和地点",
+                "source_evidence": "第5章",
+                "keywords": ["血书", "时间"],
+            }],
+        }
+        merged = merge_story_ledger(
+            ledger,
+            delta,
+            5,
+            {"status": "pass", "conflicts": []},
+        )
+        self.assertEqual(merged["immutable_facts"][0]["statement"], ledger["immutable_facts"][0]["statement"])
+        detail = merged["immutable_facts"][1]
+        self.assertEqual(detail["derived_from_fact_key"], "blood_letter")
+        self.assertTrue(detail["fact_key"].startswith("blood_letter__detail_c5"))
+
+    def test_chapters_stage_before_atomic_publish(self):
+        from Nodes import publish_staged_novel, stage_accepted_chapter
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            work = root / "work" / "run-1"
+            final = root / "Novel" / "book_run-1.txt"
+            partial = stage_accepted_chapter(work, 1, "第一章")
+            self.assertFalse(final.exists())
+            partial = stage_accepted_chapter(work, 2, "第二章")
+            self.assertEqual(Path(partial).read_text(encoding="utf-8"), "第一章\n\n第二章")
+            with patch("Nodes._build_output_path", return_value=str(final)):
+                published = publish_staged_novel("书", "run-1", partial)
+            self.assertEqual(Path(published), final)
+            self.assertEqual(final.read_text(encoding="utf-8"), "第一章\n\n第二章")
+
+    def test_failed_fifth_chapter_stays_staged_until_retry_succeeds(self):
+        from Nodes import LedgerMergeError, publish_staged_novel, summarizer_node
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            work = root / "job" / "work" / "run-1"
+            published = root / "Novel" / "完整小说_run-1.txt"
+            state = {
+                "run_id": "run-1",
+                "artifact_dir": str(work),
+                "novel_title": "完整小说",
+                "chapter_outlines": {str(index): "细纲" for index in range(1, 6)},
+                "chapter_contracts": {},
+                "words_per_chapter": 5,
+                "story_ledger": {},
+                "draft_candidates": [],
+                "current_chapter": 1,
+            }
+
+            for chapter in range(1, 5):
+                state.update({
+                    "current_chapter": chapter,
+                    "current_draft": f"第{chapter}章 正文\n\n第{chapter}章正文",
+                    "audit_report": {"审核状态": "通过", "结局完整性": True},
+                    "editor_report": {"文风评分": 8},
+                    "ledger_delta": {},
+                    "continuity_report": {"status": "pass", "conflicts": []},
+                })
+                state.update(summarizer_node(state))
+
+            self.assertFalse(published.exists())
+            state.update({
+                "current_chapter": 5,
+                "current_draft": "第5章 正文\n\n冲突版本",
+                "audit_report": {"审核状态": "通过", "结局完整性": True},
+                "editor_report": {"文风评分": 8},
+                "continuity_report": {
+                    "status": "fail",
+                    "conflicts": [{"fact_id": "F-C3-01"}],
+                },
+                "ledger_delta": {},
+            })
+            with self.assertRaises(LedgerMergeError):
+                summarizer_node(state)
+            self.assertFalse(published.exists())
+            self.assertEqual(len(list((work / "chapters").glob("*.txt"))), 4)
+
+            state.update({
+                "current_draft": "第5章 正文\n\n第5章正文",
+                "audit_report": {"审核状态": "通过", "结局完整性": True},
+                "editor_report": {"文风评分": 8},
+                "continuity_report": {"status": "pass", "conflicts": []},
+                "ledger_delta": {},
+                "draft_candidates": [],
+            })
+            state.update(summarizer_node(state))
+            partial = Path(state["partial_novel_file"])
+            with patch("Nodes._build_output_path", return_value=str(published)):
+                publish_staged_novel("完整小说", "run-1", partial)
+            content = published.read_text(encoding="utf-8")
+            self.assertEqual(len(list((work / "chapters").glob("*.txt"))), 5)
+            for chapter in range(1, 6):
+                self.assertEqual(content.count(f"第{chapter}章正文"), 1)
+
+    def test_candidate_files_are_never_overwritten(self):
+        from Nodes import _persist_draft_candidate
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            state = {
+                "artifact_dir": temp_dir,
+                "run_id": "run-1",
+                "current_chapter": 5,
+                "iteration_count": 5,
+            }
+            candidate = {
+                "chapter": 5,
+                "iteration": 5,
+                "draft": "候选正文",
+                "audit_report": {"结局问题": ["人物命运未交代"]},
+                "editor_report": {"文风评分": 8},
+                "continuity_report": {"status": "pass", "conflicts": []},
+                "ledger_delta": {},
+                "score": 88,
+            }
+            first = _persist_draft_candidate(state, candidate)
+            second = _persist_draft_candidate(state, candidate)
+            self.assertNotEqual(first, second)
+            self.assertTrue(Path(first).is_file())
+            self.assertTrue(Path(second).is_file())
+
+    def test_finale_attempts_five_and_six_rebuild_from_best_candidate(self):
+        from Nodes import writer_node
+
+        best = {
+            "chapter": 1,
+            "iteration": 3,
+            "draft": "评分最高且连续性干净的终局底稿",
+            "score": 91,
+            "audit_report": {
+                "审核状态": "不通过",
+                "未完成事件": ["交代主角最终选择"],
+                "结局问题": ["主要人物命运未交代"],
+                "阻断问题": [],
+                "发现的问题": [],
+                "套路问题": [],
+                "修改建议": "只补齐终局缺口",
+            },
+            "editor_report": {"文风评分": 8},
+            "continuity_report": {"status": "pass", "conflicts": []},
+        }
+        base_state = {
+            "current_chapter": 1,
+            "current_draft": "最近但评分较低的稿件",
+            "chapter_outlines": {"1": "【全书结局】故事结束"},
+            "chapter_contracts": {"1": {}},
+            "finale_contract": {},
+            "world_bible": "设定",
+            "story_ledger": {},
+            "draft_candidates": [best],
+            "audit_report": {"审核状态": "不通过"},
+            "editor_report": {"文风评分": 6},
+            "continuity_report": {"status": "pass", "conflicts": []},
+            "words_per_chapter": 100,
+            "writer_style": "default",
+            "pattern_config": {},
+        }
+        response = MagicMock(content="第1章 终局\n\n完整正文")
+        for previous_iteration in (4, 5):
+            with self.subTest(attempt=previous_iteration + 1), patch(
+                "Nodes._build_scene_plan",
+                return_value={"scenes": ["重建后的终局场景"]},
+            ) as planner, patch(
+                "Nodes.invoke_with_retry", return_value=response
+            ) as invoke:
+                state = {**base_state, "iteration_count": previous_iteration}
+                writer_node(state)
+                inputs = invoke.call_args.args[1]
+                self.assertEqual(inputs["previous_draft"], best["draft"])
+                self.assertIn("主要人物命运未交代", inputs["feedback"])
+                self.assertEqual(
+                    json.loads(inputs["scene_plan"])["scenes"],
+                    ["重建后的终局场景"],
+                )
+                planner.assert_called_once()
+
+    def test_checkpoint_roundtrip_and_capability_flags(self):
+        from TheGraph import (
+            _job_hash,
+            _load_resume_checkpoint,
+            _save_resume_checkpoint,
+            build_capabilities,
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            work_root = Path(temp_dir) / "work"
+            run_dir = work_root / "run-1"
+            (run_dir / "chapters").mkdir(parents=True)
+            (run_dir / "chapters" / "0001.txt").write_text("第一章", encoding="utf-8")
+            job_hash = _job_hash({"job_id": "job-1", "idea": "测试"})
+            checkpoint = run_dir / "resume.json"
+            _save_resume_checkpoint(
+                checkpoint,
+                job_hash,
+                "run-1",
+                {
+                    "run_id": "run-1",
+                    "saved_chapter": 1,
+                    "current_chapter": 2,
+                    "chapter_outlines": {"1": "a", "2": "b"},
+                },
+                {},
+                {},
+                "summarizer",
+            )
+            payload, loaded_path = _load_resume_checkpoint(work_root, job_hash)
+            self.assertEqual(payload["next_chapter"], 2)
+            self.assertEqual(loaded_path, checkpoint.resolve())
+            missing, missing_path = _load_resume_checkpoint(work_root, "wrong")
+            self.assertIsNone(missing)
+            self.assertIsNone(missing_path)
+
+        contract = build_capabilities()["cli_contract"]
+        self.assertTrue(contract["supports_job_resume"])
+        self.assertTrue(contract["publishes_novel_on_success_only"])
 
 
 if __name__ == "__main__":
