@@ -716,7 +716,10 @@ class TestChapterOutputFormat(unittest.TestCase):
             len(outline),
         )
         self.assertTrue(contracts["1"]["is_final"])
-        self.assertIn("城市恢复正常", finale["required_resolution"])
+        self.assertEqual(finale["chapter"], 1)
+        self.assertTrue(finale["must_resolve_main_conflict"])
+        self.assertTrue(finale["must_signal_story_end"])
+        self.assertTrue(finale["must_not_create_new_main_arc"])
 
     def test_finale_length_uses_soft_range_and_hard_guardrail(self):
         from Nodes import chapter_length_assessment, chapter_length_limits
@@ -725,7 +728,7 @@ class TestChapterOutputFormat(unittest.TestCase):
         self.assertEqual(limits["recommended_min"], 1200)
         self.assertEqual(limits["recommended_max"], 2100)
         self.assertEqual(limits["hard_min"], 900)
-        self.assertEqual(limits["hard_max"], 2400)
+        self.assertEqual(limits["hard_max"], 2632)
 
         state = {
             "current_chapter": 1,
@@ -736,7 +739,7 @@ class TestChapterOutputFormat(unittest.TestCase):
             state, "第1章 结局\n\n" + ("字" * 1000)
         )
         excessive = chapter_length_assessment(
-            state, "第1章 结局\n\n" + ("字" * 2500)
+            state, "第1章 结局\n\n" + ("字" * 2700)
         )
         self.assertFalse(acceptable["blocking"])
         self.assertTrue(excessive["blocking"])
@@ -889,6 +892,64 @@ class TestChapterOutputFormat(unittest.TestCase):
             {item["fact_key"] for item in merged["immutable_facts"]},
             {"rebirth_event", "past_life_sacrifice"},
         )
+
+    def test_outline_action_gradient_issues(self):
+        """第4-5章行动数远超前段均值：验证梯度检查发现问题"""
+        from Nodes import outline_action_gradient_issues
+
+        outlines = {
+            "1": "【开场状态】故事开始启动。【核心冲突】核心冲突确立。【关键行动】主角取得旧钥匙；主角破解第一道机关。【人物关系变化】关系首次变化。",
+            "2": "【开场状态】局势继续发展。【核心冲突】冲突逐步升级。【关键行动】主角救出受伤同伴；主角关闭失控核心。【人物关系变化】关系继续深化。",
+            "3": "【开场状态】线索逐渐浮现。【核心冲突】冲突进入白热化。【关键行动】主角破解第二道机关；主角发现幕后真相线索。【人物关系变化】关系出现转折。",
+            "4": "【开场状态】危机全面爆发。【核心冲突】冲突达到顶峰。【关键行动】主角破解第三道机关；主角对抗最终反派出场；主角救出全部被困同伴；主角启动自毁倒计时；主角获取关键通道密码；主角正面与反派首次交手。【人物关系变化】关系彻底重构。",
+            "5": "【开场状态】终战拉开序幕。【核心冲突】最终决战爆发。【关键行动】主角正面击穿反派防线；主角关闭所有失控装置；主角揭露隐藏阴谋真相；主角释放被困所有人质；主角终结反派全部势力；主角重建城市正常秩序。【人物关系变化】关系完成最终和解。",
+        }
+
+        issues = outline_action_gradient_issues(outlines, 5)
+
+        self.assertTrue(issues, "梯度异常场景应产生issues")
+        self.assertTrue(any("第4章" in issue for issue in issues), f"issues应包含第4章，实际：{issues}")
+        self.assertTrue(any("第5章" in issue for issue in issues), f"issues应包含第5章，实际：{issues}")
+
+    def test_outline_action_gradient_issues_passes_normal(self):
+        """5章大纲行动数逐步递减：梯度正常不应误报"""
+        from Nodes import outline_action_gradient_issues
+
+        outlines = {
+            "1": "【开场状态】故事开始启动。【核心冲突】核心冲突确立。【关键行动】主角取得第一件道具；主角破解第一层迷宫；主角救出第一个同伴；主角发现第一条线索；主角关闭第一处陷阱。【人物关系变化】关系首次变化。",
+            "2": "【开场状态】局势继续发展。【核心冲突】冲突逐步升级。【关键行动】主角取得第二件道具；主角破解第二层迷宫；主角救出第二个同伴；主角发现第二条线索；主角关闭第二处陷阱。【人物关系变化】关系继续深化。",
+            "3": "【开场状态】线索逐渐浮现。【核心冲突】冲突进入白热化。【关键行动】主角取得第三件道具；主角破解第三层迷宫；主角救出第三个同伴；主角发现第三条线索；主角关闭第三处陷阱。【人物关系变化】关系出现转折。",
+            "4": "【开场状态】危机全面爆发。【核心冲突】冲突达到顶峰。【关键行动】主角正面对抗最终反派；主角关闭所有失控装置。【人物关系变化】关系彻底重构。",
+            "5": "【开场状态】终战拉开序幕。【核心冲突】最终决战爆发。【关键行动】主角揭露隐藏阴谋真相；主角终结反派全部势力。【人物关系变化】关系完成最终和解。",
+        }
+
+        issues = outline_action_gradient_issues(outlines, 5)
+
+        self.assertEqual(issues, [], "正常梯度大纲不应误报")
+
+    def test_compute_action_budget_442_ratio(self):
+        """验证行动预算分配：前 N-1 章 ≤6，最终章 ≤5"""
+        from Nodes import compute_action_budget
+
+        # 5章：前4章≤6，最终章≤5
+        b5 = compute_action_budget(5)
+        self.assertEqual(b5[1], 6)
+        self.assertEqual(b5[2], 6)
+        self.assertEqual(b5[3], 6)
+        self.assertEqual(b5[4], 6)
+        self.assertEqual(b5[5], 5)
+
+        # 8章：前7章≤6，最终章≤5
+        b8 = compute_action_budget(8)
+        self.assertEqual(b8[1], 6)
+        self.assertEqual(b8[7], 6)
+        self.assertEqual(b8[8], 5)
+
+        # 3章：前2章≤6，最终章≤5
+        b3 = compute_action_budget(3)
+        self.assertEqual(b3[1], 6)
+        self.assertEqual(b3[2], 6)
+        self.assertEqual(b3[3], 5)
 
 
 class TestModelRetry(unittest.TestCase):
@@ -1691,6 +1752,41 @@ class TestContentLibrariesV2(unittest.TestCase):
         attached = attach_pattern_plan_to_outlines(raw, build_pattern_plan(manifest, 1, 1500))
 
         self.assertEqual(strip_pattern_plan_from_outlines(attached), raw)
+
+    def test_build_pattern_plan_compresses_beats(self):
+        """6个冲突模块 + 4章场景：验证合并后=4且不丢失关键描述"""
+        from Nodes import build_pattern_plan
+
+        conflicts = [
+            {"id": "c1", "name": "资源危机", "description": "主角失去关键资源", "category": "resource", "tags": ["财富"]},
+            {"id": "c2", "name": "声誉危机", "description": "主角声誉受损被孤立", "category": "reputation", "tags": ["名声"]},
+            {"id": "c3", "name": "信息危机", "description": "主角的关键信息被窃取", "category": "information", "tags": ["秘密"]},
+            {"id": "c4", "name": "关系危机", "description": "主角与关键人物关系破裂", "category": "relationship", "tags": ["信任"]},
+            {"id": "c5", "name": "规则危机", "description": "主角意外违反核心规则", "category": "rule", "tags": ["法则"]},
+            {"id": "c6", "name": "代价危机", "description": "主角为选择付出沉重代价", "category": "cost", "tags": ["牺牲"]},
+        ]
+
+        manifest = {
+            "pattern_key": "female_angst_awakening",
+            "labels": {"protagonist": "女主", "counterpart": "男主", "foil": "女配", "conflict": "虐点", "ending": "结局"},
+            "conflicts": conflicts,
+            "protagonist": "女主",
+            "counterpart": "男主",
+            "foil": "女配",
+            "ending": "no_reunion",
+        }
+
+        plan = build_pattern_plan(manifest, 4, 1500)
+
+        beat_keys = [k for k in plan if k != "_merge_warnings"]
+        self.assertEqual(len(beat_keys), 4)
+        self.assertEqual(beat_keys, ["1", "2", "3", "4"])
+
+        for key in beat_keys:
+            task = plan[key]
+            self.assertTrue(task.get("required_event"), f"第{key}章缺少required_event")
+            self.assertTrue(task.get("protagonist_state"))
+            self.assertTrue(task.get("conflict_stage"))
 
 
 class TestWebDefaults(unittest.TestCase):

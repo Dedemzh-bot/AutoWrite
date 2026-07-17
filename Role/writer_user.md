@@ -25,6 +25,8 @@
 【篇幅规则】：
 {length_guidance}
 
+{finale_checklist}
+
 【创作套路执行要求】：
 {pattern_writer}
 

@@ -16,6 +16,7 @@ from BatchIdeaLauncher.core import (
     load_ideas,
     make_job_payload,
     read_json,
+    sanitize_selection,
     validate_selection,
 )
 
@@ -479,7 +480,13 @@ class LauncherTests(unittest.TestCase):
                 "writer_style": "cold",
                 "material_config": {
                     "filters": {"categories": ["world_stage"], "subcategories": ["modern_city"], "tags": []},
-                    "count": 4,
+                    "group_counts": {
+                        "world_stage": 1,
+                        "protagonist": 1,
+                        "cheat_device": 0,
+                        "core_conflict": 1,
+                        "plot_event": 1,
+                    },
                 },
                 "pattern_config": {
                     "primary": "strong_rule_horror",
@@ -492,8 +499,14 @@ class LauncherTests(unittest.TestCase):
                 "words_per_chapter": 1800,
                 "writer_style": "literary",
                 "material_config": {
-                    "filters": {"categories": [], "subcategories": [], "tags": []},
-                    "count": 4,
+                    "filters": {"categories": ["world_stage"], "subcategories": ["modern_city"], "tags": []},
+                    "group_counts": {
+                        "world_stage": 1,
+                        "protagonist": 1,
+                        "cheat_device": 0,
+                        "core_conflict": 1,
+                        "plot_event": 1,
+                    },
                 },
                 "pattern_config": {
                     "primary": "custom",
@@ -984,6 +997,97 @@ class LauncherTests(unittest.TestCase):
         self.assertIn("仅支持写手风格", result["error"])
         self.assertFalse((job_dir / "Novel").exists())
         self.assertFalse((job_dir / "Outline").exists())
+
+    def test_validate_selection_rejects_forbidden_group_count(self):
+        """group_counts含禁止素材大类时validate_selection应返回冲突"""
+        capabilities = sample_capabilities()
+        capabilities["story_patterns"].append({
+            "id": "strong_infinite_dungeon",
+            "name": "强无限流闯关",
+            "strong": True,
+            "hard_conflicts": [],
+            "forbidden_material_categories": ["career_resource"],
+            "forbidden_material_tags": [],
+            "forbidden_pattern_tags": [],
+            "compatible_styles": ["default", "cold", "suspense"],
+            "ending_options": {"escape_dungeon": "逃出副本"},
+        })
+
+        constraints = {
+            "preferred_chapters": 10,
+            "min_chapters": 6,
+            "max_chapters": 14,
+            "preferred_words_per_chapter": 1500,
+            "min_words_per_chapter": 1200,
+            "max_words_per_chapter": 2000,
+        }
+        selection = {
+            "target_chapters": 10,
+            "words_per_chapter": 1500,
+            "writer_style": "default",
+            "material_config": {
+                "filters": {
+                    "categories": ["world_stage"],
+                    "subcategories": ["modern_city"],
+                    "tags": [],
+                },
+                "group_counts": {
+                    "world_stage": 1,
+                    "protagonist": 1,
+                    "supporting_role": 0,
+                    "cheat_device": 1,
+                    "plot_event": 0,
+                    "core_conflict": 1,
+                    "career_resource": 1,
+                    "atmosphere": 0,
+                },
+            },
+            "pattern_config": {
+                "primary": "strong_infinite_dungeon",
+                "secondary": [],
+                "manifest": {"ending": "escape_dungeon"},
+            },
+        }
+
+        _, issues = validate_selection(selection, constraints, capabilities)
+
+        self.assertTrue(issues, "应检测到禁止group_counts冲突")
+        self.assertTrue(
+            any("career_resource" in issue for issue in issues),
+            f"issues应包含career_resource冲突，实际：{issues}",
+        )
+
+    def test_sanitize_selection_zeroes_forbidden_counts(self):
+        """sanitize_selection根据issues将冲突的group_counts归零"""
+        selection = {
+            "material_config": {
+                "group_counts": {
+                    "world_stage": 1,
+                    "protagonist": 1,
+                    "cheat_device": 1,
+                    "career_resource": 1,
+                    "core_conflict": 1,
+                },
+            },
+        }
+        issues = [
+            "素材大类 career_resource 与套路 strong_infinite_dungeon 冲突（group_counts配置）",
+        ]
+
+        result = sanitize_selection(selection, issues)
+
+        self.assertEqual(
+            result["material_config"]["group_counts"]["career_resource"],
+            0,
+        )
+        self.assertEqual(
+            result["material_config"]["group_counts"]["world_stage"],
+            1,
+        )
+        self.assertEqual(
+            result["material_config"]["group_counts"]["protagonist"],
+            1,
+        )
 
 
 if __name__ == "__main__":

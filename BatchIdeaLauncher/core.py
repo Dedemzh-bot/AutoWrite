@@ -683,6 +683,7 @@ class OpenAISelector:
         system = (
             "你是小说生产任务的配置 Agent。你只能从提供的能力表中选择，"
             "并且必须遵守主辅套路、兼容写手、结局和素材冲突规则。"
+            "强套路禁止使用以下素材类别：无限副本闯关禁止career_resource、强规则怪谈禁止love_interest、末世基地生存禁止love_interest、系统任务升级禁止atmosphere、女频虐恋觉醒禁止cheat_device、虐恋觉醒性转禁止cheat_device、历史权谋禁止cheat_device、男频升级打脸禁止love_interest、玄幻升级换地图禁止love_interest、古言宅斗禁止cheat_device、真假千金禁止cheat_device、娱乐圈掉马禁止world_stage、星际机甲禁止love_interest。"
             "章节数和每章字数必须落在允许范围内，偏好值只是参考。"
             f"选择1个主套路、最多{pattern_rules['max_secondary']}个非强辅助套路。"
             "素材筛选可选择能力表中的大类、子类与标签；每类数量服从"
@@ -971,6 +972,17 @@ def validate_selection(
                     f"{pattern.get('id')} 冲突"
                 )
 
+    for key in sorted(group_counts.keys()):
+        count = group_counts[key]
+        if count <= 0:
+            continue
+        for pattern in active_patterns:
+            if key in pattern.get("forbidden_material_categories", []):
+                issues.append(
+                    f"素材大类 {key} 与套路 {pattern.get('id')} 冲突"
+                    f"（group_counts配置）"
+                )
+
     normalized["material_config"] = {
         "schema_version": material_rules["schema_version"],
         "filters": {
@@ -985,6 +997,24 @@ def validate_selection(
         "auto_selected_subcategories": [],
     }
     return normalized, list(dict.fromkeys(issues))
+
+
+def sanitize_selection(selection: dict, issues: list[str]) -> dict:
+    """根据validate_selection产出的issues，将冲突的group_counts归零"""
+    material_config = selection.get("material_config", {})
+    group_counts = dict(material_config.get("group_counts", {}))
+    changed = False
+    for issue in issues:
+        if "group_counts" in issue or "素材大类" in issue:
+            match = re.search(r"素材大类 (\w+) 与套路", issue)
+            if match:
+                key = match.group(1)
+                if key in group_counts and group_counts[key] > 0:
+                    group_counts[key] = 0
+                    changed = True
+    if changed:
+        selection["material_config"]["group_counts"] = group_counts
+    return selection
 
 
 def stable_seed(batch_id: str, job_id: str, namespace: str) -> int:

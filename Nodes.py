@@ -355,7 +355,7 @@ def chapter_length_limits(words_per: int, final_chapter: bool = False) -> dict:
         recommended_min_ratio = FINALE_RECOMMENDED_MIN_RATIO
         recommended_max_ratio = FINALE_RECOMMENDED_MAX_RATIO
         hard_min_ratio = FINALE_HARD_MIN_RATIO
-        hard_max_ratio = FINALE_HARD_MAX_RATIO
+        hard_max_ratio = NORMAL_HARD_MAX_RATIO * 1.3
     else:
         recommended_min_ratio = NORMAL_RECOMMENDED_MIN_RATIO
         recommended_max_ratio = NORMAL_RECOMMENDED_MAX_RATIO
@@ -593,6 +593,22 @@ def outline_validation_issues(outlines: dict, target_chapters: int) -> list[str]
         for label in required_labels:
             if f"【{label}】" not in body:
                 issues.append(f"第{key}章细纲缺少规范标签【{label}】")
+
+    # 每章关键行动数 vs 预算校验（超1个容忍，超2个以上报错）
+    _budget = compute_action_budget(target_chapters)
+    for key, outline in outlines.items():
+        ch = int(key)
+        sections = _outline_sections(str(outline))
+        events = _split_required_events(sections.get("关键行动", ""))
+        limit = _budget.get(ch, 4)
+        if len(events) > limit + 1:
+            _actions_list = " / ".join(events[:8])
+            issues.append(
+                f"第{ch}章关键行动{len(events)}个（预算{limit}个）。"
+                f"上一稿行动列表：[{_actions_list}]。"
+                f"请将同一条剧情线上关联的行动合并为复合行动"
+            )
+
     return issues
 OPEN_FINALE_MARKERS = (
     "这只是开始",
@@ -627,14 +643,15 @@ def finale_outline_validation_issues(
         if marker in ending:
             issues.append(f"最终章仍在开启后续主线：{marker}")
     action_events = _split_required_events(sections.get("关键行动", ""))
-    if len(action_events) > 4:
+    if len(action_events) > 6:
         issues.append(
-            f"最终章关键行动超过4个，当前为{len(action_events)}个，"
+            f"最终章关键行动超过6个，当前为{len(action_events)}个，"
             "必须压缩为单一终局冲突"
         )
     if ending and not any(
         signal in ending
-        for signal in ("结束", "落幕", "尘埃落定", "重建", "多年后", "年后", "从此")
+        for signal in ("结束", "落幕", "尘埃落定", "重建", "多年后", "年后", "从此",
+                       "再无后续", "故事完结", "全书完", "终章", "尾声", "再没有")
     ):
         issues.append("最终章缺少明确的故事结束信号")
     return issues
@@ -786,8 +803,9 @@ def normalize_outline_structures(outlines: dict, target_chapters: int) -> dict[s
 
 
 def _split_required_events(text: str) -> list[str]:
+    # 只按句号、分号、换行拆分——连接词（然后、接着、最终等）是复合行动内部叙事，不拆
     parts = re.split(
-        r"[；。\n]+|(?:随后|然后|接着|最终|结果|于是)[，,]?",
+        r"[；。\n]+",
         str(text or ""),
     )
     events = []
@@ -800,6 +818,38 @@ def _split_required_events(text: str) -> list[str]:
         if len(event) >= 6 and event not in events:
             events.append(event[:180])
     return events[:8]
+
+
+def outline_action_gradient_issues(outlines: dict, target_chapters: int) -> list[str]:
+    """跨章节行动数梯度校验：后1/3章行动数不应超过前2/3章均值的1.2倍"""
+    chapters = max(1, int(target_chapters))
+    if chapters < 4:
+        return []
+
+    split_point = max(2, int(chapters * 2 / 3))
+    front_actions = []
+    back_actions = []
+
+    for key, outline in outlines.items():
+        ch = int(key)
+        sections = _outline_sections(str(outline))
+        events = _split_required_events(sections.get("关键行动", ""))
+        if ch <= split_point:
+            front_actions.append(len(events))
+        else:
+            back_actions.append((ch, len(events)))
+
+    if not front_actions or not back_actions:
+        return []
+
+    front_avg = sum(front_actions) / len(front_actions)
+    issues = []
+    for ch, count in back_actions:
+        if front_avg > 0 and count > front_avg * 1.2:
+            issues.append(
+                f"第{ch}章关键行动{count}个，超出收束预期，前段均值{front_avg:.1f}"
+            )
+    return issues
 
 
 def build_chapter_contracts(outlines: dict) -> dict[str, dict]:
@@ -828,6 +878,24 @@ def build_chapter_contracts(outlines: dict) -> dict[str, dict]:
         if not required_events:
             story_text = str(outline).split("【剧情细纲】", 1)[-1]
             required_events = _split_required_events(story_text)
+        # 浓缩事件：每条最多80字，过长则在最后一个逗号或分号处截断并加"…"
+        condensed = []
+        for e in required_events:
+            if len(e) <= 80:
+                condensed.append(e)
+            else:
+                segment = e[:80]
+                last_sep = max(
+                    segment.rfind("，"),
+                    segment.rfind("；"),
+                    segment.rfind(","),
+                    segment.rfind(";"),
+                )
+                if last_sep > 0:
+                    condensed.append(e[:last_sep] + "…")
+                else:
+                    condensed.append(e[:80] + "…")
+        required_events = condensed
         contracts[str(key)] = {
             "chapter": int(key) if str(key).isdigit() else key,
             "is_final": str(key).isdigit() and int(key) >= total,
@@ -848,20 +916,61 @@ def build_chapter_contracts(outlines: dict) -> dict[str, dict]:
 def build_finale_contract(
     chapter_contracts: dict, pattern_manifest: dict | None = None
 ) -> dict:
+    """构建最终章契约——仅包含最终章特有flag，不重复chapter_contract已有字段。"""
     if not chapter_contracts:
         return {}
     final_key = max(chapter_contracts, key=lambda key: int(key) if str(key).isdigit() else 0)
-    contract = dict(chapter_contracts[final_key])
     return {
-        "chapter": contract.get("chapter"),
-        "required_finale_events": contract.get("required_events", []),
-        "required_resolution": contract.get("ending_state", ""),
-        "relationship_resolution": contract.get("relationship_change", ""),
+        "chapter": int(final_key) if str(final_key).isdigit() else final_key,
         "selected_ending": (pattern_manifest or {}).get("ending", ""),
         "must_resolve_main_conflict": True,
         "must_signal_story_end": True,
         "must_not_create_new_main_arc": True,
     }
+
+
+def build_finale_checklist(state: NovelState, chapters: int) -> str:
+    """从第1至N-1章的chapter_contracts提取【仍未解决】的线索。"""
+    contracts = state.get("chapter_contracts", {})
+    if not contracts:
+        return ""
+
+    parts = ["【最终章必收束清单】"]
+    unresolved = []
+
+    # 1. 上一章遗留钩子（最重要）
+    last_key = str(chapters - 1)
+    last_contract = contracts.get(last_key, {})
+    last_handoff = str(last_contract.get("next_handoff", "")).strip()
+    if last_handoff:
+        unresolved.append(f"上一章遗留：{last_handoff[:200]}")
+
+    # 2. 更早章节中未解决的伏笔（跳过已解决的）
+    skip_keywords = ("已解决", "已揭示", "已完成", "已关闭", "真相大白", "水落石出")
+    foreshadow_keywords = ("伏笔", "未", "待", "将", "秘密", "隐藏", "真相", "暗示", "疑似")
+    for ch in range(1, chapters - 1):
+        contract = contracts.get(str(ch), {})
+        ff = str(contract.get("facts_and_foreshadowing", "")).strip()
+        if not ff:
+            continue
+        # 检查是否已被下一章结尾解决
+        next_contract = contracts.get(str(ch + 1), {})
+        next_ending = str(next_contract.get("ending_state", "")).strip()
+        if next_ending and any(kw in next_ending for kw in ff[:20].split("，")[:3]):
+            continue  # 大概率已解决
+        if any(kw in ff for kw in skip_keywords):
+            continue  # 明确标记已解决
+        if any(kw in ff for kw in foreshadow_keywords):
+            unresolved.append(f"第{ch}章伏笔：{ff[:150]}")
+
+    if not unresolved:
+        parts.append("（前序章节已全部收束，最终章只需解决主冲突并给出结局信号。）")
+    else:
+        for idx, item in enumerate(unresolved, start=1):
+            parts.append(f"{idx}. {item}")
+
+    parts.append("最终章正文必须逐项收束以上全部线索，不得开启新主线，并在结尾给出明确的故事结束信号。")
+    return "\n".join(parts)
 
 
 def format_contract(contract: dict) -> str:
@@ -1278,6 +1387,103 @@ def validate_pattern_manifest(manifest: dict) -> list[str]:
     return issues
 
 
+def _compress_beats_by_category(modules: list[dict], target_count: int) -> tuple[list[dict], list[str]]:
+    """按 category 优先级合并拍点，直到数量达到 target_count。
+
+    优先级从高到低（最优先保留）：resource > rule > cost > relationship > information > reputation。
+    合并时：名称拼接，描述保留各自要点，category 取被合并拍点中优先级最高的。
+    若两个同 category 拍点在 tag 列表中无交集，标记为"强制但需人工审查"。
+    """
+    CATEGORY_PRIORITY = {
+        "resource": 0,
+        "rule": 1,
+        "cost": 2,
+        "relationship": 3,
+        "information": 4,
+        "reputation": 5,
+    }
+
+    def _priority(category: str) -> int:
+        return CATEGORY_PRIORITY.get(category, 99)
+
+    modules = list(modules)
+    warnings: list[str] = []
+
+    while len(modules) > target_count and len(modules) >= 2:
+        groups: dict[int, list[int]] = {}
+        for idx, mod in enumerate(modules):
+            cat = mod.get("category", "")
+            prio = _priority(cat)
+            groups.setdefault(prio, []).append(idx)
+
+        candidates = sorted(
+            [(prio, indices) for prio, indices in groups.items() if len(indices) >= 2],
+            key=lambda x: x[0],
+            reverse=True,
+        )
+        if not candidates:
+            all_indexed = sorted(
+                [(i, _priority(m.get("category", ""))) for i, m in enumerate(modules)],
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            if len(all_indexed) < 2:
+                break
+            idx_a = all_indexed[1][0]
+            idx_b = all_indexed[0][0]
+        else:
+            indices = candidates[0][1]
+            idx_a, idx_b = indices[0], indices[1]
+            for i in range(len(indices) - 1):
+                if abs(indices[i] - indices[i + 1]) < abs(idx_a - idx_b):
+                    idx_a, idx_b = indices[i], indices[i + 1]
+
+        if idx_a > idx_b:
+            idx_a, idx_b = idx_b, idx_a
+
+        mod_a = modules[idx_a]
+        mod_b = modules[idx_b]
+
+        merged_name = f"合并：{mod_a.get('name', '')} + {mod_b.get('name', '')}"
+        merged_desc = f"{mod_a.get('description', '')}。同时：{mod_b.get('description', '')}"
+
+        cat_a = mod_a.get("category", "")
+        cat_b = mod_b.get("category", "")
+        merged_category = cat_a if _priority(cat_a) <= _priority(cat_b) else cat_b
+
+        if cat_a == cat_b:
+            tags_a = set(mod_a.get("tags", [])) if isinstance(mod_a.get("tags"), list) else set()
+            tags_b = set(mod_b.get("tags", [])) if isinstance(mod_b.get("tags"), list) else set()
+            if tags_a and tags_b and not (tags_a & tags_b):
+                warnings.append(
+                    f"强制合并：{mod_a.get('name', '')} 与 {mod_b.get('name', '')} "
+                    f"主题词无交集（{', '.join(sorted(tags_a))} vs {', '.join(sorted(tags_b))}），需人工审查"
+                )
+
+        merged = {
+            "id": f"_merged_{mod_a.get('id', '')}_{mod_b.get('id', '')}",
+            "name": merged_name,
+            "description": merged_desc,
+            "category": merged_category,
+        }
+
+        modules.pop(idx_b)
+        modules[idx_a] = merged
+
+    return modules, warnings
+
+
+def compute_action_budget(chapters: int) -> dict:
+    """计算每章关键行动预算上限。
+    前 N-1 章：≤5（给展开和收束足够空间）；最终章：≤4（终局冲突专用）。
+    最终章靠必收束清单+字数放宽确保完整收尾，不靠硬砍前面行动数。
+    """
+    budget = {}
+    for ch in range(1, chapters + 1):
+        budget[ch] = 5 if ch == chapters else 6
+    return budget
+
+
 def build_pattern_plan(manifest: dict, chapters: int, words_per_chapter: int) -> dict[str, dict]:
     chapters = max(1, int(chapters))
     words_per_chapter = max(1, int(words_per_chapter))
@@ -1301,6 +1507,14 @@ def build_pattern_plan(manifest: dict, chapters: int, words_per_chapter: int) ->
     ending_descriptions = pattern.get("ending_options", {})
     is_female_angst = manifest.get("pattern_key") == STRONG_PATTERN_KEY
     plan = {}
+
+    # 拍点自动合并：当拍点数量超过章节数时，按 category 优先级合并
+    merge_warnings: list[str] = []
+    if conflicts and chapters < len(conflicts) * 2:
+        if len(conflicts) > chapters:
+            conflicts, merge_warnings = _compress_beats_by_category(conflicts, chapters)
+    if merge_warnings:
+        plan["_merge_warnings"] = merge_warnings
 
     for chapter in range(1, chapters + 1):
         midpoint = (chapter - 0.5) / chapters
@@ -2455,7 +2669,8 @@ def current_draft_is_acceptable(state: NovelState) -> bool:
     editor = state.get("editor_report", {})
     if audit.get("审核状态") != "通过":
         return False
-    if audit.get("阻断问题") or editor.get("文风评分", 0) < STYLE_PASS_SCORE:
+    _style_min = 6 if is_final_chapter(state) else STYLE_PASS_SCORE
+    if audit.get("阻断问题") or editor.get("文风评分", 0) < _style_min:
         return False
     if has_continuity_conflict(state.get("continuity_report", {})):
         return False
@@ -3202,6 +3417,13 @@ def architect_node(state: NovelState):
         f"{pattern.get('architect', '')}{strong_requirement}"
     )
 
+    _action_budget = compute_action_budget(chapters)
+    _budget_desc = "；".join(
+        f"第{ch}章≤{limit}个关键行动"
+        for ch, limit in sorted(_action_budget.items())
+    )
+    chapter_req = chapter_req + "\n【关键行动预算】" + _budget_desc + "。每个行动单元以句号或分号结尾。前N-1章每章最多6个行动单元，最终章最多5个。展开期充分铺垫，收束期逐步关闭副线，结束期只解决主冲突。"
+
     prompt = ChatPromptTemplate.from_messages([
         ("system", load_prompt("architect_system.md")),
         ("system", ARCHITECT_JSON_PROMPT),
@@ -3373,6 +3595,8 @@ def _build_scene_plan(
 【最终章契约】
 {finale_contract}
 
+{finale_checklist}
+
 【篇幅规则】
 {length_guidance}
 
@@ -3387,6 +3611,9 @@ def _build_scene_plan(
         f"阻断问题：{audit.get('阻断问题', [])}；"
         f"修改建议：{audit.get('修改建议', '无')}"
     )
+    outlines = state.get("chapter_outlines", {})
+    total_chapters = len(outlines)
+    finale_checklist = build_finale_checklist(state, total_chapters) if is_final_chapter(state) else ""
     result = _safe_invoke(
         prompt | llm_scene_planner_structured,
         {
@@ -3397,6 +3624,7 @@ def _build_scene_plan(
                 if is_final_chapter(state)
                 else "非最终章，不适用。"
             ),
+            "finale_checklist": finale_checklist,
             "length_guidance": chapter_length_guidance(
                 state.get("words_per_chapter", DEFAULT_WORDS_PER_CHAPTER),
                 is_final_chapter(state),
@@ -3447,6 +3675,8 @@ def writer_node(state: NovelState):
         contracts, pattern_config.get("manifest", {})
     )
     length_guidance = chapter_length_guidance(words_per, final_chapter)
+    total_chapters = len(outlines)
+    finale_checklist = build_finale_checklist(state, total_chapters) if final_chapter else ""
     
     system_file = writer_style(style)["prompt_file"]
     
@@ -3552,6 +3782,7 @@ def writer_node(state: NovelState):
         "scene_plan": json.dumps(scene_plan, ensure_ascii=False, indent=2),
         "chapter_type": "最终章" if final_chapter else "普通章节",
         "length_guidance": length_guidance,
+        "finale_checklist": finale_checklist,
         "previous_draft": previous_draft if iteration > 1 else "无",
         "pattern_writer": pattern.get("writer", ""),
         "pattern_contract": format_pattern_manifest(pattern_config.get("manifest", {})),
